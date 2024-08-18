@@ -319,20 +319,33 @@ App.startTime = new Date();
  */
 App.pluginRegistry = {'4xAKTrabTpTzahoLthkwPNUn': 'plugins/explore.js',
 	'ex': 'plugins/explore.js',
-	'ac': 'plugins/connect.js', 'acj': 'plugins/connectJira.js',
-	'ac148': 'plugins/cConf-1-4-8.js', 'ac148cmnt': 'plugins/cConf-comments.js', 
+	'ac': 'plugins/connect.js', 
+	'acj': 'plugins/connectJira.js',
+	'ac148': 'plugins/cConf-1-4-8.js', 
+	'ac148cmnt': 'plugins/cConf-comments.js', 
 	'nxtcld': 'plugins/nextcloud.js',
 	'monday': 'plugins/monday.js',
-	'tips': 'plugins/tooltips.js', 'svgdata': 'plugins/svgdata.js',
-	'number': 'plugins/number.js', 'sql': 'plugins/sql.js',
-	'props': 'plugins/props.js', 'text': 'plugins/text.js',
-	'anim': 'plugins/animation.js', 'update': 'plugins/update.js',
-	'trees': 'plugins/trees/trees.js', 'import': 'plugins/import.js',
-	'replay': 'plugins/replay.js', 'anon': 'plugins/anonymize.js',
-	'tr': 'plugins/trello.js', 'f5': 'plugins/rackF5.js',
-	'webcola': 'plugins/webcola/webcola.js', 'rnd': 'plugins/random.js',
-	'page': 'plugins/page.js', 'gd': 'plugins/googledrive.js',
-	'tags': 'plugins/tags.js'};
+	'tips': 'plugins/tooltips.js', 
+	'svgdata': 'plugins/svgdata.js',
+	'number': 'plugins/number.js', 
+	'sql': 'plugins/sql.js',
+	'props': 'plugins/props.js', 
+	'text': 'plugins/text.js',
+	'anim': 'plugins/animation.js', 
+	'update': 'plugins/update.js',
+	'trees': 'plugins/trees/trees.js', 
+	'import': 'plugins/import.js',
+	'replay': 'plugins/replay.js', 
+	'anon': 'plugins/anonymize.js',
+	'tr': 'plugins/trello.js', 
+	'f5': 'plugins/rackF5.js',
+	'webcola': 'plugins/webcola/webcola.js', 
+	'rnd': 'plugins/random.js',
+	'page': 'plugins/page.js', 
+	'gd': 'plugins/googledrive.js',
+	'tags': 'plugins/tags.js',
+	'scada': 'plugins/scada/scada.js'
+};
 
 App.publicPlugin = [
 	'ex',
@@ -350,7 +363,8 @@ App.publicPlugin = [
 	'anon',
 	'webcola',
 //	'rnd', 'page', 'gd',
-	'tags'
+	'tags',
+	'scada'
 ];
 
 /**
