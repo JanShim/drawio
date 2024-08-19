@@ -1,3 +1,8 @@
+function setCellAttribute(cell, name, value) {
+	//cell.value = new NamedNodeMap();
+	cell.setAttribute(name, value);
+}
+
 /**
  * Sample plugin.
  */
@@ -116,10 +121,13 @@ Draw.loadPlugin(async function(ui) {
 			console.log("compare prev", prevcell===cell);
 
 			if (modelChanged) {
-				console.log("model changed");
+				console.log("model changed", cell);
 				app.cell_updated(cell);
 			} else {
-				console.log("selection changed");
+				let doc = mxUtils.parseXml("<scada><som-data p='test' as='data'/></scada>").documentElement;
+				cell.setValue(doc);
+
+				console.log("selection changed", cell.value);
 				app.cell_clicked(cell);
 				prevcell = cell;
 			}

@@ -32,9 +32,15 @@ impl App {
     }
 
     pub fn set_cell(&self, cell: Option<AppCell>) {
-        self.cell.set_if(cell, |a, b| {
-            !compare_eq_options(a, b)
-        });
+
+        if let Some(item) = cell {
+            // item.init_meta();
+        }
+
+
+        // self.cell.set_if(cell, |a, b| {
+        //     !compare_eq_options(a, b)
+        // });
     }
 
     pub fn render(&self) -> Dom {

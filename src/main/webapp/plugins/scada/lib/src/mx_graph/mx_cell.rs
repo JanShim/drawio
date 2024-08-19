@@ -1,12 +1,16 @@
 use std::rc::Rc;
 
-use futures_signals::{signal::Mutable, signal_map::{MutableBTreeMap, SignalMapExt}, signal_vec::{MutableVec, SignalVecExt}};
+use futures_signals::{
+    signal::Mutable, 
+    signal_map::{MutableBTreeMap, SignalMapExt}, signal_vec::SignalVecExt, 
+    // signal_vec::{MutableVec, SignalVecExt}
+};
 use wasm_bindgen::prelude::*;
 use dominator::{html, styles, Dom};
 use serde_wasm_bindgen::{self, from_value};
 use serde::{de::value, Deserialize};
 
-use crate::utils::compare_eq_options;
+use crate::utils::{calculate_hash, compare_eq_options};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -35,20 +39,34 @@ pub struct MxCellValue {
     attributes: Option<Vec<MxCellAttribute>>,
 }
 
+// #[wasm_bindgen]
+// extern "C" {
+//     #[wasm_bindgen(js_name=setCellAttribute)]
+//     pub fn set_cell_attribute(target: &MxCell, name: &str, value: &str);
+// }
+
 #[wasm_bindgen]
 extern "C" {
     pub fn name() -> String;
 
     pub type MxCell;
 
-    #[wasm_bindgen(method, js_name=getValue)]
-    pub fn get_value(this: &MxCell) -> JsValue;
-
     /**
      * Returns the Id of the cell as a string.
      */
     #[wasm_bindgen(method, js_name=getId)]
     pub fn get_id(this: &MxCell) -> JsValue;
+
+    #[wasm_bindgen(method, js_name=getValue)]
+    pub fn get_value(this: &MxCell) -> JsValue;
+
+    /**
+     * Sets the user object of the cell. The user object
+     * is stored in <value>.
+     */
+    //setValue(value: any): void;
+    #[wasm_bindgen(method, js_name=setValue)]
+    pub fn set_value(this: &MxCell, value: JsValue);    
 }
 
 impl MxCell {
@@ -64,7 +82,17 @@ impl MxCell {
             }            
         }
         None
-    }    
+    }
+
+    // pub fn set_attribute(&self, name: String, value: String) {
+    //     if self.is_object() {
+    //         if let Some(v) = from_value::<MxCellValue>(self.get_value()).ok() {
+    //             let value = JsValue::
+                
+    //         }            
+    //     }
+    // }
+
 }
 
 impl PartialEq for  MxCell {
@@ -82,14 +110,19 @@ impl std::fmt::Debug for MxCell {
 
 pub struct AppCell {
     cell: MxCell,
-    attributes: MutableVec<Rc<CellAttribute>>,
+    // attributes: MutableVec<Rc<CellAttribute>>,
+    // attributes: MutableBTreeMap<u64, i32>,
+    enabled: Mutable<bool>,
+    meta: Mutable<String>,
 }
 
 impl AppCell {
     pub fn new(cell: MxCell) -> Self {
         Self {
             cell,
-            attributes: MutableVec::new(),
+            // attributes: MutableBTreeMap::new(),
+            enabled: Mutable::new(true),
+            meta: Mutable::new("{}".to_owned()),
         }
     }
 
@@ -99,36 +132,54 @@ impl AppCell {
         })
     }
 
+    // pub fn init_meta(&self) {
+    //     set_cell_attribute(&self.cell, "meta", "meta init");
+    // }
+
     pub fn get_attributes(&self) -> Option<Vec<MxCellAttribute>> {
         self.cell.get_attributes()
     }
 
+    // pub fn set_attribute_if_not(&self, name: String, value: String) {
+    //     match self.cell.get_value() {
+    //         str if str.is_string() => {
+    //             // set_cell_attribute(&self.cell, "meta", "test meta");
+    //         },
+    //         obj if obj.is_object() => {},
+    //         _ => {},
+    //     }
+    // }
+
     pub fn updated(&self) {
         log::debug!("attrs: {:?}", self.get_attributes());
-        // let mut lock = self.attributes.lock_ref();
-        // lock.insert("key".to_owned(), "value".to_owned());
-        if let Some(attrs) = self.get_attributes() {
-            let mut vec_lock = self.attributes.lock_mut();
-            attrs.iter().for_each(|a| {
-                vec_lock.push_cloned(CellAttribute::new(a.node_name.clone(), a.node_value.clone()));
-            })
-        }
-
+        // let mut lock = self.attributes.lock_mut();
+        // if let Some(attrs) = self.get_attributes() {
+        //     let mut i = 0;
+        //     attrs.iter().for_each(|a| {
+        //         lock.insert(calculate_hash(&a.node_name), i);
+        //         i+=1;
+        //     })
+        // }
     }
 
     pub fn render_attrs(&self) -> Dom {
         html!("table", {
             .attr("border", "2")
             .styles!{ border: "1px solid black"}
-            .children_signal_vec(
-                self.attributes.signal_vec_cloned()
-                .map(|v| {
-                    html!("tr", {
-                        .child(html!("td", {.text(v.name.as_str())}))
-                        .child(html!("td", {.text_signal(v.value.signal_cloned())}))
-                    })
-                })                
-            )
+            // .child_signal(self.attributes.signal_map()
+            //     .map(|(k, v)| {
+            //         html!("tr", {
+            //             .child(html!("td", {.text(k.to_string().as_str())}))
+            //             .child(html!("td", {.text(v.to_string().as_str())}))
+            //         })
+            //     })
+            //     // .map(|v| {
+            //     //     html!("tr", {
+            //     //         .child(html!("td", {.text(v.name.as_str())}))
+            //     //         .child(html!("td", {.text_signal(v.value.signal_cloned())}))
+            //     //     })
+            //     // })                
+            // )
         })
     }
 
