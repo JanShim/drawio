@@ -1,0 +1,1 @@
+futures_signals::signal::ForEach<MapRefSignal<{closure@/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/futures-signals-0.3.34/src/signal/macros.rs:74:45: 74:54}>, std::string::String, {closure@src/app/mod.rs:297:41: 297:44}>

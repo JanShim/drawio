@@ -1,0 +1,9 @@
+/home/janshim/projects/SCADA/drawio/src/main/webapp/plugins/scada/lib/target/debug/deps/libserde_wasm_bindgen-0d84c968eedcf9bd.rmeta: /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/lib.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/de.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/error.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/ser.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/../README.md
+
+/home/janshim/projects/SCADA/drawio/src/main/webapp/plugins/scada/lib/target/debug/deps/serde_wasm_bindgen-0d84c968eedcf9bd.d: /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/lib.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/de.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/error.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/ser.rs /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/../README.md
+
+/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/lib.rs:
+/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/de.rs:
+/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/error.rs:
+/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/ser.rs:
+/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-wasm-bindgen-0.4.5/src/../README.md:

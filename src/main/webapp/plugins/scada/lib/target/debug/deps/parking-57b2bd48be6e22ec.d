@@ -1,0 +1,5 @@
+/home/janshim/projects/SCADA/drawio/src/main/webapp/plugins/scada/lib/target/debug/deps/libparking-57b2bd48be6e22ec.rmeta: /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/parking-2.2.0/src/lib.rs
+
+/home/janshim/projects/SCADA/drawio/src/main/webapp/plugins/scada/lib/target/debug/deps/parking-57b2bd48be6e22ec.d: /home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/parking-2.2.0/src/lib.rs
+
+/home/janshim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/parking-2.2.0/src/lib.rs:
