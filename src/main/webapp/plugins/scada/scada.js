@@ -7,7 +7,7 @@ function setCellAttribute(cell, name, value) {
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, AppApi} = await import('./lib/pkg/scada_lib.js');
+	const {initSync, renderCell, renderSchema} = await import('./lib/pkg/scada_lib.js');
 
 	async function initWasm() {
 		await fetch('plugins/scada/lib/pkg/scada_lib_bg.wasm')
@@ -17,9 +17,6 @@ Draw.loadPlugin(async function(ui) {
 			});				
 	}
 
-	// init rust wasm
-	await initWasm();
-
 	var div = document.createElement('div');
 	div.setAttribute("id", "container");
 	div.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
@@ -28,7 +25,7 @@ Draw.loadPlugin(async function(ui) {
 	div.style.padding = '10px';
 	div.style.paddingTop = '0px';
 	div.style.width = '20%';
-	div.innerHTML = '<p><i>' + mxResources.get('nothingIsSelected') + '</i></p>';
+	// div.innerHTML = '<p><i>' + mxResources.get('nothingIsSelected') + '</i></p>';
 
 	var graph = ui.editor.graph;
 
@@ -83,7 +80,7 @@ Draw.loadPlugin(async function(ui) {
 	// register_conteiner(ui.editor, div);	// for wasm app
 	
 	// init wasm application
-	const app = new AppApi(ui.editor, div);
+	// const app = new AppApi(ui.editor, div);
 
 	function writeConsole(evt)
 	{
@@ -99,7 +96,7 @@ Draw.loadPlugin(async function(ui) {
 		}
 	};
 
-	let prevcell = undefined;
+	// let prevcell = undefined;
 	/**
 	 * Updates the properties panel
 	 */
@@ -109,7 +106,9 @@ Draw.loadPlugin(async function(ui) {
 		if (cell == null)
 		{
 			highlight.highlight(null);
-			app.cell_clicked(null);
+			// app.cell_clicked(null);
+			renderSchema(div);
+			console.log("js renderSchema");
 		}
 		else
 		{
@@ -118,18 +117,20 @@ Draw.loadPlugin(async function(ui) {
 				highlight.highlight(graph.view.getState(cell));
 			}
 	
-			console.log("compare prev", prevcell===cell);
+			// console.log("compare prev", prevcell===cell);
 
 			if (modelChanged) {
 				console.log("model changed", cell);
-				app.cell_updated(cell);
+				// app.cell_updated(cell);
 			} else {
-				let doc = mxUtils.parseXml("<scada><som-data p='test' as='data'/></scada>").documentElement;
-				cell.setValue(doc);
+				//let doc = mxUtils.parseXml("<scada><som-data p='test' as='data'/></scada>").documentElement;
+				//cell.setValue(doc);
 
-				console.log("selection changed", cell.value);
-				app.cell_clicked(cell);
-				prevcell = cell;
+				//console.log("selection changed", cell.value);
+				// app.cell_clicked(cell);
+
+				renderCell(div, cell);
+				// prevcell = cell;
 			}
 
 			// var attrs = (cell.value != null) ? cell.value.attributes : null;
@@ -217,4 +218,10 @@ Draw.loadPlugin(async function(ui) {
 			}, 0);
 		};
 	}
+
+	// =======================================
+	// init rust wasm
+	await initWasm();
+
+
 });

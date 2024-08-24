@@ -1,43 +1,38 @@
-use std::rc::Rc;
-
-use futures_signals::{
-    signal::Mutable, 
-    signal_map::{MutableBTreeMap, SignalMapExt}, signal_vec::SignalVecExt, 
-    // signal_vec::{MutableVec, SignalVecExt}
-};
 use wasm_bindgen::prelude::*;
-use dominator::{html, styles, Dom};
-use serde_wasm_bindgen::{self, from_value};
-use serde::{de::value, Deserialize};
+// use futures_signals::{
+//     signal::Mutable, 
+//     signal_map::{MutableBTreeMap, SignalMapExt}, signal_vec::SignalVecExt, 
+//     // signal_vec::{MutableVec, SignalVecExt}
+// };
+// use serde_wasm_bindgen::from_value;
+// use serde::Deserialize;
+use web_sys::Element;
 
-use crate::utils::{calculate_hash, compare_eq_options};
+// #[derive(Deserialize, Debug)]
+// #[serde(rename_all = "camelCase")]
+// pub struct MxCellAttribute {
+//     node_name: String,
+//     node_value: String,
+// }
 
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct MxCellAttribute {
-    node_name: String,
-    node_value: String,
-}
+// pub struct CellAttribute {
+//     name: String,
+//     value: String,
+// }
 
-pub struct CellAttribute {
-    name: String,
-    value: Mutable<String>,
-}
+// impl CellAttribute {
+//     pub fn new(name: String, value: String) -> Self {
+//         Self {
+//             name,
+//             value,
+//         }
+//     }
+// }
 
-impl CellAttribute {
-    pub fn new(name: String, value: String) -> Rc<Self> {
-        let ret = Self {
-            name,
-            value: Mutable::new(value),
-        };
-        Rc::new(ret)
-    }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct MxCellValue {
-    attributes: Option<Vec<MxCellAttribute>>,
-}
+// #[derive(Deserialize, Debug)]
+// pub struct MxCellValue {
+//     attributes: Option<Vec<CellAttribute>>,
+// }
 
 // #[wasm_bindgen]
 // extern "C" {
@@ -46,6 +41,7 @@ pub struct MxCellValue {
 // }
 
 #[wasm_bindgen]
+#[derive(PartialEq)]
 extern "C" {
     pub fn name() -> String;
 
@@ -67,6 +63,14 @@ extern "C" {
     //setValue(value: any): void;
     #[wasm_bindgen(method, js_name=setValue)]
     pub fn set_value(this: &MxCell, value: JsValue);    
+
+    /**
+     * Returns a string that describes the <style>.
+     */
+    //getStyle(): string;    
+    #[wasm_bindgen(method, js_name=getStyle)]
+    pub fn get_style(this: &MxCell) -> JsValue;
+
 }
 
 impl MxCell {
@@ -74,15 +78,27 @@ impl MxCell {
         self.get_id().as_string()
     }
 
-    pub fn get_attributes(&self) -> Option<Vec<MxCellAttribute>> {
-        if self.is_object() {
-            return match from_value::<MxCellValue>(self.get_value()) {
-                Ok(value) => value.attributes,
-                _ => None,
-            }            
+    pub fn mx_value(&self) -> Result<Element, JsValue> {
+        if self.is_object()  {
+            return self.get_value().dyn_into::<Element>();            
         }
-        None
+
+        Err(JsValue::from_str("value is not Element"))
     }
+
+    pub fn mx_style(&self) -> Option<String> {
+        self.get_style().as_string()
+    }
+
+    // pub fn get_attributes(&self) -> Option<Vec<CellAttribute>> {
+    //     if self.is_object() {
+    //         return match from_value::<CellValue>(self.get_value()) {
+    //             Ok(value) => value.attributes,
+    //             _ => None,
+    //         }            
+    //     }
+    //     None
+    // }
 
     // pub fn set_attribute(&self, name: String, value: String) {
     //     if self.is_object() {
@@ -95,11 +111,17 @@ impl MxCell {
 
 }
 
-impl PartialEq for  MxCell {
+impl PartialEq for MxCell {
     fn eq(&self, other: &Self) -> bool {
-        compare_eq_options(&self.id(), &other.id())
+        self.obj == other.obj
     }
 }
+
+// impl PartialEq for  MxCell {
+//     fn eq(&self, other: &Self) -> bool {
+//         compare_eq_options(&self.id(), &other.id())
+//     }
+// }
 
 impl std::fmt::Debug for MxCell {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -108,111 +130,111 @@ impl std::fmt::Debug for MxCell {
 }
 
 
-pub struct AppCell {
-    cell: MxCell,
-    // attributes: MutableVec<Rc<CellAttribute>>,
-    // attributes: MutableBTreeMap<u64, i32>,
-    enabled: Mutable<bool>,
-    meta: Mutable<String>,
-}
+// pub struct AppCell {
+//     cell: MxCell,
+//     // attributes: MutableVec<Rc<CellAttribute>>,
+//     // attributes: MutableBTreeMap<u64, i32>,
+//     enabled: Mutable<bool>,
+//     meta: Mutable<String>,
+// }
 
-impl AppCell {
-    pub fn new(cell: MxCell) -> Self {
-        Self {
-            cell,
-            // attributes: MutableBTreeMap::new(),
-            enabled: Mutable::new(true),
-            meta: Mutable::new("{}".to_owned()),
-        }
-    }
+// impl AppCell {
+//     pub fn new(cell: MxCell) -> Self {
+//         Self {
+//             cell,
+//             // attributes: MutableBTreeMap::new(),
+//             enabled: Mutable::new(true),
+//             meta: Mutable::new("{}".to_owned()),
+//         }
+//     }
 
-    pub fn clean() -> Dom {
-        html!("div", {
-            .text("cell not selected")
-        })
-    }
+//     pub fn clean() -> Dom {
+//         html!("div", {
+//             .text("cell not selected")
+//         })
+//     }
 
-    // pub fn init_meta(&self) {
-    //     set_cell_attribute(&self.cell, "meta", "meta init");
-    // }
+//     // pub fn init_meta(&self) {
+//     //     set_cell_attribute(&self.cell, "meta", "meta init");
+//     // }
 
-    pub fn get_attributes(&self) -> Option<Vec<MxCellAttribute>> {
-        self.cell.get_attributes()
-    }
+//     pub fn get_attributes(&self) -> Option<Vec<MxCellAttribute>> {
+//         self.cell.get_attributes()
+//     }
 
-    // pub fn set_attribute_if_not(&self, name: String, value: String) {
-    //     match self.cell.get_value() {
-    //         str if str.is_string() => {
-    //             // set_cell_attribute(&self.cell, "meta", "test meta");
-    //         },
-    //         obj if obj.is_object() => {},
-    //         _ => {},
-    //     }
-    // }
+//     // pub fn set_attribute_if_not(&self, name: String, value: String) {
+//     //     match self.cell.get_value() {
+//     //         str if str.is_string() => {
+//     //             // set_cell_attribute(&self.cell, "meta", "test meta");
+//     //         },
+//     //         obj if obj.is_object() => {},
+//     //         _ => {},
+//     //     }
+//     // }
 
-    pub fn updated(&self) {
-        log::debug!("attrs: {:?}", self.get_attributes());
-        // let mut lock = self.attributes.lock_mut();
-        // if let Some(attrs) = self.get_attributes() {
-        //     let mut i = 0;
-        //     attrs.iter().for_each(|a| {
-        //         lock.insert(calculate_hash(&a.node_name), i);
-        //         i+=1;
-        //     })
-        // }
-    }
+//     pub fn updated(&self) {
+//         log::debug!("attrs: {:?}", self.get_attributes());
+//         // let mut lock = self.attributes.lock_mut();
+//         // if let Some(attrs) = self.get_attributes() {
+//         //     let mut i = 0;
+//         //     attrs.iter().for_each(|a| {
+//         //         lock.insert(calculate_hash(&a.node_name), i);
+//         //         i+=1;
+//         //     })
+//         // }
+//     }
 
-    pub fn render_attrs(&self) -> Dom {
-        html!("table", {
-            .attr("border", "2")
-            .styles!{ border: "1px solid black"}
-            // .child_signal(self.attributes.signal_map()
-            //     .map(|(k, v)| {
-            //         html!("tr", {
-            //             .child(html!("td", {.text(k.to_string().as_str())}))
-            //             .child(html!("td", {.text(v.to_string().as_str())}))
-            //         })
-            //     })
-            //     // .map(|v| {
-            //     //     html!("tr", {
-            //     //         .child(html!("td", {.text(v.name.as_str())}))
-            //     //         .child(html!("td", {.text_signal(v.value.signal_cloned())}))
-            //     //     })
-            //     // })                
-            // )
-        })
-    }
+//     pub fn render_attrs(&self) -> Dom {
+//         html!("table", {
+//             .attr("border", "2")
+//             .styles!{ border: "1px solid black"}
+//             // .child_signal(self.attributes.signal_map()
+//             //     .map(|(k, v)| {
+//             //         html!("tr", {
+//             //             .child(html!("td", {.text(k.to_string().as_str())}))
+//             //             .child(html!("td", {.text(v.to_string().as_str())}))
+//             //         })
+//             //     })
+//             //     // .map(|v| {
+//             //     //     html!("tr", {
+//             //     //         .child(html!("td", {.text(v.name.as_str())}))
+//             //     //         .child(html!("td", {.text_signal(v.value.signal_cloned())}))
+//             //     //     })
+//             //     // })                
+//             // )
+//         })
+//     }
 
-    pub fn render(&self) -> Dom {
-        html!("div", {
-            .children(&mut [
-                // html!("table", {
-                //     .attr("border", "1")
-                //     .styles!{ border: "1px solid black"}
-                //     .children(self.get_attributes().unwrap_or(vec![])
-                //         .iter()
-                //         .map(|o| {
-                //             html!("tr", {
-                //                 .child(html!("td", {.text(o.node_name.as_str())}))
-                //                 .child(html!("td", {.text(o.node_value.as_str())}))
-                //             })
-                //         })
-                //     )
-                // }),
-                self.render_attrs(),                
-            ])
-        })
+//     pub fn render(&self) -> Dom {
+//         html!("div", {
+//             .children(&mut [
+//                 // html!("table", {
+//                 //     .attr("border", "1")
+//                 //     .styles!{ border: "1px solid black"}
+//                 //     .children(self.get_attributes().unwrap_or(vec![])
+//                 //         .iter()
+//                 //         .map(|o| {
+//                 //             html!("tr", {
+//                 //                 .child(html!("td", {.text(o.node_name.as_str())}))
+//                 //                 .child(html!("td", {.text(o.node_value.as_str())}))
+//                 //             })
+//                 //         })
+//                 //     )
+//                 // }),
+//                 self.render_attrs(),                
+//             ])
+//         })
 
-    } 
+//     } 
 
 
-}
+// }
 
-impl<'a> PartialEq for AppCell {
-    fn eq(&self, other: &Self) -> bool {
-        self.cell == other.cell
-    }
-}
+// impl<'a> PartialEq for AppCell {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.cell == other.cell
+//     }
+// }
 
 /*
 
