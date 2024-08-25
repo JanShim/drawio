@@ -3,6 +3,8 @@ use wasm_bindgen::JsValue;
 
 mod cell_app;
 mod schema_app;
+mod scada_object;
+
 
 // This is like the `main` function, except for JavaScript.
 #[wasm_bindgen(start)]

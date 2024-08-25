@@ -1,3 +1,5 @@
+// import { initSync, renderCell, renderSchema, SchemaOptions } from './lib/pkg/scada_lib.js';
+
 function setCellAttribute(cell, name, value) {
 	//cell.value = new NamedNodeMap();
 	cell.setAttribute(name, value);
@@ -7,7 +9,7 @@ function setCellAttribute(cell, name, value) {
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, renderCell, renderSchema} = await import('./lib/pkg/scada_lib.js');
+	const {initSync, renderCell, renderSchema, SchemaOptions} = await import('./lib/pkg/scada_lib.js');
 
 	async function initWasm() {
 		await fetch('plugins/scada/lib/pkg/scada_lib_bg.wasm')
@@ -107,7 +109,7 @@ Draw.loadPlugin(async function(ui) {
 		{
 			highlight.highlight(null);
 			// app.cell_clicked(null);
-			renderSchema(div);
+			renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
 			console.log("js renderSchema");
 		}
 		else
