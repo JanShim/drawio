@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use yew::{function_component, html, virtual_dom::VNode, Html, Properties};
+use yew::{function_component, html, Html, Properties};
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]

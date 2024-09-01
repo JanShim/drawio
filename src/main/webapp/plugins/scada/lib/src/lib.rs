@@ -1,6 +1,9 @@
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 
+mod utils;
+mod errors;
+mod model;
 mod cell_app;
 mod schema_app;
 mod scada_object;

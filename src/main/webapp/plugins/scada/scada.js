@@ -109,8 +109,14 @@ Draw.loadPlugin(async function(ui) {
 		{
 			highlight.highlight(null);
 			// app.cell_clicked(null);
-			renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
+			// renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
+			renderSchema(mxUtils, ui.editor, div, new SchemaOptions("http://localhost:8091/api/v1"));
 			console.log("js renderSchema");
+
+			// let snapshot = ui.getDiagramSnapshot();
+			// let model = mxUtils.getPrettyXml(snapshot.node);
+			// console.log("model", model);
+
 		}
 		else
 		{
