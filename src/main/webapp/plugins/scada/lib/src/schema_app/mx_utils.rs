@@ -21,6 +21,11 @@ extern "C" {
     #[wasm_bindgen(method, js_name=getXml)]
     pub fn mx_get_xml(this: &MxUtils, node: Node, linefeed: JsString) -> JsValue;
 
+    /**
+     *   parseXml
+     */ 
+    #[wasm_bindgen(method, js_name=parseXml)]
+    pub fn mx_parse_xml(this: &MxUtils, text: JsString) -> JsValue;
 
 }
 
@@ -38,6 +43,13 @@ impl MxUtils {
             _ => Err(JsValue::from_str("can't get xml as string"))            
         }
     }    
+
+    pub fn parse_xml(&self, text: String) -> Result<Node, JsValue> {
+        match self.mx_parse_xml(JsString::from(text)) {
+            node if node.is_object() => node.dyn_into::<Node>(),
+            _ => Err(JsValue::from_str("xml parse problems"))
+        }
+    }
 }
 
 impl PartialEq for MxUtils {

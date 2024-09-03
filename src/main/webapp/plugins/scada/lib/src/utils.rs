@@ -41,3 +41,4 @@ where
         .json::<T>().await
         .map_err(|err| FetchError::SerdeError(err.to_string()));
 }
+

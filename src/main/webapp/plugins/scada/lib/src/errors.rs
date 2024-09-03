@@ -1,6 +1,8 @@
 // use thiserror::Error;
 use std::fmt::Display;
 
+use wasm_bindgen::JsValue;
+
 // #[derive(Error, Debug)]
 // #[error("{msg}")]
 // struct RequestError {
@@ -31,6 +33,7 @@ pub enum FetchError {
     // #[error("{0}")]
     SerdeError(String),    
     InsertModelError(String),
+    ParseXmlError(String),
 }
 
 impl Display for FetchError {
@@ -39,6 +42,7 @@ impl Display for FetchError {
             FetchError::RequestError(err) => err,
             FetchError::SerdeError(err) => err,
             FetchError::InsertModelError(err) => err,
+            FetchError::ParseXmlError(err) => err,
         };
         write!(f, "{msg}")
     }

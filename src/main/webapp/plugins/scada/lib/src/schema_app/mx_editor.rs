@@ -14,10 +14,15 @@ extern "C" {
     #[wasm_bindgen(method, js_name=getGraphXml)]
     pub fn mx_get_graph_xml(this: &MxEditor) -> JsValue;
 
+    /**
+     * Sets the XML node for the current diagram.
+     */
+    #[wasm_bindgen(method, js_name=setGraphXml)]
+    pub fn set_graph_xml(this: &MxEditor, node: Node);
+
 }
 
 impl MxEditor {
-
     pub fn get_graph_xml(&self) -> Result<Node, JsValue> {
         let node = self.mx_get_graph_xml();
         match node {

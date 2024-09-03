@@ -5,6 +5,40 @@ function setCellAttribute(cell, name, value) {
 	cell.setAttribute(name, value);
 }
 
+function loadScadaModel(editor, xmlStr) {
+	const node = mxUtils.parseXml(xmlStr).documentElement;
+	if (!!node) {
+		var dec = new mxCodec(node.ownerDocument);
+	
+		if (node.nodeName == 'mxGraphModel')
+		{
+			editor.graph.model.beginUpdate();
+			try
+			{
+				editor.graph.model.clear();
+				editor.graph.view.scale = 1;
+				editor.readGraphState(node);
+				editor.updateGraphComponents();
+				dec.decode(node, editor.graph.getModel());
+			}
+			finally
+			{
+				editor.graph.model.endUpdate();
+			}
+	
+			editor.fireEvent(new mxEventObject('resetGraphView'));
+
+			let cell0 = editor.graph.getModel().getCell("0");
+			if (!!cell0.value && typeof cell0.value !== 'string') {
+				// console.log("cell0", cell0.value.outerHTML);
+				return cell0.value.outerHTML;
+			}
+			return undefined;
+
+		}	
+	}
+}
+
 /**
  * Sample plugin.
  */

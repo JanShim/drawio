@@ -1,4 +1,3 @@
-
 use std::rc::Rc;
 
 use editor_ui::EditorUi;
@@ -10,13 +9,15 @@ use yew::{
     prelude::*,
     // services::fetch::Request
 };
-use web_sys::HtmlDivElement;
+use web_sys::{js_sys::JsString, HtmlDivElement};
 // use wasm_bindgen_futures::spawn_local;
 use yew_hooks::{use_async, use_async_with_options, UseAsyncOptions};
 
 use crate::{
     //
-    errors::FetchError, model::scada_diagram::{ScadaDiagramComponent, ScadaDiagramDto, ScadaDiagramListDto}, utils::{fetch, fetch_string, post} 
+    errors::FetchError, 
+    model::scada_diagram::{DiagramListItem, ScadaDiagramDto, ScadaDiagramListDto}, 
+    utils::{fetch, fetch_string, post} 
 };
 
 mod mx_utils;
@@ -24,6 +25,14 @@ mod mx_graph;
 mod mx_graph_model;
 mod mx_editor;
 mod editor_ui;
+
+const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_name=loadScadaModel)]
+    pub fn load_scada_model(editor: &MxEditor, xmlStr: &str) -> JsValue;
+}
 
 #[wasm_bindgen]
 pub struct SchemaOptions {
@@ -52,6 +61,8 @@ pub struct Props {
 #[function_component(App)]
 pub fn app(props: &Props) -> Html {
     let url = props.api_url.clone();
+    let editor = props.mx_editor.clone();
+    // let utils = props.mx_utils.clone();    
     // let diagrams = use_list(Vec::<ScadaDiagramListDto>::new()); 
 
     // let state = use_async(
@@ -71,114 +82,94 @@ pub fn app(props: &Props) -> Html {
     //     "model error!".to_owned()
     // });
 
-    let id = use_state(|| "00000000-0000-0000-0000-000000000000".to_owned());
+    let id = use_state(|| NULL_UUID.to_owned());
 
-    let diarrams_lis = use_async_with_options(
+    let diagram_list = use_async_with_options(
         async move { fetch::<Vec::<ScadaDiagramListDto>>(format!("{url}/diagram/all")).await },
         UseAsyncOptions::enable_auto(),
     );
 
-    let model = use_state(|| "Not loaded".to_owned());
-    let get_model = {
-        let model = model.clone();
-        let editor = props.mx_editor.clone();
-        let utils = props.mx_utils.clone();
+    // let model = use_state(|| "Not loaded".to_owned());
+    // let get_model = {
+    //     let model = model.clone();
+    //     let editor = props.mx_editor.clone();
+    //     let utils = props.mx_utils.clone();
 
-        Callback::from(move |_: MouseEvent| {
-            if let Ok(node) = editor.get_graph_xml() {
-                if let Ok(Some(v)) = utils.get_pretty_xml(node) {
-                    model.set(v);
-                    return;
-                }
-            }            
+    //     Callback::from(move |_: MouseEvent| {
+    //         if let Ok(node) = editor.get_graph_xml() {
+    //             if let Ok(Some(v)) = utils.get_pretty_xml(node) {
+    //                 model.set(v);
+    //                 return;
+    //             }
+    //         }            
 
-            model.set("model error!".to_owned());
-        })
-    };
+    //         model.set("model error!".to_owned());
+    //     })
+    // };
 
     // load model from db
     let url = props.api_url.clone();
-    let model_id = id.clone();
-    let model_load = use_async(
+    let id_clone = id.clone();
+    let model_load_handle = use_async(
         async move {
-            let id = *model_id;
-            fetch_string(format!("{url}/diagram/{id}/model")).await 
+            fetch_string(format!("{url}/diagram/{}/model", *id_clone)).await
+                .and_then(|text| {
+                    let meta = load_scada_model(&*editor, text.as_str());
+                    match meta {
+                        node if node.is_string() => {
+                            // serde_xml_rs::from_str::<DiagramMeta>(node.)
+                        }, 
+                        _ => {
+
+                        },
+                    }
+                    // log::debug!("{}", meta);
+                    Ok(())
+                }) 
         }
     );
-    // let on_load_model = {
-    //     let handle = model_load.clone();
-    //     Callback::from(move |_: MouseEvent| { handle.run(); })
-    // };
+    let model_load_handle_clone = model_load_handle.clone();
+    use_effect_with(id.clone(), move |id| {
+        if !(*id).as_str().eq(NULL_UUID) {
+            log::debug!("clicked {}", (*id).to_string());
+            model_load_handle_clone.run();
+        }
+    });
     let on_load_model =  {
-        let model_id = id.clone();
-        let handle = model_load.clone();
-        Callback::from(move |pk: String| { 
-            let pk = pk.clone();
-            model_id.set(pk.as_str());
-            handle.run(); 
-        })
+        let id = id.clone();
+        Callback::from(move |pk: String| id.set(pk))
     };
 
-    // insert model to db
-    let url = props.api_url.clone();
-    let model = model.clone();
-    let editor = props.mx_editor.clone();
-    let utils = props.mx_utils.clone();    
-    let model_create = use_async(
-        async move {
-            if let Ok(node) = editor.get_graph_xml() {
-                if let Ok(Some(curr_model)) = utils.get_pretty_xml(node) {
-                    let item = ScadaDiagramDto::new("insert proba".to_owned(), curr_model.clone());
-                    return post(format!("{url}/diagram"), item).await;
-                }
-            }
+    // // insert model to db
+    // let url = props.api_url.clone();
+    // // let model = model.clone();
+    // // let id_clone = id.clone();
+    // let editor = props.mx_editor.clone();
+    // let utils = props.mx_utils.clone();    
+    // let model_create = use_async(
+    //     async move {
+    //         if let Ok(node) = editor.get_graph_xml() {
+    //             if let Ok(Some(curr_model)) = utils.get_pretty_xml(node) {
+    //                 let item = ScadaDiagramDto::new("insert proba".to_owned(), curr_model.clone());
+    //                 return post(format!("{url}/diagram"), item).await
+    //                     .and_then(|o| {
+    //                         log::debug!("new {}", o.uuid);
+    //                         // id_clone.set(o.uuid);
+    //                         Ok(())
+    //                     });
+    //             }
+    //         }
 
-            // let item = ScadaDiagramDto::new("insert proba".to_owned(), "<ssss/>".to_owned());
-            // log::debug!("send post");
-            // post(format!("{url}/diagram"), item).await
+    //         Err(FetchError::InsertModelError("can't insert model".to_owned()))
+    //     }
+    // );
+    // let on_create_model = {
+    //     let handle = model_create.clone();
+    //     Callback::from(move |_: MouseEvent| {
+    //         handle.run();
+    //     })        
+    //  };
 
-            // log::error!("can't insert model");
-            Err(FetchError::InsertModelError("can't insert model".to_owned()))
-        }
-    );
-    let on_create_model = {
-        let handle = model_create.clone();
-        Callback::from(move |_: MouseEvent| {
-            handle.run();
-        })        
-     };
-
-    // let state: yew_hooks::UseAsyncHandle<Vec<&str>, reqwasm::Error> = use_async(async move {
-    //     let end_point = format!("{url}/diagram/all");
-
-    //     // log::debug!("{}", &end_point);
-
-    //     let fetched = Request::get(end_point.as_str()).send()
-    //         .await
-    //         .map(|o| {
-
-    //             vec!["aaaa"]
-    //         })
-    //         .map_err(|err| {
-    //             anyhow::Error::new(err)
-    //         });
-    //     // match fetched {
-    //     //     Ok(response) => {
-    //     //         let json = response.json::<Vec<ScadaDiagramListDto>>().await;
-    //     //         match json {
-    //     //             // Ok(f) => diagrams_clone.set(f),
-    //     //             Ok(data) => data,
-    //     //             Err(e) => {log::error!("{}", e); vec![]},
-    //     //         }
-    //     //     }
-    //     //     Err(e) => {log::error!("{}", e); vec![]},
-    //     // }   
-    //     fetched         
-    // });
-
-    // let diagrams_clone = diagrams.clone();
-
-    // spawn_local();
 
     html! {
         <>
@@ -188,82 +179,84 @@ pub fn app(props: &Props) -> Html {
             //     .map(|o| html!( <ScadaDiagramComponent item={o.clone()}/> )) 
             // }</pre>
             <pre>{
-                if diarrams_lis.loading {
+                if diagram_list.loading {
                     html! { "Loading, wait a sec..." }
                 } else  {
-                    diarrams_lis.data.as_ref().map_or_else(
+                    diagram_list.data.as_ref().map_or_else(
                         || html! {},        // default
                         |repo| html! { 
-                            for repo.iter().map(|o| 
-                                html!{ <ScadaDiagramComponent item={o.clone()} load={on_load_model}/> }
+                            for repo.iter().map(|item| 
+                                html!{ <DiagramListItem item={item.clone()} load={on_load_model.clone()}/> }
                             )
                     })      
                 }    
             }
             </pre>            
-            <p>{
-                diarrams_lis.error.as_ref().map_or_else(|| html! {}, |error| match error {
+            <p >{
+                diagram_list.error.as_ref().map_or_else(|| html! {}, |error| match error {
                     FetchError::SerdeError(err) => html! { err },
                     FetchError::RequestError(err) => html! { err },
                     FetchError::InsertModelError(err) => html!{ err },
+                    FetchError::ParseXmlError(err) => html!{ err },
                 })
             }</p>            
             <div>
-                <button onclick={get_model}>{ "Get" }</button>
-                <button onclick={on_create_model}>{ "insert" }</button>
+                // <button onclick={get_model}>{ "Get" }</button>
+                // <button onclick={on_create_model}>{ "insert" }</button>
                 // <button onclick={on_load_model} disabled={model_load.loading}>{ "Load" }</button>
-                <pre>{ model.as_str() }</pre>
+                <pre>{ id.as_str()  }
+                </pre>
                 <div>
                 {
-                    if model_load.loading {
+                    if model_load_handle.loading {
                         html! { "Loading" }
                     } else {
                         html! {}
                     }
                 }
+                // {
+                //     if let Some(data) = &model_load_handle.data {
+                //         html! { data }
+                //     } else {
+                //         html! {}
+                //     }
+                // }
                 {
-                    if let Some(data) = &model_load.data {
-                        html! { data }
-                    } else {
-                        html! {}
-                    }
-                }
-                {
-                    if let Some(error) = &model_load.error {
+                    if let Some(error) = &model_load_handle.error {
                         html! { error }
                     } else {
                         html! {}
                     }
                 }                
                 </div>
-                <div>
-                {
-                    if model_create.loading {
-                        html! { "Creating..." }
-                    } else {
-                        html! {}
-                    }
-                }
-                {
-                    if let Some(data) = &model_create.data {
-                        // model.set(serde_json::to_string(&data).unwrap());
-                        html! { 
-                            // model.as_str()
-                            serde_json::to_string(&data).unwrap()
-                            // data
-                        }
-                    } else {
-                        html! {}
-                    }
-                }
-                {
-                    if let Some(error) = &model_create.error {
-                        html! { error }
-                    } else {
-                        html! {}
-                    }
-                }                
-                </div>
+                // <div>
+                // {
+                //     if model_create.loading {
+                //         html! { "Creating..." }
+                //     } else {
+                //         html! {}
+                //     }
+                // }
+                // // {
+                // //     if let Some(data) = &model_create.data {
+                // //         // model.set(serde_json::to_string(&data).unwrap());
+                // //         html! { 
+                // //             // model.as_str()
+                // //             serde_json::to_string(&data).unwrap()
+                // //             // data
+                // //         }
+                // //     } else {
+                // //         html! {}
+                // //     }
+                // // }
+                // {
+                //     if let Some(error) = &model_create.error {
+                //         html! { error }
+                //     } else {
+                //         html! {}
+                //     }
+                // }                
+                // </div>
 
             </div>
 
