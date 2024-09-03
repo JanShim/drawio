@@ -16,7 +16,7 @@ use yew_hooks::{use_async, use_async_with_options, UseAsyncOptions};
 use crate::{
     //
     errors::FetchError, 
-    model::scada_diagram::{DiagramListItem, ScadaDiagramDto, ScadaDiagramListDto}, 
+    model::scada_diagram::{self, DiagramListItem, ScadaDiagramDto, ScadaDiagramListDto}, 
     utils::{fetch, fetch_string, post} 
 };
 
@@ -82,7 +82,7 @@ pub fn app(props: &Props) -> Html {
     //     "model error!".to_owned()
     // });
 
-    let id = use_state(|| NULL_UUID.to_owned());
+    let id = use_state_eq(|| NULL_UUID.to_owned());
 
     let diagram_list = use_async_with_options(
         async move { fetch::<Vec::<ScadaDiagramListDto>>(format!("{url}/diagram/all")).await },
@@ -114,10 +114,16 @@ pub fn app(props: &Props) -> Html {
         async move {
             fetch_string(format!("{url}/diagram/{}/model", *id_clone)).await
                 .and_then(|text| {
+                    // let id = id_clone.clone();
                     let meta = load_scada_model(&*editor, text.as_str());
+                    log::debug!("meta: {:#?}", meta);
                     match meta {
-                        node if node.is_string() => {
-                            // serde_xml_rs::from_str::<DiagramMeta>(node.)
+                        str if str.is_string() => {
+                            let xml_str = str.as_string().expect("must be string");
+                            let meta = serde_xml_rs::from_str::<scada_diagram::meta::Meta>(&xml_str).unwrap();
+                            log::debug!("meta: {:#?}", meta);
+
+
                         }, 
                         _ => {
 
@@ -132,7 +138,7 @@ pub fn app(props: &Props) -> Html {
     use_effect_with(id.clone(), move |id| {
         if !(*id).as_str().eq(NULL_UUID) {
             log::debug!("clicked {}", (*id).to_string());
-            model_load_handle_clone.run();
+            // model_load_handle_clone.run();
         }
     });
     let on_load_model =  {
