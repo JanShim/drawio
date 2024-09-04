@@ -7,13 +7,17 @@ extern "C" {
 
     pub type MxGraphModel;
 
-    // /**
-    //  * Function: getModel
-    //  * 
-    //  * Returns the <mxGraphModel> that contains the cells.
-    //  */
-    // #[wasm_bindgen(method, js_name=getModel)]
-    // pub fn mx_model(this: &MxGraph) -> JsValue;
+
+/**
+ * Function: getRoot
+ * 
+ * Returns the root of the model or the topmost parent of the given cell.
+ *
+ * Parameters:
+ * 
+ * cell - Optional <mxCell> that specifies the child.
+ */
+mxGraphModel.prototype.getRoot = function(cell)	
 }
 
 

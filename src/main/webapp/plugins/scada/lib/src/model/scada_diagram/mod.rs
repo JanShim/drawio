@@ -1,7 +1,11 @@
+use std::rc::Rc;
+
 use serde::{Deserialize, Serialize};
 use yew::{
-    function_component, html, use_state, Callback, Html, MouseEvent, Properties
+    function_component, html, Callback, Html, MouseEvent, Properties
 };
+
+use crate::schema_app::mx_editor::MxEditor;
 
 pub mod meta;
 
@@ -20,15 +24,15 @@ pub struct ScadaDiagramDto {
     pub model: String,
 }
 
-impl ScadaDiagramDto {
-    pub fn new(name: String, model: String) -> Self {
-        ScadaDiagramDto {
-            uuid: "00000000-0000-0000-0000-000000000000".to_owned(),
-            name,
-            model,
-        }
-    }
-}
+// impl ScadaDiagramDto {
+//     pub fn new(name: String, model: String) -> Self {
+//         ScadaDiagramDto {
+//             uuid: "00000000-0000-0000-0000-000000000000".to_owned(),
+//             name,
+//             model,
+//         }
+//     }
+// }
 
 
 #[derive(PartialEq, Properties)]

@@ -5,10 +5,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "object")]
 pub struct Meta {
     #[serde(rename(serialize="@label"))]    
-    label: String,
+    pub label: String,
     // #[serde(rename(serialize="@id"))]    
     // id: String,
-    diagram: Diagram, 
+    pub diagram: Diagram, 
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

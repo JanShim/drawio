@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
 use web_sys::Node;
-// use web_sys::Element;
 
 #[wasm_bindgen]
 extern "C" {

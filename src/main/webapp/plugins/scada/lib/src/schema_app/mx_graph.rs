@@ -1,5 +1,10 @@
 use wasm_bindgen::prelude::*;
-// use web_sys::Element;
+use web_sys::js_sys::JsString;
+
+
+use crate::model::scada_diagram;
+
+use super::mx_graph_model::MxGraphModel;
 
 #[wasm_bindgen]
 // #[derive(PartialEq)]
@@ -14,13 +19,20 @@ extern "C" {
      * Returns the <mxGraphModel> that contains the cells.
      */
     #[wasm_bindgen(method, js_name=getModel)]
-    pub fn mx_model(this: &MxGraph) -> JsValue;
+    pub fn mx_get_model(this: &MxGraph) -> JsValue;
 }
 
 impl MxGraph {
-    // pub fn get_model(&self) -> Result<, JsValue> {
-    //     self.mx_model()
-    // }
+    pub fn get_model(&self) -> Result<MxGraphModel, JsValue> {
+      match self.mx_get_model() {
+		  model if model.is_object() => model.dyn_into::<MxGraphModel>(),
+		  _ => Err("get model error".into()),
+	  }
+    }
+
+	pub fn get_model_meta(&self) -> Result<scada_diagram::meta::Meta, JsValue> {
+		
+	}
 }
 
 impl PartialEq for MxGraph {

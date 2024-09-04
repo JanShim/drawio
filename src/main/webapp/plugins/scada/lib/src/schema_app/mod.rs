@@ -20,11 +20,11 @@ use crate::{
     utils::{fetch, fetch_string, post} 
 };
 
-mod mx_utils;
-mod mx_graph;
-mod mx_graph_model;
-mod mx_editor;
-mod editor_ui;
+pub mod mx_utils;
+pub mod mx_graph;
+pub mod mx_graph_model;
+pub mod mx_editor;
+pub mod editor_ui;
 
 const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
@@ -61,7 +61,6 @@ pub struct Props {
 #[function_component(App)]
 pub fn app(props: &Props) -> Html {
     let url = props.api_url.clone();
-    let editor = props.mx_editor.clone();
     // let utils = props.mx_utils.clone();    
     // let diagrams = use_list(Vec::<ScadaDiagramListDto>::new()); 
 
@@ -82,10 +81,13 @@ pub fn app(props: &Props) -> Html {
     //     "model error!".to_owned()
     // });
 
-    let id = use_state_eq(|| NULL_UUID.to_owned());
+    // let id = use_state_eq(|| NULL_UUID.to_owned());
+    let editor = props.mx_editor.clone();
+    let meta = use_state_eq(|| None);
 
+    let url_clone = url.clone();
     let diagram_list = use_async_with_options(
-        async move { fetch::<Vec::<ScadaDiagramListDto>>(format!("{url}/diagram/all")).await },
+        async move { fetch::<Vec::<ScadaDiagramListDto>>(format!("{url_clone}/diagram/all")).await },
         UseAsyncOptions::enable_auto(),
     );
 
@@ -94,7 +96,6 @@ pub fn app(props: &Props) -> Html {
     //     let model = model.clone();
     //     let editor = props.mx_editor.clone();
     //     let utils = props.mx_utils.clone();
-
     //     Callback::from(move |_: MouseEvent| {
     //         if let Ok(node) = editor.get_graph_xml() {
     //             if let Ok(Some(v)) = utils.get_pretty_xml(node) {
@@ -102,48 +103,74 @@ pub fn app(props: &Props) -> Html {
     //                 return;
     //             }
     //         }            
-
     //         model.set("model error!".to_owned());
     //     })
     // };
 
+
     // load model from db
-    let url = props.api_url.clone();
-    let id_clone = id.clone();
-    let model_load_handle = use_async(
-        async move {
-            fetch_string(format!("{url}/diagram/{}/model", *id_clone)).await
-                .and_then(|text| {
-                    // let id = id_clone.clone();
-                    let meta = load_scada_model(&*editor, text.as_str());
-                    log::debug!("meta: {:#?}", meta);
-                    match meta {
-                        str if str.is_string() => {
-                            let xml_str = str.as_string().expect("must be string");
-                            let meta = serde_xml_rs::from_str::<scada_diagram::meta::Meta>(&xml_str).unwrap();
-                            log::debug!("meta: {:#?}", meta);
-
-
-                        }, 
-                        _ => {
-
-                        },
-                    }
-                    // log::debug!("{}", meta);
-                    Ok(())
-                }) 
-        }
-    );
-    let model_load_handle_clone = model_load_handle.clone();
-    use_effect_with(id.clone(), move |id| {
-        if !(*id).as_str().eq(NULL_UUID) {
-            log::debug!("clicked {}", (*id).to_string());
-            // model_load_handle_clone.run();
-        }
-    });
+    // let url = props.api_url.clone();
+    // let id_clone = id.clone();
+    // let model_load_handle = use_async(
+    //     async move {
+    //         fetch_string(format!("{url}/diagram/{}/model", *id_clone)).await
+    //             .and_then(|text| {
+    //                 // let id = id_clone.clone();
+    //                 let meta = load_scada_model(&*editor, text.as_str());
+    //                 log::debug!("meta: {:#?}", meta);
+    //                 match meta {
+    //                     str if str.is_string() => {
+    //                         let xml_str = str.as_string().expect("must be string");
+    //                         let meta = serde_xml_rs::from_str::<scada_diagram::meta::Meta>(&xml_str).unwrap();
+    //                         log::debug!("meta: {:#?}", meta);
+    //                     }, 
+    //                     _ => {
+    //                     },
+    //                 }
+    //                 // log::debug!("{}", meta);
+    //                 Ok(())
+    //             }) 
+    //     }
+    // );
+    // let model_load_handle_clone = model_load_handle.clone();
+    // use_effect_with(id.clone(), move |id| {
+    //     if !(*id).as_str().eq(NULL_UUID) {
+    //         log::debug!("clicked {}", (*id).to_string());
+    //         // model_load_handle_clone.run();
+    //     }
+    // });
     let on_load_model =  {
         let id = id.clone();
-        Callback::from(move |pk: String| id.set(pk))
+        Callback::from(move |pk: String|  {
+            let editor = editor.clone();
+            let url = url.clone();
+            let id = id.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                fetch_string(format!("{url}/diagram/{pk}/model")).await  
+                .map(|model| {
+                    let meta = match load_scada_model(&editor, model.as_str()) {
+                        str if str.is_string() => {
+                            let xml_str = str.as_string().expect("must be string");
+                            serde_xml_rs::from_str::<scada_diagram::meta::Meta>(&xml_str)
+                                .map_err(|err| {log::debug!("can't deserialize schema meta"); err})
+                                .unwrap()
+                        }, 
+                        _ => {
+                            scada_diagram::meta::Meta {
+                                label: "".to_owned(),
+                                diagram: scada_diagram::meta::Diagram { 
+                                    item_type: "schema".to_owned(), 
+                                    uuid: NULL_UUID.to_owned(), 
+                                }
+                            }
+                        },
+                    };                    
+                    log::debug!("meta: {:#?}", meta);
+                    let uuid = meta.diagram.uuid;
+                    id.set(uuid);
+                }).unwrap();
+            });
+        })
     };
 
     // // insert model to db
@@ -210,31 +237,31 @@ pub fn app(props: &Props) -> Html {
                 // <button onclick={get_model}>{ "Get" }</button>
                 // <button onclick={on_create_model}>{ "insert" }</button>
                 // <button onclick={on_load_model} disabled={model_load.loading}>{ "Load" }</button>
-                <pre>{ id.as_str()  }
+                <pre> { &*id  }
                 </pre>
-                <div>
-                {
-                    if model_load_handle.loading {
-                        html! { "Loading" }
-                    } else {
-                        html! {}
-                    }
-                }
+                // <div>
                 // {
-                //     if let Some(data) = &model_load_handle.data {
-                //         html! { data }
+                //     if model_load_handle.loading {
+                //         html! { "Loading" }
                 //     } else {
                 //         html! {}
                 //     }
                 // }
-                {
-                    if let Some(error) = &model_load_handle.error {
-                        html! { error }
-                    } else {
-                        html! {}
-                    }
-                }                
-                </div>
+                // // {
+                // //     if let Some(data) = &model_load_handle.data {
+                // //         html! { data }
+                // //     } else {
+                // //         html! {}
+                // //     }
+                // // }
+                // {
+                //     if let Some(error) = &model_load_handle.error {
+                //         html! { error }
+                //     } else {
+                //         html! {}
+                //     }
+                // }                
+                // </div>
                 // <div>
                 // {
                 //     if model_create.loading {
