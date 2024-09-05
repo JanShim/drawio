@@ -25,6 +25,7 @@ reqwasm = { version = "0.5.0"}
 yew-hooks = "0.3.2"
 anyhow = "1.0"
 thiserror = "1.0"
+# yew-autoprops = "0.4.1"
 # futures = "0.3.30"
 # material-yew = { version = "0.3.0", features = ["button","tabs", "dialog", "checkbox"]}
 # js-sys = "0.3.19"
@@ -32,4 +33,5 @@ thiserror = "1.0"
 # html_parser = "0.7.0"
 
 [dev-dependencies]
-
+mockall = "0.13.0"
+wasm-bindgen-test = "0.3"

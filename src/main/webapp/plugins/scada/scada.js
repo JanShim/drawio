@@ -27,16 +27,12 @@ function loadScadaModel(editor, xmlStr) {
 			}
 	
 			editor.fireEvent(new mxEventObject('resetGraphView'));
-
-			let cell0 = editor.graph.getModel().getCell("0");
-			if (!!cell0.value && typeof cell0.value !== 'string') {
-				// console.log("cell0", cell0.value.outerHTML);
-				return cell0.value.outerHTML;
-			}
-			return undefined;
-
 		}	
 	}
+}
+
+function getCell0(editor) {
+	return editor.graph.getModel().getCell("0");
 }
 
 /**

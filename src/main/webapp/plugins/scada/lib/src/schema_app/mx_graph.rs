@@ -19,7 +19,7 @@ extern "C" {
      * Returns the <mxGraphModel> that contains the cells.
      */
     #[wasm_bindgen(method, js_name=getModel)]
-    pub fn mx_get_model(this: &MxGraph) -> JsValue;
+    fn mx_get_model(this: &MxGraph) -> JsValue;
 }
 
 impl MxGraph {
@@ -30,9 +30,11 @@ impl MxGraph {
 	  }
     }
 
-	pub fn get_model_meta(&self) -> Result<scada_diagram::meta::Meta, JsValue> {
-		
-	}
+	// pub fn get_model_meta(&self) -> Result<scada_diagram::meta::Meta, JsValue> {
+	// 	self.get_model()
+	// 		.map(|model| model.get_root(None))
+	// 		.map(|root| root.get_diagram_meta())
+	// }
 }
 
 impl PartialEq for MxGraph {

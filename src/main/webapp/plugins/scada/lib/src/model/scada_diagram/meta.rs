@@ -1,62 +1,104 @@
 use serde::{Deserialize, Serialize};
+use web_sys::{Element, Node};
+use yew::AttrValue;
 
+use crate::schema_app::mx_cell::MxCell;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-#[serde(rename = "object")]
-pub struct Meta {
-    #[serde(rename(serialize="@label"))]    
-    pub label: String,
-    // #[serde(rename(serialize="@id"))]    
-    // id: String,
-    pub diagram: Diagram, 
-}
+const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Diagram {
     #[serde(rename(serialize="@type", deserialize="type"))]    
     pub item_type: String,
     #[serde(rename(serialize="@uuid"))]    
     pub uuid: String,
+    #[serde(rename(serialize="@name"))]    
+    pub name: String,
+}
+
+impl Default for Diagram {
+    fn default() -> Self {
+        Self { 
+            item_type: "schema".to_owned(),
+            uuid: NULL_UUID.to_owned(),
+            name: "undefiend".to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ADiagram {
+    pub item_type: AttrValue,
+    pub uuid: AttrValue,
+    pub name: AttrValue,
+}
+
+impl From<Diagram> for ADiagram {
+    fn from(value: Diagram) -> Self {
+        let Diagram {item_type, uuid, name} = value;
+        Self {
+            item_type: item_type.into(),
+            uuid: uuid.into(),
+            name: name.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
+#[serde(rename = "object")]
+pub struct Meta {
+    #[serde(rename(serialize="@label"))]    
+    pub label: String,
+    pub diagram: Diagram, 
+}
+
+
+
+impl From<MxCell> for Meta {
+    fn from(cell: MxCell) -> Self {
+        if let Ok(meta) = cell.get_diagram_meta() {
+            return meta;
+        }
+        Default::default()
+    }
+}
+
+impl From<Element> for Meta {
+    fn from(e: Element) -> Self {
+        log::debug!("outer html: {}", e.outer_html());
+        if let Ok(meta) = serde_xml_rs::from_str::<Meta>(e.outer_html().as_str()) {
+            return meta;
+        }  
+        Default::default()
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct AMeta {
+    pub label: AttrValue,
+    pub diagram: ADiagram, 
+}
+
+impl From<Meta> for AMeta {
+    fn from(value: Meta) -> Self {
+        let Meta {label, diagram} = value;
+        Self {
+            label: label.into(),
+            diagram: diagram.into(),
+        }
+    }
 }
 
 
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    // use std::collections::HashMap;
-
     use super::*;
-
-    // #[derive(Serialize, Deserialize, Debug)]
-    // #[serde(rename = "object")]
-    // // #[serde(rename_all = "camelCase")]    
-    // struct HashObject {
-    //     // #[serde(serialize_with = "serialize_struct_attr")]
-    //     // #[serde(rename(serialize="@uuid"))]    
-    //     // uuid: String,
-    //     #[serde(flatten)]
-    //     data: HashMap<String, String>,
-    // }
-
-    // impl HashObject {
-    //     pub fn new() -> Self {
-    //         Self {
-    //             // uuid: "aaaaaaaaaa".to_owned(),
-    //             data: {
-    //                 let mut m = HashMap::<String, String>::new();
-    //                 m.insert("type".to_owned(), "schema".to_owned());
-    //                 m
-    //             }
-    //         }
-    //     }
-        
-    // }
     
-
     #[test]
     fn xml_diagram_meta_deser_works() {
         let xml = r#"<object label="" id="0">
-      <diagram type="schema" uuid="aaaaaaaaaa" />
+      <diagram type="schema" uuid="aaaaaaaaaa" name="test"/>
     </object>"#;
 
         let diagram = serde_xml_rs::from_str::<Meta>(xml);    
@@ -74,11 +116,11 @@ mod tests {
     #[test]
     fn xml_diagram_meta_ser_works() {
         let item = Meta {
-            // id: "0".to_owned(),
             label: "".to_owned(),
             diagram: Diagram {
                 item_type: "schema".to_owned(),
                 uuid: "aaaaaaaaaa".to_owned(),
+                name: "test".to_owned(),
             }
         };
 
@@ -103,45 +145,6 @@ mod tests {
             Err(err) => panic!("err: {}", err),
         }
     }    
-
-    // #[test]
-    // fn xml_hashmap_deser_works() {
-    //     let xml = r#"<diagram type="schema" uuid="aaaaaaaaaa" />"#;
-
-    //     let diagram = serde_xml_rs::from_str::<HashObject>(xml);    
-    //     match diagram {
-    //         Ok(item) => {
-    //             println!("{item:#?}");
-
-    //             assert_eq!(item.uuid, "aaaaaaaaaa");
-    //             assert_eq!(item.data.get("type"), Some("schema".to_owned()).as_ref());
-    //         },
-    //         Err(err) => panic!("err: {}", err),
-    //     }
-    // }    
-
-    // #[test]
-    // fn xml_hashmap_ser_works() {
-    //     // let xml = r#"<diagram type="schema" uuid="aaaaaaaaaa" />"#;
-
-    //     let item = HashObject::new();
-    //     let str = serde_xml_rs::to_string(&item).unwrap();
-
-    //     // serde_xml_rs::Serializer.
-
-    //     println!("{str}");
-
-    //     // let diagram = serde_xml_rs::from_str::<HashObject>(xml);    
-    //     // match diagram {
-    //     //     Ok(item) => {
-    //     //         println!("{item:#?}");
-
-    //     //         assert_eq!(item.uuid, "aaaaaaaaaa");
-    //     //         assert_eq!(item.data.get("type"), Some("schema".to_owned()).as_ref());
-    //     //     },
-    //     //     Err(err) => panic!("err: {}", err),
-    //     // }
-    // }    
 
 
 }

@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
-// use web_sys::Element;
+
+use crate::schema_app::mx_cell::MxCell;
 
 #[wasm_bindgen]
 extern "C" {
@@ -8,16 +9,25 @@ extern "C" {
     pub type MxGraphModel;
 
 
-/**
- * Function: getRoot
- * 
- * Returns the root of the model or the topmost parent of the given cell.
- *
- * Parameters:
- * 
- * cell - Optional <mxCell> that specifies the child.
- */
-mxGraphModel.prototype.getRoot = function(cell)	
+	/**
+	 * Function: getRoot
+	 * 
+	 * Returns the root of the model or the topmost parent of the given cell.
+	 *
+	 * Parameters:
+	 * 
+	 * cell - Optional <mxCell> that specifies the child.
+	 */
+	// mxGraphModel.prototype.getRoot = function(cell)	
+	#[wasm_bindgen(method, js_name=getRoot)]
+	fn mx_get_root(this: &MxGraphModel, cell: Option<MxCell>) -> MxCell;
+}
+
+impl MxGraphModel {
+	pub fn get_root(&self, cell: Option<MxCell>) -> MxCell {
+		self.mx_get_root(cell)
+	}
+	
 }
 
 
