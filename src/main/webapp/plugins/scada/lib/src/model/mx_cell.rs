@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use web_sys::Element;
+use web_sys::{js_sys::JsString, Element};
 
 use crate::model::scada_diagram;
 
@@ -11,7 +11,6 @@ pub enum CellValue {
 #[wasm_bindgen]
 extern "C" {
     pub fn name() -> String;
-
     pub type MxCell;
 
     /**
@@ -72,8 +71,19 @@ impl MxCell {
             _ => Err("can't create diagram meta".into()),           
         }
     }
-}
 
+    pub fn get_label(&self) -> String {
+        self.get_value()
+            .map(|cell_val| {
+                match cell_val {
+                    CellValue::Object(elem) => elem.get_attribute("label"),
+                    CellValue::Label(label) => label,
+                }
+            })
+            .map(|s| s.unwrap_or_default())
+            .unwrap()
+    }
+}
 
 impl PartialEq for MxCell {
     fn eq(&self, other: &Self) -> bool {
@@ -87,3 +97,8 @@ impl std::fmt::Debug for MxCell {
     }
 }
 
+impl Clone for MxCell {
+    fn clone(&self) -> Self {
+        Self { obj: self.obj.clone() }
+    }
+}

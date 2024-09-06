@@ -1,66 +1,60 @@
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
+use yew_hooks::use_effect_once;
+use std::rc::Rc;
 use web_sys::HtmlDivElement;
+use yewdux::{use_selector, use_store};
 
-use crate::model::mx_cell::MxCell;
+use crate::{model::mx_cell::MxCell, store::cell};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub val: String,
     pub cell: MxCell,
 }
 
-#[function_component(App)]
-pub fn app(props: &Props) -> Html {
+#[function_component(CellComponent)]
+pub fn app(Props {cell: mxcell}: &Props) -> Html {
+    // let cell = use_selector(|state: &cell::State| state.cell.clone());
+    let (state, dispatch) = use_store::<cell::State>();
 
-    // let node = use_memo(
-    //     (),
-    //     |_| {
-    //         let window = web_sys::window().expect("no global `window` exists");
-    //         let document = window.document().expect("should have a document on window");
-    //         let elem = document.get_element_by_id("container").expect("must be id=container");
+    let cell = (*mxcell).clone();
+    let disp = dispatch.clone();
+    use_effect_once(move || {
+        disp.set(cell::State {cell: Rc::new(Some(cell)), ..Default::default()});
+        
+        move || disp.set(cell::State {..Default::default()})
+    });
 
-    //         // Create a div element from the document
-    //         // let div: Element = document.create_element("div").unwrap();
-    //         // Add content, classes etc.
-    //         elem.set_inner_html("Hello, World!");
-    //         // Convert Element into a Node
-    //         let node = elem.into();
-    //         // Return that Node as a Html value
-    //         Html::VRef(node)
-    //     },
-    // );
+    let up = dispatch.reduce_mut_callback(|state| state.inc());    
+    let dwn = dispatch.reduce_mut_callback(|state| state.dec());    
 
-    // // use_memo return Rc so we need to deref and clone
-    // (*node).clone()
+    // let counter = use_state(|| 0);
+    // let up = {
+    //     let counter = counter.clone();
+    //     Callback::from(move |_: MouseEvent| {
+    //         counter.set(*counter + 1);
+    //     })
+    // };
+    // let dwn = {
+    //     let counter = counter.clone();
+    //     Callback::from(move |_: MouseEvent| {
+    //         counter.set(*counter - 1);
+    //     })
+    // };
 
-    let counter = use_state(|| 0);
-    let up = {
-        let counter = counter.clone();
-        Callback::from(move |_: MouseEvent| {
-            counter.set(*counter + 1);
-        })
-    };
-    let dwn = {
-        let counter = counter.clone();
-        Callback::from(move |_: MouseEvent| {
-            counter.set(*counter - 1);
-        })
-    };
+    // if let Ok(el) = props.cell.get_value() {
+    //     // if let Some(style) = props.cell.mx_style() {
+    //     //     el.set_attribute("style", style.as_str()).ok();
+    //     // }
 
-    if let Ok(el) = props.cell.get_value() {
-        // if let Some(style) = props.cell.mx_style() {
-        //     el.set_attribute("style", style.as_str()).ok();
-        // }
-
-        // let ch = el.children();
-        // for i in 0..ch.length() {
-        //     if let Some(e) = ch.item(i) {
-        //         e.set_attribute("new-attr", "new value").ok();
-        //         log::info!("cell attributes: {:?}", e.get_attribute_names());
-        //     }
-        // }
-    }
+    //     // let ch = el.children();
+    //     // for i in 0..ch.length() {
+    //     //     if let Some(e) = ch.item(i) {
+    //     //         e.set_attribute("new-attr", "new value").ok();
+    //     //         log::info!("cell attributes: {:?}", e.get_attribute_names());
+    //     //     }
+    //     // }
+    // }
 
     // let up = Callback::from(move |e: Event| {
     //     // let target: EventTarget = e
@@ -77,37 +71,14 @@ pub fn app(props: &Props) -> Html {
 
     html! {
         <div>
-            <p>{&props.val}</p>
             <button onclick={up}>{ "+1" }</button><button onclick={dwn}>{ "-1" }</button>
-            <p>{ *counter }</p>
+            <p>{ state.count }</p>
         </div>
     }    
-
-    // html! {
-    //     <main>
-    //         <h1>{ "Hello World!" }</h1>
-    //         <span class="subtitle">{ "from Yew with! " }<i class="heart" /></span>
-    //     </main>
-    // }
 }
 
 
 #[wasm_bindgen(js_name=renderCell)]
 pub fn render_cell(div: HtmlDivElement, cell: MxCell) {
-    let props  = Props {
-        val: "CELL".to_owned(),
-        cell,
-    };
-    yew::Renderer::<App>::with_root_and_props(div.into(), props).render();
-
-    // if let Ok(el) = cell.value() {
-    //     let ch = el.children();
-    //     for i in 0..ch.length() {
-    //         if let Some(e) = ch.item(i) {
-    //             e.set_attribute("new-attr", "new value").ok();
-    //             log::info!("cell attributes: {:?}", e.get_attribute_names());
-    //         }
-    //     }
-    // }
-
+    yew::Renderer::<CellComponent>::with_root_and_props(div.into(), Props {cell}).render();
 }
