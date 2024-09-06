@@ -1,28 +1,24 @@
 use wasm_bindgen::prelude::*;
-use yew::{prelude::*, virtual_dom::Attributes, html};
+use yew::prelude::*;
 use std::rc::Rc;
 
-use mx_editor::MxEditor;
-use mx_utils::MxUtils;
 use web_sys::HtmlDivElement;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use js_functions::{get_cell0, load_scada_model};
 
 use crate::{
+    components::{
+        info_item::Component as InfoComponent, list_item::Component as ListItemComponents
+    }, 
     errors::FetchError, 
-    model::scada_diagram::{
-        self, info_item::InfoComponent, 
-        list_item::{ListItem, ListItemComponent}, 
-        meta::{AMeta as DiagramAMeta, Meta as DiagramMeta}
-    }, utils::{fetch, fetch_string, post} 
+    model::{mx_editor::MxEditor, mx_utils::MxUtils, scada_diagram::{
+        meta::Meta as DiagramMeta, 
+        ListItem, 
+        ScadaDiagramDto, NULL_UUID
+    }}, 
+    utils::{fetch, fetch_string, post} 
 };
 
-pub mod mx_utils;
-pub mod mx_graph;
-pub mod mx_graph_model;
-pub mod mx_editor;
-pub mod mx_cell;
-pub mod editor_ui;
 pub mod js_functions;
 
 #[wasm_bindgen]
@@ -51,22 +47,6 @@ pub struct Props {
 
 #[function_component(App)]
 pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
-    // let aaa = AttrValue::from(props.api_url.clone());
-    // let utils = props.mx_utils.clone();    
-    // let diagrams = use_list(Vec::<ScadaDiagramListDto>::new()); 
-
-    // let eitor = use_memo(props.mx_editor, |p| {
-    //    p
-    // });
-
-    // let model_string = use_memo(props, |p| {
-    //     if let Ok(node) = p.editor.get_graph_xml() {
-    //         if let Ok(Some(v)) = p.mx_utils.get_pretty_xml(node) {
-    //             return  v;
-    //         }
-    //     }
-    //     "model error!".to_owned()
-    // });
     let editor = mx_editor.clone();
     let meta = use_state(|| {
         let cell_meta: DiagramMeta = get_cell0(&editor).into();
@@ -74,23 +54,11 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
         cell_meta
     });
 
-    // let id = use_state_eq(|| NULL_UUID.to_owned());
-    // let editor = props.mx_editor.clone();
-    // let meta = use_state_eq(|| None);
-
     let url = api_url.clone();
     let diagram_list = use_async_with_options(
         async move { fetch::<Vec::<ListItem>>(format!("{url}/diagram/all")).await },
         UseAsyncOptions::enable_auto(),
     );
-
-    // let meta = use_state(||DiagramMeta::default());
-    // let uuid = use_state(|| "value uuid".to_owned());
-    // let aaa = use_state(|| 0);
-
-   
-    // let uuid = use_memo(meta.clone(), |m | {(*m).diagram.uuid.clone()});
-
 
     // let model = use_state(|| "Not loaded".to_owned());
     // let get_model = {
@@ -108,7 +76,6 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
     //     })
     // };
 
-    // load model from db
     // let url = props.api_url.clone();
     // let id_clone = id.clone();
     // let model_load_handle = use_async(
@@ -174,39 +141,57 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
     //         });
     //     })
     // };
+
+
+    // ---------------
+    // load model from db
     let on_load_model =  {
         let editor = mx_editor.clone();
         let url = api_url.clone();
-        // let meta = meta.clone();
-        // let uuid = uuid.clone();
-        // let aaa = aaa.clone();
         Callback::from(move |pk: String|  {
             let editor = editor.clone();
             let url = url.clone();
-            // let meta = meta.clone();
-            // let uuid = uuid.clone();
-            // let aaa = aaa.clone();
-            // aaa.set(321);
-            // log::debug!("aaaaaaa {}", *aaa);
             wasm_bindgen_futures::spawn_local(async move {
                 fetch_string(format!("{url}/diagram/{pk}/model")).await  
                 .map(|model| {
                     load_scada_model(&editor, model.as_str());
-                    // let cell_meta: scada_diagram::meta::Meta = get_cell0(&editor).into();
-                    // log::debug!("loaded meta {:#?}", cell_meta);
-                    // let pk = cell_meta.diagram.uuid.clone();
-                    // meta.set(cell_meta);
-                    // log::debug!("----{pk}");
-                    // uuid.set(pk);
-                    // aaa.set(123);
                 }).unwrap();
             });
         })
     };
 
 
-    // // insert model to db
-    // let url = props.api_url.clone();
+    // ---------------
+    // insert model to db
+    let on_create_model =  {
+        let editor = mx_editor.clone();
+        let utils = mx_utils.clone();
+        let url = api_url.clone();
+        Callback::from(move |_: MouseEvent|  {
+            let editor = editor.clone();
+            let utils = utils.clone();
+            let url = url.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                if let Ok(node) = editor.get_graph_xml() {
+                    if let Ok(Some(model_str)) = utils.get_xml(node) {
+                        let item = ScadaDiagramDto::new("insert proba".to_owned(), model_str);
+                        post(format!("{url}/diagram"), item).await
+                            .and_then(|o| Ok(o.uuid))
+                            .map(|pk| {
+                                wasm_bindgen_futures::spawn_local(async move {
+                                    fetch_string(format!("{url}/diagram/{pk}/model")).await
+                                        .map(|model| {
+                                            load_scada_model(&editor, model.as_str());
+                                        }).unwrap();
+                                })
+                            })
+                            .unwrap();
+                    } 
+                } 
+            });
+        })
+    };
+
     // // let model = model.clone();
     // // let id_clone = id.clone();
     // let editor = props.mx_editor.clone();
@@ -235,8 +220,6 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
     //     })        
     //  };
 
-    // let uuid = uuid.clone();
-
     html! {
         <>
             <p>{val}</p>
@@ -249,13 +232,13 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
                         || html! {},        // default
                         |repo| html! { 
                             for repo.iter().map(|item| 
-                                html!{ <ListItemComponent item={item.clone()} load={on_load_model.clone()}/> }
+                                html!{ <ListItemComponents item={item.clone()} load={on_load_model.clone()}/> }
                             )
                     })      
                 }    
             }
             </pre>            
-            <p >{
+            <p>{
                 diagram_list.error.as_ref().map_or_else(|| html! {}, |error| match error {
                     FetchError::SerdeError(err) => html! { err },
                     FetchError::RequestError(err) => html! { err },
@@ -263,11 +246,12 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
                     FetchError::ParseXmlError(err) => html!{ err },
                 })
             }</p>
-            // <InfoComponent meta={(*meta).clone().diagram}/> 
+            <div>
+                <button onclick={on_create_model} disabled={(*meta).clone().diagram.uuid.ne(NULL_UUID)}>{ "insert" }</button >
+            </div>
             <InfoComponent ..(*meta).clone().diagram.into() /> 
             <div>
                 // <button onclick={get_model}>{ "Get" }</button>
-                // <button onclick={on_create_model}>{ "insert" }</button>
                 // <button onclick={on_load_model} disabled={model_load.loading}>{ "Load" }</button>
                 // <pre> { &*id  } </pre>
                 // <div>

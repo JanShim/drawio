@@ -1,16 +1,14 @@
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlDivElement;
-use mx_cell::MxCell;
 
-mod mx_cell;
+use crate::model::mx_cell::MxCell;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
     pub val: String,
     pub cell: MxCell,
 }
-
 
 #[function_component(App)]
 pub fn app(props: &Props) -> Html {
@@ -50,18 +48,18 @@ pub fn app(props: &Props) -> Html {
         })
     };
 
-    if let Ok(el) = props.cell.mx_value() {
-        if let Some(style) = props.cell.mx_style() {
-            el.set_attribute("style", style.as_str()).ok();
-        }
+    if let Ok(el) = props.cell.get_value() {
+        // if let Some(style) = props.cell.mx_style() {
+        //     el.set_attribute("style", style.as_str()).ok();
+        // }
 
-        let ch = el.children();
-        for i in 0..ch.length() {
-            if let Some(e) = ch.item(i) {
-                e.set_attribute("new-attr", "new value").ok();
-                log::info!("cell attributes: {:?}", e.get_attribute_names());
-            }
-        }
+        // let ch = el.children();
+        // for i in 0..ch.length() {
+        //     if let Some(e) = ch.item(i) {
+        //         e.set_attribute("new-attr", "new value").ok();
+        //         log::info!("cell attributes: {:?}", e.get_attribute_names());
+        //     }
+        // }
     }
 
     // let up = Callback::from(move |e: Event| {

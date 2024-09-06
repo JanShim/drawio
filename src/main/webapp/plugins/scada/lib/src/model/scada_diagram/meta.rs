@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
-use web_sys::{Element, Node};
-use yew::AttrValue;
+use web_sys::Element;
 
-use crate::schema_app::mx_cell::MxCell;
+use crate::model::mx_cell::MxCell;
 
-const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
+use super::NULL_UUID;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Diagram {
@@ -26,23 +25,23 @@ impl Default for Diagram {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct ADiagram {
-    pub item_type: AttrValue,
-    pub uuid: AttrValue,
-    pub name: AttrValue,
-}
+// #[derive(Debug, PartialEq, Clone)]
+// pub struct ADiagram {
+//     pub item_type: AttrValue,
+//     pub uuid: AttrValue,
+//     pub name: AttrValue,
+// }
 
-impl From<Diagram> for ADiagram {
-    fn from(value: Diagram) -> Self {
-        let Diagram {item_type, uuid, name} = value;
-        Self {
-            item_type: item_type.into(),
-            uuid: uuid.into(),
-            name: name.into(),
-        }
-    }
-}
+// impl From<Diagram> for ADiagram {
+//     fn from(value: Diagram) -> Self {
+//         let Diagram {item_type, uuid, name} = value;
+//         Self {
+//             item_type: item_type.into(),
+//             uuid: uuid.into(),
+//             name: name.into(),
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
 #[serde(rename = "object")]
@@ -73,21 +72,21 @@ impl From<Element> for Meta {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct AMeta {
-    pub label: AttrValue,
-    pub diagram: ADiagram, 
-}
+// #[derive(Debug, PartialEq, Clone)]
+// pub struct AMeta {
+//     pub label: AttrValue,
+//     pub diagram: ADiagram, 
+// }
 
-impl From<Meta> for AMeta {
-    fn from(value: Meta) -> Self {
-        let Meta {label, diagram} = value;
-        Self {
-            label: label.into(),
-            diagram: diagram.into(),
-        }
-    }
-}
+// impl From<Meta> for AMeta {
+//     fn from(value: Meta) -> Self {
+//         let Meta {label, diagram} = value;
+//         Self {
+//             label: label.into(),
+//             diagram: diagram.into(),
+//         }
+//     }
+// }
 
 
 // ==========================================================
@@ -134,13 +133,14 @@ mod tests {
 
     #[test]
     fn xml_diagram_deser_works() {
-        let xml = r#"<diagram type="schema" uuid="aaaaaaaaaa" />"#;
+        let xml = r#"<diagram type="schema" uuid="aaaaaaaaaa" name="test"/>"#;
 
         let diagram = serde_xml_rs::from_str::<Diagram>(xml);    
         match diagram {
             Ok(item) => {
                 assert_eq!(item.item_type, "schema".to_owned());
                 assert_eq!(item.uuid, "aaaaaaaaaa".to_owned());
+                assert_eq!(item.name, "test".to_owned());
             },
             Err(err) => panic!("err: {}", err),
         }

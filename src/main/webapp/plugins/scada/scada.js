@@ -8,7 +8,7 @@ function setCellAttribute(cell, name, value) {
 function loadScadaModel(editor, xmlStr) {
 	const node = mxUtils.parseXml(xmlStr).documentElement;
 	if (!!node) {
-		var dec = new mxCodec(node.ownerDocument);
+		let dec = new mxCodec(node.ownerDocument);
 	
 		if (node.nodeName == 'mxGraphModel')
 		{
@@ -49,7 +49,7 @@ Draw.loadPlugin(async function(ui) {
 			});				
 	}
 
-	var div = document.createElement('div');
+	let div = document.createElement('div');
 	div.setAttribute("id", "container");
 	div.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
 	div.style.border = '1px solid gray';
@@ -57,9 +57,8 @@ Draw.loadPlugin(async function(ui) {
 	div.style.padding = '10px';
 	div.style.paddingTop = '0px';
 	div.style.width = '20%';
-	// div.innerHTML = '<p><i>' + mxResources.get('nothingIsSelected') + '</i></p>';
 
-	var graph = ui.editor.graph;
+	let graph = ui.editor.graph;
 
 	if (!ui.editor.isChromelessView())
 	{
@@ -67,9 +66,10 @@ Draw.loadPlugin(async function(ui) {
 		div.style.minHeight = '100%';
 		div.style.width = '100%';
 
-		var iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		
-		var dataWindow = new mxWindow('SCADA', div, iiw - 320, 60, 240, 400, true, true);
+		// main window
+		let dataWindow = new mxWindow('SCADA diagram data', div, iiw - 320, 60, 300, 500, true, true);
 		dataWindow.destroyOnClose = false;
 		dataWindow.setMaximizable(true);
 		dataWindow.setResizable(true);
@@ -81,13 +81,13 @@ Draw.loadPlugin(async function(ui) {
 		mxResources.parse('scada=SCADA');
 
 		// Adds action
-		ui.actions.addAction('scada...', function()
+		ui.actions.addAction('scada', function()
 		{
 			dataWindow.setVisible(!dataWindow.isVisible());
 		});
 		
-		var menu = ui.menus.get('extras');
-		var oldFunct = menu.funct;
+		let menu = ui.menus.get('extras');
+		let oldFunct = menu.funct;
 		
 		menu.funct = function(menu, parent)
 		{
@@ -107,7 +107,7 @@ Draw.loadPlugin(async function(ui) {
 	
 	// Highlights current cell
 	const highlight = new mxCellHighlight(graph, '#00ff00', 8);
-	const ignored = ['label', 'tooltip', 'placeholders'];
+	// const ignored = ['label', 'tooltip', 'placeholders'];
 
 	// register_conteiner(ui.editor, div);	// for wasm app
 	
@@ -116,7 +116,7 @@ Draw.loadPlugin(async function(ui) {
 
 	function writeConsole(evt)
 	{
-		var result = graph.getDataForCells(graph.getSelectionCells());
+		let result = graph.getDataForCells(graph.getSelectionCells());
 
 		if (mxEvent.isShiftDown(evt))
 		{
@@ -141,12 +141,6 @@ Draw.loadPlugin(async function(ui) {
 			// app.cell_clicked(null);
 			// renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
 			renderSchema(mxUtils, ui.editor, div, new SchemaOptions("http://localhost:8091/api/v1"));
-			console.log("js renderSchema");
-
-			// let snapshot = ui.getDiagramSnapshot();
-			// let model = mxUtils.getPrettyXml(snapshot.node);
-			// console.log("model", model);
-
 		}
 		else
 		{
@@ -167,14 +161,14 @@ Draw.loadPlugin(async function(ui) {
 				//console.log("selection changed", cell.value);
 				// app.cell_clicked(cell);
 
-				renderCell(div, cell);
+				// renderCell(div, cell);
 				// prevcell = cell;
 			}
 
-			// var attrs = (cell.value != null) ? cell.value.attributes : null;
+			// let attrs = (cell.value != null) ? cell.value.attributes : null;
 			// if (attrs != null)
 			// {
-			// 	var label = Graph.sanitizeHtml(graph.getLabel(cell));
+			// 	let label = Graph.sanitizeHtml(graph.getLabel(cell));
 				
 			// 	if (label != null && label.length > 0)
 			// 	{
@@ -185,16 +179,16 @@ Draw.loadPlugin(async function(ui) {
 			// 		div.innerText = '';
 			// 	}
 				
-			// 	for (var i = 0; i < attrs.length; i++)
+			// 	for (let i = 0; i < attrs.length; i++)
 			// 	{
 			// 		if (mxUtils.indexOf(ignored, attrs[i].nodeName) < 0 &&
 			// 			attrs[i].nodeValue.length > 0)
 			// 		{
 			// 			// TODO: Add click handler on h2 to output data
-			// 			var h2 = document.createElement('h2');
+			// 			let h2 = document.createElement('h2');
 			// 			mxUtils.write(h2, attrs[i].nodeName);
 			// 			div.appendChild(h2);
-			// 			var p = document.createElement('p');
+			// 			let p = document.createElement('p');
 			// 			mxUtils.write(p, attrs[i].nodeValue);
 			// 			div.appendChild(p);
 			// 		}
@@ -204,7 +198,7 @@ Draw.loadPlugin(async function(ui) {
 			// }
 			// else
 			// {
-			// 	var label = graph.convertValueToString(cell);
+			// 	let label = graph.convertValueToString(cell);
 				
 			// 	if (label != '')
 			// 	{
@@ -218,7 +212,7 @@ Draw.loadPlugin(async function(ui) {
 
 			// if (!ui.editor.isChromelessView())
 			// {
-			// 	var button = document.createElement('button');
+			// 	let button = document.createElement('button');
 			// 	button.setAttribute('title', 'Click or Shift+Click to write data for all selected cells to the browser console');
 			// 	button.style['float'] = 'none';
 			// 	mxUtils.write(button, 'Write to Console');
@@ -257,7 +251,195 @@ Draw.loadPlugin(async function(ui) {
 		};
 	}
 
+	// ================== SIDEBAR ===================
+	// Adds sidebar entries
+	let sb = ui.sidebar;
+	function addPalette()
+	{
+		sb.addPalette('scada', 'SCADA', false, function(content)
+		{
+			(function()
+			{
+				let cell = new mxCell('Valve', new mxGeometry(0, 0, 100, 40),
+					'rectangle;whiteSpace=wrap;html=1;align=center;collapsible=0;container=1;recursiveResize=0;');
+				cell.vertex = true;
+
+				let value = mxUtils.parseXml("<scada><widget uuid='00000000-0000-0000-0000-000000000000'/></scada>").documentElement;
+				value.setAttribute('label', cell.value || '');
+				cell.setValue(value);
+
+
+
+				// let value = null;
+				// if (cell.value != null && typeof(cell.value) == 'object')
+				// {
+				// 	value = cell.value.cloneNode(true);
+				// }
+				// else
+				// {
+				// }
+				
+				// if (attributeValue != null)
+				// {
+				// 	value.setAttribute(attributeName, attributeValue);
+				// }
+				// else
+				// {
+				// 	value.removeAttribute(attributeName);
+				// }
+
+				
+				content.appendChild(sb.createVertexTemplateFromCells([cell], 100, 40, 'Valve'));
+			})();
+
+		});
+	}
+	addPalette();
+
+	// Handles reload of sidebar after dark mode change
+	let init = sb.init;
+	sb.init = function()
+	{
+		init.apply(this, arguments);
+		addPalette();
+	};
+
+	// ================ MENUS =================
+	let divScadaCellData = document.createElement('div');
+	divScadaCellData.setAttribute("id", "container");
+	divScadaCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
+	divScadaCellData.style.border = '1px solid gray';
+	divScadaCellData.style.opacity = '0.8';
+	divScadaCellData.style.padding = '10px';
+	divScadaCellData.style.paddingTop = '0px';
+	divScadaCellData.style.width = '20%';
+
+	divScadaCellData.style.boxSizing = 'border-box';
+	divScadaCellData.style.minHeight = '100%';
+	divScadaCellData.style.width = '100%';
+
+	let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+	
+	// main window
+	let scadaDataWindow = new mxWindow('SCADA data', divScadaCellData, iiw - 320, 60, 300, 450, true, true);
+	scadaDataWindow.destroyOnClose = false;
+	scadaDataWindow.setMaximizable(true);
+	scadaDataWindow.setResizable(true);
+	scadaDataWindow.setScrollable(true);
+	scadaDataWindow.setClosable(true);
+	scadaDataWindow.contentWrapper.style.overflowY = 'scroll';
+
+	function isScadaCell(cell)
+	{
+		if (cell != null && cell.value !== null && typeof cell.value !== 'string')
+		{
+			return cell.value.tagName === "scada";
+		}
+		return false;
+	};
+
+
+	/**
+	 * Updates the scada data panel
+	 */
+	function scadaCellClicked(cell)
+	{
+		// Gets the selection cell
+		if (cell != null && isScadaCell(cell))
+		{
+			highlight.highlight(graph.view.getState(cell));
+			scadaDataWindow.setVisible(true);
+			renderCell(divScadaCellData, cell);
+		} 
+		else {
+			highlight.highlight(null);
+			scadaDataWindow.setVisible(false);
+		}
+
+	}	
+
+	if (!ui.editor.isChromelessView())
+	{
+		graph.selectionModel.addListener(mxEvent.CHANGE, function(sender, evt)
+		{
+			scadaCellClicked(graph.getSelectionCell());
+		});
+	}	
+
+	// Adds resources for actions
+	mxResources.parse('scadaData=SCADA Data');
+	mxResources.parse('scadaItem=SCADA item');
+
+	// Adds actions
+	ui.actions.addAction('scadaData', function()
+	{
+		scadaDataWindow.setVisible(!scadaDataWindow.isVisible());
+
+		// if (graph.isEnabled() && graph.getSelectionCount() == 1)
+		// {
+		// 	let cell = graph.getSelectionCell();
+		// 	let sib = graph.getOutgoingEdges(cell);
+			
+		// 	if (sib != null)
+		// 	{
+		// 		let tmp = [];
+				
+		// 		for (let i = 0; i < sib.length; i++)
+		// 		{
+		// 			tmp.push(graph.model.getTerminal(sib[i], false));
+		// 		}
+				
+		// 		graph.setSelectionCells(tmp);
+		// 	}
+		// }
+	}, null, null, 'Alt+Shift+Q');
+	ui.actions.addAction('scadaItem', function()
+	{
+		if (graph.isEnabled() && graph.getSelectionCount() == 1)
+		{
+			let cell = graph.getSelectionCell();
+			if (!isScadaCell(cell)) {
+				let value = mxUtils.parseXml("<scada></scada>").documentElement;
+				value.setAttribute('label', cell.value || '');
+				cell.setValue(value);
+				scadaCellClicked(cell);
+			}
+		}		
+	}, null, null, 'Alt+Shift+W');
+
+	// -----------------------------------------------------------------
+	let uiCreatePopupMenu = ui.menus.createPopupMenu;
+	ui.menus.createPopupMenu = function(menu, cell, evt)
+	{
+		uiCreatePopupMenu.apply(this, arguments);
+
+		menu.addSeparator();
+		// let cell = graph.getSelectionCell();
+		if (!isScadaCell(cell)) {
+			this.addMenuItems(menu, ['scadaItem'], null, evt);
+		}
+
+		if (isScadaCell(cell) && graph.getSelectionCount() == 1)
+		{
+			this.addMenuItems(menu, ['scadaData'], null, evt);
+
+			// if (sib != null && sib.length > 0)
+			// {
+			// 	this.addMenuItems(menu, ['selectChildren', 'selectSubtree'], null, evt);
+			// }
+			
+			// menu.addSeparator();
+			
+			// if (cell.getAttribute('treeRoot') != '1')
+			// {
+			// 	this.addMenuItems(menu, ['selectSiblings', 'selectParent'], null, evt);
+			// }
+		}
+	};
 	// =======================================
+
+
+	// ============== WASM ===================
 	// init rust wasm
 	await initWasm();
 
