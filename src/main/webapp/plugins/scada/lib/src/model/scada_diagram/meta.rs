@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use quick_xml::{de::from_str, se::to_string};
 use web_sys::Element;
 
 use crate::model::mx_cell::MxCell;
@@ -7,11 +8,11 @@ use super::NULL_UUID;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Diagram {
-    #[serde(rename(serialize="@type", deserialize="type"))]    
+    #[serde(rename="@type")]    
     pub item_type: String,
-    #[serde(rename(serialize="@uuid"))]    
+    #[serde(rename="@uuid")]    
     pub uuid: String,
-    #[serde(rename(serialize="@name"))]    
+    #[serde(rename="@name")]    
     pub name: String,
 }
 
@@ -45,15 +46,15 @@ impl Default for Diagram {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
 #[serde(rename = "object")]
-pub struct Meta {
-    #[serde(rename(serialize="@label"))]    
+pub struct DiagramMeta {
+    #[serde(rename="@label")]    
     pub label: String,
     pub diagram: Diagram, 
 }
 
 
 
-impl From<MxCell> for Meta {
+impl From<MxCell> for DiagramMeta {
     fn from(cell: MxCell) -> Self {
         if let Ok(meta) = cell.get_diagram_meta() {
             return meta;
@@ -62,10 +63,10 @@ impl From<MxCell> for Meta {
     }
 }
 
-impl From<Element> for Meta {
+impl From<Element> for DiagramMeta {
     fn from(e: Element) -> Self {
         log::debug!("outer html: {}", e.outer_html());
-        if let Ok(meta) = serde_xml_rs::from_str::<Meta>(e.outer_html().as_str()) {
+        if let Ok(meta) = from_str::<DiagramMeta>(e.outer_html().as_str()) {
             return meta;
         }  
         Default::default()
@@ -100,7 +101,7 @@ mod tests {
       <diagram type="schema" uuid="aaaaaaaaaa" name="test"/>
     </object>"#;
 
-        let diagram = serde_xml_rs::from_str::<Meta>(xml);    
+        let diagram = from_str::<DiagramMeta>(xml);    
         match diagram {
             Ok(item) => {
                 println!("{item:#?}");
@@ -114,7 +115,7 @@ mod tests {
 
     #[test]
     fn xml_diagram_meta_ser_works() {
-        let item = Meta {
+        let item = DiagramMeta {
             label: "".to_owned(),
             diagram: Diagram {
                 item_type: "schema".to_owned(),
@@ -123,10 +124,10 @@ mod tests {
             }
         };
 
-        let str = serde_xml_rs::to_string(&item).unwrap();
+        let str = to_string(&item).unwrap();
         println!("{str}");        
 
-        let diagram = serde_xml_rs::from_str::<Meta>(&str).unwrap();    
+        let diagram = from_str::<DiagramMeta>(&str).unwrap();    
 
         assert_eq!(item, diagram);
     }
@@ -135,7 +136,7 @@ mod tests {
     fn xml_diagram_deser_works() {
         let xml = r#"<diagram type="schema" uuid="aaaaaaaaaa" name="test"/>"#;
 
-        let diagram = serde_xml_rs::from_str::<Diagram>(xml);    
+        let diagram = from_str::<Diagram>(xml);    
         match diagram {
             Ok(item) => {
                 assert_eq!(item.item_type, "schema".to_owned());

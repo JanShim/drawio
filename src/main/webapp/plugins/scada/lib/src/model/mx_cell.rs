@@ -1,7 +1,8 @@
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{js_sys::JsString, Element};
+use web_sys::{js_sys::JsString, Element, Node};
 
-use crate::model::scada_diagram;
+use crate::{model::scada_diagram, schema_app::js_functions::get_pretty_xml};
 
 pub enum CellValue {
     Object(Element),
@@ -43,10 +44,11 @@ extern "C" {
     //getStyle(): string;    
     #[wasm_bindgen(method, js_name=getStyle)]
     fn mx_get_style(this: &MxCell) -> JsValue;
+
 }
 
 impl MxCell {
-    pub fn id(&self) -> Option<String> {
+    pub fn get_id(&self) -> Option<String> {
         self.mx_get_id().as_string()
     }
 
@@ -60,11 +62,11 @@ impl MxCell {
         }
     }
 
-    pub fn mx_style(&self) -> Option<String> {
+    pub fn get_style(&self) -> Option<String> {
         self.mx_get_style().as_string()
     }
 
-    pub fn get_diagram_meta(&self) -> Result<scada_diagram::meta::Meta, JsValue> {
+    pub fn get_diagram_meta(&self) -> Result<scada_diagram::meta::DiagramMeta, JsValue> {
         match self.mx_get_value() {
             str if str.is_string() => Ok(Default::default()),
             elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
@@ -82,6 +84,30 @@ impl MxCell {
             })
             .map(|s| s.unwrap_or_default())
             .unwrap()
+    }
+
+    pub fn get_meta_xml(&self) -> Option<String>  {
+        if let Ok(CellValue::Object(el)) = self.get_value() {
+            return get_pretty_xml(el).as_string();
+        }
+        None
+    }
+
+    pub fn append_meta_element<F>(&self, provider: F) -> Result<Element, JsValue>
+        where F: FnOnce(&Element) -> &Element
+    {
+        if let Ok(CellValue::Object(root)) = self.get_value() {
+            // if let Some(doc) =  el.owner_document() {
+            //     let doc.create_element("")
+            // }
+            let child = provider(&root);
+            return root.append_child(child)
+                .map(|node| match node.dyn_into::<Element>() {
+                    Ok(e) => Ok(e),
+                    Err(_) => Err(JsValue::from("can't convert to Element")),
+                })?;
+        }
+        Err(JsValue::from_str("can't appent element to root"))
     }
 }
 

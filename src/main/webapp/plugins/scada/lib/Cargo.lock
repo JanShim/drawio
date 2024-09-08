@@ -1002,6 +1002,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-xml"
+version = "0.36.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96a05e2e8efddfa51a84ca47cec303fac86c8541b686d37cac5efc0e094417bc"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1045,10 +1055,10 @@ dependencies = [
  "console_error_panic_hook",
  "log",
  "mockall",
+ "quick-xml",
  "reqwasm",
  "serde",
  "serde-wasm-bindgen 0.6.5",
- "serde-xml-rs",
  "serde_json",
  "thiserror",
  "wasm-bindgen",
@@ -1096,18 +1106,6 @@ dependencies = [
  "js-sys",
  "serde",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "serde-xml-rs"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb3aa78ecda1ebc9ec9847d5d3aba7d618823446a049ba2491940506da6e2782"
-dependencies = [
- "log",
- "serde",
- "thiserror",
- "xml-rs",
 ]
 
 [[package]]
@@ -1423,12 +1421,6 @@ checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
 dependencies = [
  "memchr",
 ]
-
-[[package]]
-name = "xml-rs"
-version = "0.8.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "539a77ee7c0de333dcc6da69b177380a0b81e0dacfa4f7344c465a36871ee601"
 
 [[package]]
 name = "yew"

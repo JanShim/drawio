@@ -35,6 +35,10 @@ function getCell0(editor) {
 	return editor.graph.getModel().getCell("0");
 }
 
+function getPrettyXml(element) {
+	return mxUtils.getPrettyXml(element);
+}
+
 /**
  * Sample plugin.
  */

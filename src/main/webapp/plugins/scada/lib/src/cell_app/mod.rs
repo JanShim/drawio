@@ -5,7 +5,7 @@ use std::rc::Rc;
 use web_sys::HtmlDivElement;
 use yewdux::{use_selector, use_store};
 
-use crate::{model::mx_cell::MxCell, store::cell};
+use crate::{components::cell_details::CellDetailsComponent, model::mx_cell::MxCell, store::cell};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -17,16 +17,16 @@ pub fn app(Props {cell: mxcell}: &Props) -> Html {
     // let cell = use_selector(|state: &cell::State| state.cell.clone());
     let (state, dispatch) = use_store::<cell::State>();
 
-    let cell = (*mxcell).clone();
+    let cell = mxcell.clone();
     let disp = dispatch.clone();
     use_effect_once(move || {
-        disp.set(cell::State {cell: Rc::new(Some(cell)), ..Default::default()});
+        disp.set(cell::State {cell: Some(cell), ..Default::default()});
         
         move || disp.set(cell::State {..Default::default()})
     });
 
-    let up = dispatch.reduce_mut_callback(|state| state.inc());    
-    let dwn = dispatch.reduce_mut_callback(|state| state.dec());    
+    // let up = dispatch.reduce_mut_callback(|state| state.inc());    
+    // let dwn = dispatch.reduce_mut_callback(|state| state.dec());    
 
     // let counter = use_state(|| 0);
     // let up = {
@@ -71,8 +71,9 @@ pub fn app(Props {cell: mxcell}: &Props) -> Html {
 
     html! {
         <div>
-            <button onclick={up}>{ "+1" }</button><button onclick={dwn}>{ "-1" }</button>
-            <p>{ state.count }</p>
+            // <button onclick={up}>{ "+1" }</button><button onclick={dwn}>{ "-1" }</button>
+            // <p>{ state.count }</p>
+            <CellDetailsComponent/>
         </div>
     }    
 }

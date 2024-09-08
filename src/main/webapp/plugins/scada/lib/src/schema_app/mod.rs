@@ -12,7 +12,7 @@ use crate::{
     }, 
     errors::FetchError, 
     model::{mx_editor::MxEditor, mx_utils::MxUtils, scada_diagram::{
-        meta::Meta as DiagramMeta, 
+        meta::DiagramMeta as DiagramMeta, 
         ListItem, 
         ScadaDiagramDto, NULL_UUID
     }}, 

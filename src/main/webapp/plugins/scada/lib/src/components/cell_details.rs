@@ -7,14 +7,28 @@ use crate::store::cell;
 
 #[function_component(CellDetailsComponent)]
 pub fn component() -> Html {
-    let (state, _dispatch) = use_store::<cell::State>();
+    let (state, dispatch) = use_store::<cell::State>();
+
+    // let up = dispatch.reduce_mut_callback(|state| {
+    //     // let aaa = state.cell
+
+    //         // if let Some(cell) = state.cell {
+    //         //     cell.append_meta_element(|root| {
+    //         //         let doc = root.owner_document().unwrap();
+
+    //         //         let aaa = doc.create_element("aaaa").unwrap();
+    //         //         &aaa
+    //         //     })
+    //         // }
+    //     });    
 
 
-
-    let cell = (*state);
-    html! {
-        <div>
-            { format!("label {:#?}", cell) } 
-        </div>
+    match &state.cell {
+        Some(cell) => html! {
+            <div>
+            <pre>{ cell.get_meta_xml() }</pre>
+            </div>
+        },
+        _ => html! {<div></div>},
     }
 }

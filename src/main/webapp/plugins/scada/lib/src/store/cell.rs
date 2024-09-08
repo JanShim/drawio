@@ -4,24 +4,24 @@ use crate::model::mx_cell::MxCell;
 
 #[derive(Clone, PartialEq, Store)]
 pub struct State {
-    pub count: i32,
+    // pub count: i32,
     pub cell: Option<MxCell>,
 }
 
-impl State {
-    pub fn inc(&mut self)  {
-        self.count += 1;
-    }
+// impl State {
+//     pub fn inc(&mut self)  {
+//         self.count += 1;
+//     }
 
-    pub fn dec(&mut self)  {
-        self.count -= 1;
-    }
-}
+//     pub fn dec(&mut self)  {
+//         self.count -= 1;
+//     }
+// }
 
 impl Default for State {
     fn default() -> Self {
         Self { 
-            count: Default::default(), 
+            // count: Default::default(), 
             cell: None,
         }
     }
