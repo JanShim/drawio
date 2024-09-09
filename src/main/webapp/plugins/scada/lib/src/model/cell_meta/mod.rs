@@ -1,4 +1,6 @@
 
+use std::{cell::RefCell, rc::Rc};
+
 use serde::{Deserialize, Serialize};
 use widget::{WidgetMeta, is_none_widget };
 use multystate::{MultystateMeta, is_none_multystate};
@@ -7,8 +9,10 @@ use multystate::{MultystateMeta, is_none_multystate};
 pub mod widget;
 pub mod multystate;
 
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum CellType {
-    Widget(WidgetMeta)
+    Widget(WidgetMeta),
+    MultyState(MultystateMeta),
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -16,10 +20,24 @@ pub enum CellType {
 pub struct CellMeta {
     #[serde(rename="@label")]
     pub label: String,
+    meta: CellType,
     #[serde(skip_serializing_if = "is_none_widget")]
     pub widget: Option<WidgetMeta>,
     #[serde(skip_serializing_if = "is_none_multystate")]
-    pub multystate: Option<MultystateMeta>,
+    pub multystate: Option<Box<MultystateMeta>>,
+}
+
+impl CellMeta {
+    
+    pub fn set_label(&mut self, label: String) {
+        self.label = label;
+    }
+
+    pub fn create_state(&self) {
+        if let Some(mut multystate) = self.multystate.clone() {
+            multystate.as_mut().create_state();
+        }
+    }
 
 }
 
@@ -41,6 +59,7 @@ mod tests {
             label: "test".to_owned(),
             widget: None,
             multystate: None,
+            meta: 
         };
 
         let str = to_string(&item).unwrap();
@@ -76,13 +95,13 @@ mod tests {
         let item = CellMeta {
             label: "test".to_owned(),
             widget: None,
-            multystate: Some(MultystateMeta {
+            multystate: Some(Box::new(MultystateMeta {
                 range_type: Default::default(),
                 states: vec![
                     StateMeta { uuid: "1".to_owned() },
                     StateMeta { uuid: "2".to_owned() },
                 ],
-            }),
+            })),
         };
 
         let str = to_string(&item).unwrap();

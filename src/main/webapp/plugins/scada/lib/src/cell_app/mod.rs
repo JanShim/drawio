@@ -14,15 +14,17 @@ pub struct Props {
 
 #[function_component(CellComponent)]
 pub fn app(Props {cell: mxcell}: &Props) -> Html {
-    // let cell = use_selector(|state: &cell::State| state.cell.clone());
-    let (state, dispatch) = use_store::<cell::State>();
+    let (_state, dispatch) = use_store::<cell::State>();
 
     let cell = mxcell.clone();
-    let disp = dispatch.clone();
+    let dispatcher = dispatch.clone();
     use_effect_once(move || {
-        disp.set(cell::State {cell: Some(cell), ..Default::default()});
+        let mut new_state = cell::State {cell: Some(cell), ..Default::default()};
+        new_state.set_meta_from_self();
         
-        move || disp.set(cell::State {..Default::default()})
+        dispatcher.set(new_state);
+        
+        move || dispatcher.set(cell::State {..Default::default()})
     });
 
     // let up = dispatch.reduce_mut_callback(|state| state.inc());    

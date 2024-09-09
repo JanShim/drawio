@@ -73,7 +73,7 @@ Draw.loadPlugin(async function(ui) {
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		
 		// main window
-		let dataWindow = new mxWindow('SCADA diagram data', div, iiw - 320, 60, 300, 500, true, true);
+		let dataWindow = new mxWindow('IIoT-Hub diagram data', div, iiw - 320, 60, 300, 500, true, true);
 		dataWindow.destroyOnClose = false;
 		dataWindow.setMaximizable(true);
 		dataWindow.setResizable(true);
@@ -82,10 +82,10 @@ Draw.loadPlugin(async function(ui) {
 		dataWindow.contentWrapper.style.overflowY = 'scroll';
 
 		// Adds resource for action
-		mxResources.parse('scada=SCADA');
+		mxResources.parse('iiot=IIoT-Hub');
 
 		// Adds action
-		ui.actions.addAction('scada', function()
+		ui.actions.addAction('iiot', function()
 		{
 			dataWindow.setVisible(!dataWindow.isVisible());
 		});
@@ -96,7 +96,7 @@ Draw.loadPlugin(async function(ui) {
 		menu.funct = function(menu, parent)
 		{
 			oldFunct.apply(this, arguments);
-			ui.menus.addMenuItems(menu, ['-', 'scada'], parent);
+			ui.menus.addMenuItems(menu, ['-', 'iiot'], parent);
 		};
 	}
 	else
@@ -159,7 +159,7 @@ Draw.loadPlugin(async function(ui) {
 				console.log("model changed", cell);
 				// app.cell_updated(cell);
 			} else {
-				//let doc = mxUtils.parseXml("<scada><som-data p='test' as='data'/></scada>").documentElement;
+				//let doc = mxUtils.parseXml("<iiot><som-data p='test' as='data'/></iiot>").documentElement;
 				//cell.setValue(doc);
 
 				//console.log("selection changed", cell.value);
@@ -260,7 +260,7 @@ Draw.loadPlugin(async function(ui) {
 	let sb = ui.sidebar;
 	function addPalette()
 	{
-		sb.addPalette('scada', 'SCADA', false, function(content)
+		sb.addPalette('iiot', 'IIoT', false, function(content)
 		{
 			(function()
 			{
@@ -268,7 +268,7 @@ Draw.loadPlugin(async function(ui) {
 					'rectangle;whiteSpace=wrap;html=1;align=center;collapsible=0;container=1;recursiveResize=0;');
 				cell.vertex = true;
 
-				let value = mxUtils.parseXml("<scada><widget uuid='00000000-0000-0000-0000-000000000000'/></scada>").documentElement;
+				let value = mxUtils.parseXml("<iiot><widget uuid='00000000-0000-0000-0000-000000000000'/></iiot>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
 
@@ -325,7 +325,7 @@ Draw.loadPlugin(async function(ui) {
 	let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	
 	// main window
-	let scadaDataWindow = new mxWindow('SCADA data', divScadaCellData, iiw - 320, 60, 300, 450, true, true);
+	let scadaDataWindow = new mxWindow('IIoT-Hub data', divScadaCellData, iiw - 320, 60, 300, 450, true, true);
 	scadaDataWindow.destroyOnClose = false;
 	scadaDataWindow.setMaximizable(true);
 	scadaDataWindow.setResizable(true);
@@ -337,14 +337,14 @@ Draw.loadPlugin(async function(ui) {
 	{
 		if (cell != null && cell.value !== null && typeof cell.value !== 'string')
 		{
-			return cell.value.tagName === "scada";
+			return cell.value.tagName === "iiot";
 		}
 		return false;
 	};
 
 
 	/**
-	 * Updates the scada data panel
+	 * Updates the iiot data panel
 	 */
 	function scadaCellClicked(cell)
 	{
@@ -371,8 +371,8 @@ Draw.loadPlugin(async function(ui) {
 	}	
 
 	// Adds resources for actions
-	mxResources.parse('scadaData=SCADA Data');
-	mxResources.parse('scadaItem=SCADA item');
+	mxResources.parse('scadaData=IIot-Hub Data');
+	mxResources.parse('scadaItem=IIot-Hub item');
 
 	// Adds actions
 	ui.actions.addAction('scadaData', function()
@@ -403,7 +403,7 @@ Draw.loadPlugin(async function(ui) {
 		{
 			let cell = graph.getSelectionCell();
 			if (!isScadaCell(cell)) {
-				let value = mxUtils.parseXml("<scada></scada>").documentElement;
+				let value = mxUtils.parseXml("<iiot></iiot>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
 				scadaCellClicked(cell);

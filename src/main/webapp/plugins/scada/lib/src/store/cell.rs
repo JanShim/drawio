@@ -1,40 +1,49 @@
-use yewdux::Store;
+use yewdux::store::Store;
 
-use crate::model::mx_cell::MxCell;
+use crate::model::{cell_meta::CellMeta, mx_cell::MxCell};
 
-#[derive(Clone, PartialEq, Store)]
+#[derive(Clone, PartialEq)]
+// #[store(storage = "local")]
 pub struct State {
-    // pub count: i32,
     pub cell: Option<MxCell>,
+    pub meta: Option<Box<CellMeta>>,
+    pub entries: Vec<i32>,
 }
 
-// impl State {
-//     pub fn inc(&mut self)  {
-//         self.count += 1;
-//     }
+impl State {
+    pub fn set_meta_from_self(&mut self) {
+        if let Some(cell) = &self.cell {
+            let meta = cell.get_meta()
+                .or_else(|err| { log::error!("{err:#?}"); Err(()) }).ok()
+                .map(|o| Box::new(o));
 
-//     pub fn dec(&mut self)  {
-//         self.count -= 1;
-//     }
-// }
-
-impl Default for State {
-    fn default() -> Self {
-        Self { 
-            // count: Default::default(), 
-            cell: None,
+            self.meta = meta;
         }
     }
 }
 
-// impl Store for State {
-//     fn new(_cx: &yewdux::Context) -> Self {
-//         Self {
-//             ..Default::default()
-//         }
-//     }
+impl Default for State {
+    fn default() -> Self {
+        Self { 
+            cell: None,
+            meta: None,
+            entries: vec![1,2,3],
+        }
+    }
+}
+
+impl Store for State {
+    fn new(_cx: &yewdux::Context) -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
     
-//     fn should_notify(&self, old: &Self) -> bool {
-//         self.cell != old.cell
-//     }
-// }
+    fn should_notify(&self, old: &Self) -> bool {
+        log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
+
+        self != old
+        || self.cell != old.cell
+        || self.meta != old.meta
+    }
+}

@@ -1,8 +1,14 @@
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{js_sys::JsString, Element, Node};
+use web_sys::{js_sys::{JsString, Object}, Element, Node};
+use quick_xml::{
+    de::from_str, se::to_string,
+    // se::to_string,
+};
 
 use crate::{model::scada_diagram, schema_app::js_functions::get_pretty_xml};
+
+use super::{cell_meta::CellMeta, scada_diagram::meta};
 
 pub enum CellValue {
     Object(Element),
@@ -55,12 +61,22 @@ impl MxCell {
     pub fn get_value(&self) -> Result<CellValue, JsValue> {
         match self.mx_get_value() {
             str if str.is_string() => Ok(CellValue::Label(str.as_string())),
-            obj if obj.is_object() => obj.dyn_into::<Element>().map(|o| CellValue::Object(o)),
+            obj if obj.is_object() => obj.dyn_into::<Element>()
+                .map(|o| CellValue::Object(o)),
             null if null.is_null() => Ok(CellValue::Label(None)),
             undefiend if undefiend.is_undefined() => Ok(CellValue::Label(None)),
             _ => Err(JsValue::from_str("get value error")),
         }
     }
+
+    // pub fn set_value_as_meta(&self, meta: String) -> Result<CellMeta, JsValue> {
+    //     if let Ok(CellValue::Object(el)) = self.get_value() {
+    //         // el.set_outer_html(meta.as_str());
+    //         el.set_attribute("label", value)
+    //         return self.get_meta();
+    //     }
+    //     Err(JsValue::from_str("can't set cell meta data"))
+    // }
 
     pub fn get_style(&self) -> Option<String> {
         self.mx_get_style().as_string()
@@ -93,22 +109,45 @@ impl MxCell {
         None
     }
 
-    pub fn append_meta_element<F>(&self, provider: F) -> Result<Element, JsValue>
-        where F: FnOnce(&Element) -> &Element
-    {
-        if let Ok(CellValue::Object(root)) = self.get_value() {
-            // if let Some(doc) =  el.owner_document() {
-            //     let doc.create_element("")
-            // }
-            let child = provider(&root);
-            return root.append_child(child)
-                .map(|node| match node.dyn_into::<Element>() {
-                    Ok(e) => Ok(e),
-                    Err(_) => Err(JsValue::from("can't convert to Element")),
-                })?;
+    // pub fn append_meta_element<F>(&self, provider: F) -> Result<Element, JsValue>
+    //     where F: FnOnce(&Element) -> &Element
+    // {
+    //     if let Ok(CellValue::Object(root)) = self.get_value() {
+    //         // if let Some(doc) =  el.owner_document() {
+    //         //     let doc.create_element("")
+    //         // }
+    //         let child = provider(&root);
+    //         return root.append_child(child)
+    //             .map(|node| match node.dyn_into::<Element>() {
+    //                 Ok(e) => Ok(e),
+    //                 Err(_) => Err(JsValue::from("can't convert to Element")),
+    //             })?;
+    //     }
+    //     Err(JsValue::from_str("can't appent element to root"))
+    // }
+
+    pub fn get_meta(&self) -> Result<CellMeta, JsValue> {
+        match self.get_value() {
+            Ok(CellValue::Object(el)) => from_str(el.outer_html().as_str())
+                    .map_err(|err| JsValue::from(err.to_string().as_str())),
+            _ => Err(JsValue::from("no meta data for this cell"))
         }
-        Err(JsValue::from_str("can't appent element to root"))
     }
+
+    pub fn set_meta(&mut self, meta: &CellMeta) -> Result<CellMeta, JsValue> {
+        // let meta_str = to_string(meta)
+        //     .map_err(|err| JsValue::from(err.to_string().as_str()))?;
+            
+        // self.set_value_as_meta(meta_str)
+
+         if let Ok(CellValue::Object(el)) = self.get_value() {
+             // el.set_outer_html(meta.as_str());
+             el.set_attribute("label", meta.label.as_str()).ok();
+             return self.get_meta();
+         }
+         Err(JsValue::from_str("can't set cell meta data"))        
+    }
+
 }
 
 impl PartialEq for MxCell {

@@ -1,6 +1,6 @@
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 
-pub fn is_none_multystate(tst: &Option<MultystateMeta>) -> bool {
+pub fn is_none_multystate(tst: &Option<Box<MultystateMeta>>) -> bool {
     match tst {
         Some(_) => false,
         None => true,
@@ -50,6 +50,13 @@ pub struct MultystateMeta {
     pub states: Vec<StateMeta>,
 }
 
+impl MultystateMeta {
+    
+    pub fn create_state(&mut self) {
+        self.states.push(StateMeta {uuid: "new sate".to_owned()});
+    }
+}
+
 impl Serialize for MultystateMeta {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -77,7 +84,6 @@ impl Serialize for MultystateMeta {
         helper.serialize(serializer)
     }
 }
-
 
 // ==========================================================
 #[cfg(test)]
