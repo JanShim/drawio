@@ -1,12 +1,11 @@
 use multystate::{is_none_multystate, MultystateMeta};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 use widget::{is_none_widget, WidgetMeta};
 
-use super::scada_diagram::meta;
-
 pub mod multystate;
 pub mod multystate_state;
+pub mod multystate_data_source;
 pub mod widget;
 
 // fn serialize_meta<S>(item: &CellType, serializer: S) -> Result<S::Ok, S::Error>
@@ -103,10 +102,6 @@ fn err_not_multystate() -> JsValue {
 pub struct CellMeta {
     #[serde(rename = "@label")]
     pub label: String,
-    // #[serde(rename="$value")]
-    // #[serde(flatten)]
-    // #[serde(serialize_with = "serialize_meta")]
-    // meta: CellType,
     #[serde(skip_serializing_if = "is_none_widget")]
     pub widget: Option<WidgetMeta>,
     #[serde(skip_serializing_if = "is_none_multystate")]
@@ -174,9 +169,6 @@ mod tests {
             label: "test".to_owned(),
             widget: None,
             multystate: None,
-            // meta: CellType::Widget(WidgetMeta {
-            //     uuid: "aaaa".to_owned(),
-            // }),
         };
 
         let str = to_string(&item).unwrap();
@@ -196,9 +188,6 @@ mod tests {
                 uuid: "some-uuid".to_owned(),
             }),
             multystate: None,
-            // meta: CellType::Widget(WidgetMeta {
-            //     uuid: "aaaa".to_owned(),
-            // }),
         };
 
         let str = to_string(&item).unwrap();

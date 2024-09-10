@@ -3,17 +3,23 @@ use serde::{Deserialize, Serialize};
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-#[serde(rename = "state")]
-pub struct StateMeta {
-    #[serde(rename = "@pk")]
-    pub pk: String,
+#[serde(rename = "ds")]
+pub struct DataSource {
+    #[serde(rename="@tag")]
+    pub tag: String,
+    #[serde(rename="@path")]
+    pub path: String,
 }
 
-impl Default for StateMeta {
+impl Default for DataSource {
     fn default() -> Self {
-        Self { pk: Default::default() }
+        Self { 
+            tag: Default::default(),
+            path: Default::default(),
+        }
     }
 }
+
 
 // ==========================================================
 #[cfg(test)]
@@ -27,14 +33,15 @@ mod tests {
 
     #[test]
     fn xml_state_meta_serde_works() {
-        let item = StateMeta {
-            pk: "some".to_owned(),
+        let item = DataSource {
+            tag: "proba".to_owned(),
+            ..Default::default()
         };
 
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<StateMeta>(&str).unwrap();
+        let meta = from_str::<DataSource>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);

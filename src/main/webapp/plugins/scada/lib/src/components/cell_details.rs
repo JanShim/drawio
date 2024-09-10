@@ -1,23 +1,19 @@
 use quick_xml::se::to_string;
-use wasm_bindgen::JsCast;
-use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_state, virtual_dom::VNode, Callback, Html, InputEvent, MouseEvent};
+use yew::{function_component, html, virtual_dom::VNode, Html};
 use yewdux::{use_selector, use_store};
 
 use crate::{components::multystate::MultystateComponent, store::cell};
 
 #[function_component(CellDetailsComponent)]
 pub fn component() -> Html {
-    let (state, dispatch) = use_store::<cell::State>();
+    // let (state, dispatch) = use_store::<cell::State>();
     let meta = use_selector(|state: &cell::State| state.meta.clone());
 
     let multystate: VNode = {
             let meta = meta.clone();
             if let Some(_) = (*meta).multystate  {
                 html!{ 
-                    <> {"here must be multy"}
                     <MultystateComponent/>
-                    </>
                 }    
             } else {
                 html!{<div/>}
@@ -34,60 +30,60 @@ pub fn component() -> Html {
     //         state.entries.push(123);
     //     })};
 
-    let name = use_state(|| String::new());
-    let oninput = {
-        let state = state.clone();
-        Callback::from({
-            let name = name.clone();
-            move |e: InputEvent| {
-                let input = e.target()
-                    .and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+    // let name = use_state(|| String::new());
+    // let oninput = {
+    //     let state = state.clone();
+    //     Callback::from({
+    //         let name = name.clone();
+    //         move |e: InputEvent| {
+    //             let input = e.target()
+    //                 .and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
 
-                if let Some(input) = input {
-                    name.set(input.value());
-                }
-            }
-        })};
+    //             if let Some(input) = input {
+    //                 name.set(input.value());
+    //             }
+    //         }
+    //     })};
 
-    let onclick = {
-        let name = name.clone();
-        dispatch.reduce_mut_callback(move |state| {
-            let mut meta = state.meta.clone();
-            meta.set_label((*name).clone());
-            // set to cell if exist
-            if let Some(mut cell) = state.cell.clone() {
-                cell.set_meta(&meta)
-                    .map_err(|er| {
-                        log::error!("{er:#?}");
-                        er
-                    })
-                    .unwrap();
-            }
+    // let onclick = {
+    //     let name = name.clone();
+    //     dispatch.reduce_mut_callback(move |state| {
+    //         let mut meta = state.meta.clone();
+    //         meta.set_label((*name).clone());
+    //         // set to cell if exist
+    //         if let Some(mut cell) = state.cell.clone() {
+    //             cell.set_meta(&meta)
+    //                 .map_err(|er| {
+    //                     log::error!("{er:#?}");
+    //                     er
+    //                 })
+    //                 .unwrap();
+    //         }
 
-            // if let Some(mut meta) = state.meta.clone() {
-            //     meta.set_label((*name).clone());
-            //     let m = meta.clone();
-            //     if let Some(mut cell) = state.cell.clone() {
-            //         cell.set_meta(&m)
-            //             .map_err(|er| {
-            //                 log::error!("{er:#?}");
-            //                 er
-            //             })
-            //             .unwrap();
-            //     }
-            // }
-        })};        
+    //         // if let Some(mut meta) = state.meta.clone() {
+    //         //     meta.set_label((*name).clone());
+    //         //     let m = meta.clone();
+    //         //     if let Some(mut cell) = state.cell.clone() {
+    //         //         cell.set_meta(&m)
+    //         //             .map_err(|er| {
+    //         //                 log::error!("{er:#?}");
+    //         //                 er
+    //         //             })
+    //         //             .unwrap();
+    //         //     }
+    //         // }
+    //     })};        
     
     html! {
         <div>
             <pre width="300">{ to_string(&meta).unwrap()}</pre>
             // <button onclick={on_add}>{"+"}</button><br/>
             // <ul>{entries}</ul>
-            <div>
-                <button {onclick}>{"set label"}</button><br/>
-                <label for="label">{"label: "}</label><input id="label" {oninput}/><br/>
-                <p>{"label: "}{&*name}</p>
-            </div>                
+            // <div>
+            //     <button {onclick}>{"set label"}</button><br/>
+            //     <label for="label">{"label: "}</label><input id="label" {oninput}/><br/>
+            //     <p>{"label: "}{&*name}</p>
+            // </div>                
 
             { multystate }
 

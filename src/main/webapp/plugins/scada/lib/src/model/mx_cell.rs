@@ -1,14 +1,13 @@
-use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{js_sys::{JsString, Object}, Element, Node};
+use web_sys::Element;
 use quick_xml::{
-    de::from_str, se::to_string,
-    // se::to_string,
+    de::from_str, 
+    se::to_string,
 };
 
 use crate::{model::scada_diagram, schema_app::js_functions::get_pretty_xml};
 
-use super::{cell_meta::CellMeta, scada_diagram::meta};
+use super::cell_meta::CellMeta;
 
 pub enum CellValue {
     Object(Element),
@@ -134,18 +133,34 @@ impl MxCell {
         }
     }
 
-    pub fn set_meta(&mut self, meta: &CellMeta) -> Result<CellMeta, JsValue> {
-        // let meta_str = to_string(meta)
-        //     .map_err(|err| JsValue::from(err.to_string().as_str()))?;
-            
-        // self.set_value_as_meta(meta_str)
-
+    pub fn set_meta(&self, meta: &CellMeta) -> Result<CellMeta, JsValue> {
          if let Ok(CellValue::Object(el)) = self.get_value() {
-             // el.set_outer_html(meta.as_str());
-             el.set_attribute("label", meta.label.as_str()).ok();
-             return self.get_meta();
+            el.set_attribute("label", meta.label.as_str()).ok();
+
+            let inner_html = self.get_meta_inner_html(&meta)?;
+            log::debug!("set_inner_html {:#?}", inner_html);
+            el.set_inner_html(inner_html.as_str());
+
+            return self.get_meta();
          }
          Err(JsValue::from_str("can't set cell meta data"))        
+    }
+
+    pub fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
+        let multystate = if let Some(multystate) = &meta.multystate {
+                    to_string(multystate)
+                        .map_err(|err| JsValue::from(err.to_string().as_str()))?
+                } else {
+                    String::default()
+                };
+        let widget = if let Some(widget) = &meta.widget {
+                to_string(widget)
+                    .map_err(|err| JsValue::from(err.to_string().as_str()))?
+            } else {
+                String::default()
+            };
+
+        Ok(format!("{widget}{multystate}"))
     }
 
 }

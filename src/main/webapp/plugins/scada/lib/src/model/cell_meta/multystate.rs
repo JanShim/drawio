@@ -1,6 +1,6 @@
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 
-use super::multystate_state::StateMeta;
+use super::{multystate_data_source::DataSource, multystate_state::StateMeta};
 
 pub fn is_none_multystate(tst: &Option<MultystateMeta>) -> bool {
     match tst {
@@ -41,6 +41,8 @@ impl Default for RangeType {
 pub struct MultystateMeta {
     #[serde(rename="@range-type", default)]
     pub range_type: RangeType,
+    #[serde(rename="ds", default)]
+    pub data_source: DataSource,
     #[serde(deserialize_with = "unwrap_states", default)]
     pub states: Vec<StateMeta>,
 }
@@ -48,7 +50,7 @@ pub struct MultystateMeta {
 impl MultystateMeta {
     
     pub fn create_state(&mut self) {
-        self.states.push(StateMeta {id: "new sate".to_owned()});
+        self.states.push(StateMeta {pk: "new sate".to_owned()});
     }
 }
 
@@ -56,7 +58,8 @@ impl Default for MultystateMeta {
     fn default() -> Self {
         Self { 
             range_type: Default::default(), 
-            states: Default::default() 
+            data_source: Default::default(),
+            states: Default::default(),
         }
     }
 }
@@ -71,6 +74,8 @@ impl Serialize for MultystateMeta {
         struct Root<'a> {
             #[serde(rename="@range-type", default)]
             range_type: &'a RangeType,
+            #[serde(rename="ds", default)]
+            pub data_source: &'a DataSource,
             states: List<'a>,
         }
 
@@ -81,6 +86,7 @@ impl Serialize for MultystateMeta {
 
         let helper = Root {
             range_type: &self.range_type,
+            data_source: &self.data_source,
             states: List {
                 state: &self.states,
             },
@@ -100,23 +106,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn xml_state_meta_serde_works() {
-        let item = StateMeta {
-            id: "some".to_owned(),
-        };
-
-        let str = to_string(&item).unwrap();
-        println!("{str}");
-
-        let meta = from_str::<StateMeta>(&str).unwrap();
-        println!("{meta:#?}");
-
-        assert_eq!(item, meta);
-    }
-
-    #[test]
     fn xml_multystate_meta_nostates_serde_works() {
-        let item = MultystateMeta { states: vec![], range_type: Default::default() };
+        let item = MultystateMeta::default();
 
         let str = to_string(&item).unwrap();
         println!("{str}");
@@ -131,12 +122,16 @@ mod tests {
     fn xml_multystate_meta_states_serde_works() {
         let item = MultystateMeta {
             range_type: RangeType::LINIER,
+            data_source: DataSource { 
+                tag: "tag".to_owned(), 
+                path: "path".to_owned(),
+            },
             states: vec![
                 StateMeta {
-                    id: "1".to_owned(),
+                    pk: "1".to_owned(),
                 },
                 StateMeta {
-                    id: "2".to_owned(),
+                    pk: "2".to_owned(),
                 },
             ],
         };
