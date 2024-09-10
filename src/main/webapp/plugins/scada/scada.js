@@ -403,7 +403,7 @@ Draw.loadPlugin(async function(ui) {
 		{
 			let cell = graph.getSelectionCell();
 			if (!isScadaCell(cell)) {
-				let value = mxUtils.parseXml("<iiot></iiot>").documentElement;
+				let value = mxUtils.parseXml("<iiot><multystate range-type=\"linier\"><states/></multystate></iiot>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
 				scadaCellClicked(cell);

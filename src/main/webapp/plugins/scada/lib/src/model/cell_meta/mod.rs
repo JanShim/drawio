@@ -1,55 +1,170 @@
+use multystate::{is_none_multystate, MultystateMeta};
+use serde::{Deserialize, Serialize, Serializer};
+use wasm_bindgen::JsValue;
+use widget::{is_none_widget, WidgetMeta};
 
-use std::{cell::RefCell, rc::Rc};
+use super::scada_diagram::meta;
 
-use serde::{Deserialize, Serialize};
-use widget::{WidgetMeta, is_none_widget };
-use multystate::{MultystateMeta, is_none_multystate};
-
-
-pub mod widget;
 pub mod multystate;
+pub mod multystate_state;
+pub mod widget;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+// fn serialize_meta<S>(item: &CellType, serializer: S) -> Result<S::Ok, S::Error>
+// where
+//     S: Serializer,
+// {
+//         match item {
+//             // CellType::Undef() => "".to_owned().serialize(serializer),
+//             CellType::Widget(widget) => {
+
+//                 #[derive(Serialize, PartialEq, Debug, Clone)]
+//                 struct Root {
+//                     widget: WidgetMeta,
+//                 }
+
+//                 let root = Root {
+//                     widget: (*widget).clone(),
+//                 };
+
+//                 root.clone().serialize(serializer)
+//             },
+//             CellType::MultyState(meta) => meta.serialize(serializer),
+//         }
+// }
+
+// #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+// #[serde(untagged)]
 pub enum CellType {
-    Widget(WidgetMeta),
-    MultyState(MultystateMeta),
+    UNDEFIEND,
+    WIDGET,
+    MULTYSTATE,
 }
+
+// impl Serialize for CellType {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         match self {
+//             // CellType::Undef() => "".to_owned().serialize(serializer),
+//             CellType::Widget(widget) => {
+
+//                 #[derive(Serialize, PartialEq, Debug, Clone)]
+//                 struct Root {
+//                     widget: WidgetMeta,
+//                 }
+
+//                 let root = Root {
+//                     widget: (*widget).clone(),
+//                 };
+
+//                 root.serialize(serializer)
+//             },
+//             CellType::MultyState(meta) => meta.serialize(serializer),
+//         }
+//     }
+// }
+
+// impl<'de> Deserialize<'de> for CellType {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: serde::Deserializer<'de>
+//     {
+// #[derive(Debug, Deserialize)]
+// struct Mapping {
+//     field: i32,
+//     #[serde(rename = "A")]
+//     a: Option<i32>,
+//     #[serde(rename = "B")]
+//     b: Option<i32>,
+// }
+
+// let Mapping { field, a, b } = Mapping::deserialize(deserializer)?;
+
+// match (a, b) {
+//     (Some(_), Some(_)) =>
+//         Err(D::Error::custom("multiple variants specified")),
+//     (Some(a), None) =>
+//         Ok(Example { field, an_enum: AnEnum::A(a) }),
+//     (None, Some(b)) =>
+//         Ok(Example { field, an_enum: AnEnum::B(b) }),
+//     (None, None) =>
+//         Err(D::Error::custom("no variants specified")),
+// }
+//     }
+// }
+
+fn err_not_multystate() -> JsValue {
+    JsValue::from_str("this is no multistate")
+} 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename = "iiot")]
 pub struct CellMeta {
-    #[serde(rename="@label")]
+    #[serde(rename = "@label")]
     pub label: String,
-    meta: CellType,
+    // #[serde(rename="$value")]
+    // #[serde(flatten)]
+    // #[serde(serialize_with = "serialize_meta")]
+    // meta: CellType,
     #[serde(skip_serializing_if = "is_none_widget")]
     pub widget: Option<WidgetMeta>,
     #[serde(skip_serializing_if = "is_none_multystate")]
-    pub multystate: Option<Box<MultystateMeta>>,
+    pub multystate: Option<MultystateMeta>,
 }
 
 impl CellMeta {
-    
     pub fn set_label(&mut self, label: String) {
         self.label = label;
     }
 
-    pub fn create_state(&self) {
-        if let Some(mut multystate) = self.multystate.clone() {
-            multystate.as_mut().create_state();
+    pub fn get_cell_type(&self) -> CellType {
+        if let Some(_) = self.widget  {
+            return CellType::WIDGET;
+        } else if let Some(_) = self.multystate {
+            return CellType::MULTYSTATE;
         }
+        CellType::UNDEFIEND
     }
 
+    pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateMeta, JsValue>{
+        if let Some(m) = self.multystate.as_mut() {
+            return Ok(m);
+        }
+        Err(err_not_multystate())
+    }
+
+    pub fn get_multystate(&self) -> Result<&MultystateMeta, JsValue>{
+        if let Some(m) = self.multystate.as_ref() {
+            return Ok(m);
+        }
+        Err(err_not_multystate())
+    }    
+
+    pub fn create_state(&self) {
+        todo!();
+        // if let Some(mut multystate) = self.multystate.clone() {
+        //     multystate.as_mut().create_state();
+        // }
+    }
+}
+
+impl Default for CellMeta {
+    fn default() -> Self {
+        Self { 
+            label: Default::default(), 
+            widget: None, 
+            multystate: None, 
+        }
+    }
 }
 
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    use multystate::StateMeta;
-    use quick_xml::{
-        de::from_str,
-        se::to_string,
-    };
-    use serde::{Deserializer, Serializer};
+    // use multystate::StateMeta;
+    use quick_xml::{de::from_str, se::to_string};
+    use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
 
     use super::*;
 
@@ -59,7 +174,9 @@ mod tests {
             label: "test".to_owned(),
             widget: None,
             multystate: None,
-            meta: 
+            // meta: CellType::Widget(WidgetMeta {
+            //     uuid: "aaaa".to_owned(),
+            // }),
         };
 
         let str = to_string(&item).unwrap();
@@ -79,6 +196,9 @@ mod tests {
                 uuid: "some-uuid".to_owned(),
             }),
             multystate: None,
+            // meta: CellType::Widget(WidgetMeta {
+            //     uuid: "aaaa".to_owned(),
+            // }),
         };
 
         let str = to_string(&item).unwrap();
@@ -88,31 +208,76 @@ mod tests {
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
-    }    
+    }
+
+    // #[test]
+    // fn xml_cell_meta_serde_multystate_works() {
+    //     let item = CellMeta {
+    //         label: "test".to_owned(),
+    //         widget: None,
+    //         multystate: Some(Box::new(MultystateMeta {
+    //             range_type: Default::default(),
+    //             states: vec![
+    //                 StateMeta { uuid: "1".to_owned() },
+    //                 StateMeta { uuid: "2".to_owned() },
+    //             ],
+    //         })),
+    //     };
+
+    //     let str = to_string(&item).unwrap();
+    //     println!("{str}");
+
+    //     let meta = from_str::<CellMeta>(&str).unwrap();
+    //     println!("{meta:#?}");
+
+    //     assert_eq!(item, meta);
+    // }
+
+    /* #region example serialize_tuple_variant*/
+    enum E {
+        T(u8),
+        U(String),
+    }
+
+    impl Serialize for E {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match *self {
+                E::T(ref a) => {
+                    let mut tv = serializer.serialize_tuple_variant("E", 0, "T", 1)?;
+                    tv.serialize_field(a)?;
+                    tv.end()
+                }
+                E::U(ref a) => {
+                    let mut tv = serializer.serialize_tuple_variant("E", 1, "U", 1)?;
+                    tv.serialize_field(a)?;
+                    tv.end()
+                }
+            }
+        }
+    }
+    
 
     #[test]
-    fn xml_cell_meta_serde_multystate_works() {
-        let item = CellMeta {
-            label: "test".to_owned(),
-            widget: None,
-            multystate: Some(Box::new(MultystateMeta {
-                range_type: Default::default(),
-                states: vec![
-                    StateMeta { uuid: "1".to_owned() },
-                    StateMeta { uuid: "2".to_owned() },
-                ],
-            })),
+    fn example_serialize_tuple_variant_works() {
+
+        #[derive(Serialize)]
+        pub struct CellMeta {
+            meta: E,
+        }
+
+        let meta = CellMeta {
+            meta: E::T(123),
         };
 
-        let str = to_string(&item).unwrap();
-        println!("{str}");
+        let str = to_string(&meta);
+        println!("{str:#?}")
 
-        let meta = from_str::<CellMeta>(&str).unwrap();
-        println!("{meta:#?}");
+    }
 
-        assert_eq!(item, meta);
-    }   
-
+    /* #endregion */
 
     /* #region  example for array */
     fn unwrap_list<'de, D>(deserializer: D) -> Result<Vec<Element>, D::Error>

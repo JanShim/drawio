@@ -1,6 +1,8 @@
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 
-pub fn is_none_multystate(tst: &Option<Box<MultystateMeta>>) -> bool {
+use super::multystate_state::StateMeta;
+
+pub fn is_none_multystate(tst: &Option<MultystateMeta>) -> bool {
     match tst {
         Some(_) => false,
         None => true,
@@ -19,13 +21,6 @@ where
     }
 
     Ok(List::deserialize(deserializer)?.state)
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-#[serde(rename = "state")]
-pub struct StateMeta {
-    #[serde(rename = "@uuid")]
-    pub uuid: String,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -53,7 +48,16 @@ pub struct MultystateMeta {
 impl MultystateMeta {
     
     pub fn create_state(&mut self) {
-        self.states.push(StateMeta {uuid: "new sate".to_owned()});
+        self.states.push(StateMeta {id: "new sate".to_owned()});
+    }
+}
+
+impl Default for MultystateMeta {
+    fn default() -> Self {
+        Self { 
+            range_type: Default::default(), 
+            states: Default::default() 
+        }
     }
 }
 
@@ -98,7 +102,7 @@ mod tests {
     #[test]
     fn xml_state_meta_serde_works() {
         let item = StateMeta {
-            uuid: "some".to_owned(),
+            id: "some".to_owned(),
         };
 
         let str = to_string(&item).unwrap();
@@ -129,10 +133,10 @@ mod tests {
             range_type: RangeType::LINIER,
             states: vec![
                 StateMeta {
-                    uuid: "1".to_owned(),
+                    id: "1".to_owned(),
                 },
                 StateMeta {
-                    uuid: "2".to_owned(),
+                    id: "2".to_owned(),
                 },
             ],
         };
