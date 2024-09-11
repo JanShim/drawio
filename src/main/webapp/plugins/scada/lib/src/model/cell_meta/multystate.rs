@@ -52,6 +52,10 @@ impl MultystateMeta {
     pub fn create_state(&mut self) {
         self.states.push(StateMeta {pk: "new sate".to_owned()});
     }
+
+    pub fn set_data_source(&mut self, ds: DataSource) {
+        self.data_source = ds;
+    }
 }
 
 impl Default for MultystateMeta {

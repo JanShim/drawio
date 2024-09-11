@@ -68,10 +68,18 @@ impl State {
             .map(|ms| &ms.data_source)
     }
 
-    pub fn get_mut_multystate_data_source(&mut self) ->  Result<&mut DataSource, JsValue> {
+    // pub fn get_mut_multystate_data_source(&mut self) ->  Result<&mut DataSource, JsValue> {
+    //     self.meta.get_mut_multystate()
+    //         .map(|ms| &mut ms.data_source)
+    // }    
+
+    pub fn set_multystate_data_source(&mut self, ds: DataSource) ->  Result<(), JsValue> {
         self.meta.get_mut_multystate()
-            .map(|ms| &mut ms.data_source)
+            .map(|ms| {
+                ms.set_data_source(ds);
+            })
     }    
+
 
 }
 

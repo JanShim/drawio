@@ -94,6 +94,7 @@ pub enum CellType {
 // }
 
 fn err_not_multystate() -> JsValue {
+    log::error!("not multistate cell");
     JsValue::from_str("this is no multistate")
 } 
 
