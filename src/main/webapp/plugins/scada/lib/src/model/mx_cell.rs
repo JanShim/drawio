@@ -68,15 +68,6 @@ impl MxCell {
         }
     }
 
-    // pub fn set_value_as_meta(&self, meta: String) -> Result<CellMeta, JsValue> {
-    //     if let Ok(CellValue::Object(el)) = self.get_value() {
-    //         // el.set_outer_html(meta.as_str());
-    //         el.set_attribute("label", value)
-    //         return self.get_meta();
-    //     }
-    //     Err(JsValue::from_str("can't set cell meta data"))
-    // }
-
     pub fn get_style(&self) -> Option<String> {
         self.mx_get_style().as_string()
     }

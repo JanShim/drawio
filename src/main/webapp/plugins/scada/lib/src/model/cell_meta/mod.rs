@@ -4,8 +4,6 @@ use wasm_bindgen::JsValue;
 use widget::{is_none_widget, WidgetMeta};
 
 pub mod multystate;
-pub mod multystate_state;
-pub mod multystate_data_source;
 pub mod widget;
 
 // fn serialize_meta<S>(item: &CellType, serializer: S) -> Result<S::Ok, S::Error>

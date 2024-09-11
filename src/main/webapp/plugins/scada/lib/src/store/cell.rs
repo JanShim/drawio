@@ -3,9 +3,11 @@ use yewdux::store::Store;
 
 use crate::model::{
     cell_meta::{
-        multystate::MultystateMeta, 
-        multystate_data_source::DataSource,
-        multystate_state::StateMeta, 
+        multystate::{
+            MultystateMeta,
+            data_source::DataSource, 
+            state::StateMeta, 
+        }, 
         CellMeta
     }, 
     mx_cell::MxCell
@@ -80,6 +82,13 @@ impl State {
             })
     }    
 
+    pub fn get_cell_style(&self) -> Result<String, JsValue> {
+        self.cell.clone()
+            .map(|cell| {
+                cell.get_style().unwrap()
+            })
+            .ok_or(JsValue::from("no cell"))
+    }
 
 }
 

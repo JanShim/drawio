@@ -1,10 +1,9 @@
-use stylist::css;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{classes, function_component, html, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
-use yewdux::{use_selector, use_store};
+use yew::{function_component, html, use_state, Callback, Html, InputEvent, MouseEvent};
+use yewdux::use_store;
 
-use crate::{model::cell_meta::multystate_data_source::DataSource, store::cell};
+use crate::{model::cell_meta::multystate::data_source::DataSource, store::cell};
 
 #[function_component(DataSourceComponent)]
 pub fn component() -> Html {
@@ -36,9 +35,9 @@ pub fn component() -> Html {
     let img = {
         let is_edit = is_edit.clone();
         if *is_edit { 
-           html! { <img align="right" src="images/checkmark.gif" onclick={togle_apply}/> }
+           html! { <img src="images/checkmark.gif" onclick={togle_apply}/> }
         } else {
-           html! { <img align="right" src="images/edit16.png" onclick={togle_edit}/> }
+           html! { <img src="images/edit16.png" onclick={togle_edit}/> }
         }
     };
 
@@ -54,24 +53,24 @@ pub fn component() -> Html {
             })
         };
 
-    // item view
-    let item = {
-        let ds = data_source.clone();
-        if *(is_edit.clone()) {
+    let tag = {
+            let ds = data_source.clone();
             html! {
-                <div>
-                    <label for="tag">{"tag: "}</label><input id="tag" {oninput} value={ds.tag.clone()}/>
-                    { img }
-                </div>
+                if *(is_edit.clone()) {
+                    <input id="tag" {oninput} value={ds.tag.clone()}/>
+                } else {
+                    {ds.tag.clone()}
+                }
             }
-        } else {
-            html! {<div class={classes!("test-div")}>{ format!("{:#?}", *ds) } { img }</div>}
-        }
-    };
-    
+        };
 
+    // item view
     html!{
-        { item }
+        <table class="prop-table">
+        <td class="label" width="20">{"tag"}</td>
+        <td>{ tag }</td>
+        <td class="img">{ img }</td>
+        </table>
     }
     
 }

@@ -1,6 +1,10 @@
+use data_source::DataSource;
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
+use state::StateMeta;
 
-use super::{multystate_data_source::DataSource, multystate_state::StateMeta};
+pub mod state;
+pub mod data_source;
+pub mod state_range;
 
 pub fn is_none_multystate(tst: &Option<MultystateMeta>) -> bool {
     match tst {
@@ -48,9 +52,11 @@ pub struct MultystateMeta {
 }
 
 impl MultystateMeta {
-    
     pub fn create_state(&mut self) {
-        self.states.push(StateMeta {pk: "new sate".to_owned()});
+        self.states.push(StateMeta {
+            pk: self.states.len().to_string(), 
+            ..Default::default()
+        });
     }
 
     pub fn set_data_source(&mut self, ds: DataSource) {
@@ -133,9 +139,13 @@ mod tests {
             states: vec![
                 StateMeta {
                     pk: "1".to_owned(),
+                    name: "name-1".to_owned(),
+                    ..Default::default()
                 },
                 StateMeta {
                     pk: "2".to_owned(),
+                    name: "name-1".to_owned(),
+                    ..Default::default()
                 },
             ],
         };

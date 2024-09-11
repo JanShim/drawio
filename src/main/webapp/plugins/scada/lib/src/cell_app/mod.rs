@@ -74,19 +74,40 @@ pub fn app(Props {cell: mxcell}: &Props) -> Html {
     html! {
         <>
 <Global css={css!(r#"
-.test-div {
+.prop-edit-panel {
     background-color: rgb(237, 244, 255);
+    min-height: 20px;
 }
 
 .flex-box {
-  display:flex;
-  justify-content:space-between;
+    display:flex;
+    justify-content:space-between;
 }
 
 .flex-box-2 {
-  display:flex;
-  justify-content: flex-end;
-}                
+    display:flex;
+    justify-content: flex-end;
+}
+    
+table.prop-table {
+    width: 100%;
+}
+table.prop-table td {
+    padding: 0px 5px 0px 5px;
+}
+table.prop-table td input {
+    width: 100%;
+    height: 16px;
+}
+table.prop-table td.label {
+    background-color: rgb(221, 221, 221);
+    text-align: right;
+}
+table.prop-table td.img {
+    width: 16px;
+    padding: 0px;
+}        
+
 "#)} />
 
         <div>
