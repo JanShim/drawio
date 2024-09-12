@@ -41,12 +41,14 @@ pub fn component() -> Html {
             let selected = selected_state.clone();        
             if let Some(ms) = state.get_multystate().ok()  {
                 ms.states.iter().enumerate()
-                    .map(|(id, _)| {
+                    .map(|(id, meta)| {
                         let props = state::Props {
-                            index: id,
                             selected: (*selected).map(|o| o == id ).unwrap_or(false),
                             select: select.clone(), 
+                            meta: (*meta).clone(),
                         };
+                        log::debug!("states props: {props:?}");
+
                         html! { <MultystateStateComponent ..props/> }
                     })
                     .collect::<Html>()                
@@ -63,8 +65,10 @@ pub fn component() -> Html {
 
     let on_add: Callback<MouseEvent> = dispatch.reduce_mut_callback(|state| {
             if let Some(m) = state.get_mut_multystate().ok() {
+                let pk = m.states.len().to_string();
+                log::debug!("on_add {pk}");
                 m.states.push(StateMeta {
-                    pk: m.states.len().to_string(),
+                    pk,
                     ..Default::default()
                 });    
             };

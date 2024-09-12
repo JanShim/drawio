@@ -1,4 +1,7 @@
+use std::rc::Rc;
+
 use serde::{Deserialize, Serialize};
+use yew::Reducible;
 
 
 
@@ -15,6 +18,16 @@ pub struct StateMeta {
     pub selected: bool,
 }
 
+impl StateMeta {
+    pub fn set_style(&mut self, style: String) {
+        self.style = style;
+    }
+
+    pub fn get_index(&self) -> Option<usize> {
+        self.pk.parse::<usize>().ok()
+    }
+}
+
 impl Default for StateMeta {
     fn default() -> Self {
         Self { 
@@ -23,6 +36,39 @@ impl Default for StateMeta {
             style: "".to_owned(),
             selected: false,
         }
+    }
+}
+
+/// reducer's Action
+pub enum StateAction {
+    Clone(StateMeta),
+    SetStyle(String),
+}
+
+impl Reducible for StateMeta {
+    type Action = StateAction;
+
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        match action {
+           StateAction::SetStyle(style) => {
+            let aaa = Self {
+                pk: self.pk.clone(),
+                name: self.name.clone(),
+                style: style.clone(), 
+                selected: self.selected,
+            };
+        
+                log::debug!("StateAction::SetStyle {style}, {aaa:?}");
+                aaa.into()
+            },
+            StateAction::Clone(meta) => Self {
+                pk: meta.pk.clone(),
+                name: meta.name.clone(),
+                style: meta.style.clone(), 
+                selected: meta.selected,
+            }.into(),
+           _ => self
+       }
     }
 }
 

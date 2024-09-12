@@ -3,28 +3,6 @@ use std::fmt::Display;
 
 use wasm_bindgen::JsValue;
 
-// #[derive(Error, Debug)]
-// #[error("{msg}")]
-// struct RequestError {
-//     source: Option<anyhow::Error>,
-//     msg: String
-// }
-
-// #[derive(Error, Debug)]
-// #[error("{msg}")]
-// struct DeserializeError {
-//     source: Option<anyhow::Error>,
-//     msg: String
-// }
-
-// #[derive(Clone, Debug, PartialEq)]
-// enum Error {
-//     RequestError,
-//     DeserializeError,
-//     // etc.
-// }
-
-
 
 #[derive(Debug, Clone)]
 pub enum FetchError {
@@ -45,5 +23,31 @@ impl Display for FetchError {
             FetchError::ParseXmlError(err) => err,
         };
         write!(f, "{msg}")
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub enum CellStateError  {
+    NoCell(),
+    NoMeta(),
+    MultyStateStateIndexError{len: usize, index: usize},
+}
+
+impl Display for CellStateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let msg = match self {
+            CellStateError::NoCell() => "no cell error".to_owned(),
+            CellStateError::NoMeta() => "no meta data error".to_owned(),
+            CellStateError::MultyStateStateIndexError{len, index} => format!("vec index: {index} > length: {len}"),
+        };
+        write!(f, "{msg}")
+    }
+}
+
+impl Into<JsValue> for CellStateError {
+    fn into(self) -> JsValue {
+        log::error!("{}", self.to_string());
+        JsValue::from(self.to_string())
     }
 }

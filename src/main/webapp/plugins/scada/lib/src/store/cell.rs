@@ -1,19 +1,17 @@
 use wasm_bindgen::JsValue;
 use yewdux::store::Store;
 
-use crate::model::{
+use crate::{components::multystate::state, errors::CellStateError, model::{
     cell_meta::{
         multystate::{
-            MultystateMeta,
-            data_source::DataSource, 
-            state::StateMeta, 
+            data_source::DataSource, state::StateMeta, MultystateMeta 
         }, 
         CellMeta
     }, 
     mx_cell::MxCell
-};
+}};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 // #[store(storage = "local")]
 pub struct State {
     pub cell: Option<MxCell>,
@@ -46,11 +44,15 @@ impl State {
         Ok(&self.meta)
     }   
 
-    pub fn get_multystate_state<'a>(&'a self, id: usize) -> Result<&'a StateMeta, JsValue> {
+    pub fn get_multystate_state<'a>(&'a self, index: usize) -> Result<&'a StateMeta, JsValue> {
+        log::debug!("get_multystate_state index = {index}");
+
        if let Some(multy) = &self.meta.multystate {
             let states = &multy.states;
-            if id < states.len() {
-                return Ok(&states[id]);
+            log::debug!("get_multystate_state: {:#?}", states);
+            if index < states.len() {
+                log::debug!("get_multystate_state[{index}] = {:#?}", states[index]);
+                return Ok(&states[index]);
             }
             return Err(JsValue::from("index not in range"));
        };
@@ -70,11 +72,6 @@ impl State {
             .map(|ms| &ms.data_source)
     }
 
-    // pub fn get_mut_multystate_data_source(&mut self) ->  Result<&mut DataSource, JsValue> {
-    //     self.meta.get_mut_multystate()
-    //         .map(|ms| &mut ms.data_source)
-    // }    
-
     pub fn set_multystate_data_source(&mut self, ds: DataSource) ->  Result<(), JsValue> {
         self.meta.get_mut_multystate()
             .map(|ms| {
@@ -89,6 +86,19 @@ impl State {
             })
             .ok_or(JsValue::from("no cell"))
     }
+
+    // pub fn set_multystate_state_style(&self, index: usize, style: String) -> Result<(), JsValue> {
+    //     let multy = self.meta.multystate.clone().ok_or::<JsValue>(CellStateError::NoMeta().into())?;
+    //     let mut states = multy.states;
+    //     if index < states.len() {
+    //         let state = &mut states[index];
+    //         state.set_style(style);
+    //         log::debug!("set_multystate_state_style:!! {:?}", state);
+    //         return Ok(());
+    //     }
+
+    //     Err(CellStateError::MultyStateStateIndexError{index, len: states.len()}.into())
+    // }
 
 }
 

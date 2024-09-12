@@ -62,6 +62,13 @@ impl MultystateMeta {
     pub fn set_data_source(&mut self, ds: DataSource) {
         self.data_source = ds;
     }
+
+    // pub fn set_state<'a>(&'a self, meta: &'a StateMeta) {
+    //     if let Some(index) = meta.pk.parse::<usize>().ok() {
+    //        let mut ietm =  self.states[index];
+            
+    //     }
+    // }
 }
 
 impl Default for MultystateMeta {
