@@ -1,3 +1,4 @@
+use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
 
 pub fn is_none_widget(tst: &Option<WidgetMeta>) -> bool {
@@ -11,7 +12,7 @@ pub fn is_none_widget(tst: &Option<WidgetMeta>) -> bool {
 #[serde(rename = "widget")]
 pub struct WidgetMeta {
     #[serde(rename="@uuid")]
-    pub uuid: String,
+    pub uuid: IString,
 }
 
 
@@ -28,7 +29,7 @@ mod tests {
     #[test]
     fn xml_widget_meta_serde_works() {
         let item = WidgetMeta {
-            uuid: "some".to_owned(),
+            uuid: "some".into(),
         };
 
         let str = to_string(&item).unwrap();

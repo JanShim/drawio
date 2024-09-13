@@ -1,3 +1,4 @@
+use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yewdux::store::Store;
 
@@ -77,28 +78,31 @@ impl State {
             .map(|ms| {
                 ms.set_data_source(ds);
             })
-    }    
+    } 
 
-    pub fn get_cell_style(&self) -> Result<String, JsValue> {
+    pub fn get_cell_style(&self) -> Result<IString, JsValue> {
         self.cell.clone()
             .map(|cell| {
-                cell.get_style().unwrap()
+                cell.get_style().unwrap().into()
             })
             .ok_or(JsValue::from("no cell"))
     }
 
-    // pub fn set_multystate_state_style(&self, index: usize, style: String) -> Result<(), JsValue> {
-    //     let multy = self.meta.multystate.clone().ok_or::<JsValue>(CellStateError::NoMeta().into())?;
-    //     let mut states = multy.states;
-    //     if index < states.len() {
-    //         let state = &mut states[index];
-    //         state.set_style(style);
-    //         log::debug!("set_multystate_state_style:!! {:?}", state);
-    //         return Ok(());
-    //     }
+    pub fn set_multystate_state_style(&self, i: usize, style: IString) -> Result<(), JsValue> {
+        log::debug!("set_multystate_state_style: multy {:?}", self.meta.multystate);
+        if let Some(multy) = self.meta.multystate.clone() {
+            let mut states = multy.states;
+            if i < states.len() {
+                let state = &mut states[i];
+                state.set_style(style);
+                return Ok(());
+            }
+            return Err(CellStateError::MultyStateStateIndexError{index: i, len: states.len()}.into());
 
-    //     Err(CellStateError::MultyStateStateIndexError{index, len: states.len()}.into())
-    // }
+        } 
+        Err(CellStateError::NoMeta().into())
+        // let multy = self.meta.multystate.clone().ok_or::<JsValue>(CellStateError::NoMeta().into())?;
+    }
 
 }
 

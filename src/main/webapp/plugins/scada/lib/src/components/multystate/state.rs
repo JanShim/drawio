@@ -26,19 +26,7 @@ pub fn component(Props {
 }: &Props) -> Html {
 
     // cell meta storage
-    let (cell_state, _) = use_store::<cell::State>();
-
-    // let my_state = use_state(|| {
-    //     log::debug!("call state for: {index}");
-
-    //     match state.get_multystate_state(*index).ok() {
-    //         // Some(my_state) => {
-    //         //     StateMeta {pk: (*index).to_string(), ..(*my_state).clone()}
-    //         // },
-    //         Some(state) => (*state).clone(),          
-    //         _ => StateMeta::default()
-    //     }
-    // });
+    let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
 
     let my_state = {
             let meta =  meta.clone();
@@ -60,13 +48,14 @@ pub fn component(Props {
         })
     };      
 
-
     let is_changed = use_state_eq(|| false);
     let toggle_apply = {
         let cell_state = cell_state.clone();
         let my_state = my_state.clone();
         let is_changed = is_changed.clone();
         let select_callback = select_callback.clone();
+        // let cell_state_dispatch.
+
         Callback::from(move |_: MouseEvent| { 
             if let Some(style) = cell_state.get_cell_style().ok() {
                 my_state.dispatch(StateAction::SetStyle(style));    // dispatch set style

@@ -1,6 +1,6 @@
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_state, Callback, Html, InputEvent, MouseEvent};
+use yew::{function_component, html, use_state, AttrValue, Callback, Html, InputEvent, MouseEvent};
 use yewdux::use_store;
 
 use crate::{model::cell_meta::multystate::data_source::DataSource, store::cell};
@@ -47,7 +47,7 @@ pub fn component() -> Html {
             Callback::from(move |e:InputEvent| {
                 e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
                     .map(|input| {
-                        let new = DataSource {tag: input.value(), ..(*ds).clone()};
+                        let new = DataSource {tag: input.value().into(), ..(*ds).clone()};
                         ds.set(new);
                     });
             })
@@ -57,7 +57,7 @@ pub fn component() -> Html {
             let ds = data_source.clone();
             html! {
                 if *(is_edit.clone()) {
-                    <input id="tag" {oninput} value={ds.tag.clone()}/>
+                    <input id="tag" {oninput} value={ format!("{}", ds.tag) }/>
                 } else {
                     {ds.tag.clone()}
                 }

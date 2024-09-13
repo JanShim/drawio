@@ -1,12 +1,13 @@
+use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename = "ds")]
 pub struct DataSource {
     #[serde(rename="@tag")]
-    pub tag: String,
+    pub tag: IString,
     #[serde(rename="@path")]
-    pub path: String,
+    pub path: IString,
 }
 
 impl Default for DataSource {
@@ -32,7 +33,7 @@ mod tests {
     #[test]
     fn xml_state_meta_serde_works() {
         let item = DataSource {
-            tag: "proba".to_owned(),
+            tag: "proba".into(),
             ..Default::default()
         };
 

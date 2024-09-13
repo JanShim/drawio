@@ -1,3 +1,4 @@
+use implicit_clone::unsync::IString;
 use multystate::{is_none_multystate, MultystateMeta};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
@@ -100,7 +101,7 @@ fn err_not_multystate() -> JsValue {
 #[serde(rename = "iiot")]
 pub struct CellMeta {
     #[serde(rename = "@label")]
-    pub label: String,
+    pub label: IString,
     #[serde(skip_serializing_if = "is_none_widget")]
     pub widget: Option<WidgetMeta>,
     #[serde(skip_serializing_if = "is_none_multystate")]
@@ -108,7 +109,7 @@ pub struct CellMeta {
 }
 
 impl CellMeta {
-    pub fn set_label(&mut self, label: String) {
+    pub fn set_label(&mut self, label: IString) {
         self.label = label;
     }
 
@@ -165,7 +166,7 @@ mod tests {
     #[test]
     fn xml_cell_meta_serde_all_none_works() {
         let item = CellMeta {
-            label: "test".to_owned(),
+            label: "test".into(),
             widget: None,
             multystate: None,
         };
@@ -182,9 +183,9 @@ mod tests {
     #[test]
     fn xml_cell_meta_serde_widget_works() {
         let item = CellMeta {
-            label: "test".to_owned(),
+            label: "test".into(),
             widget: Some(WidgetMeta {
-                uuid: "some-uuid".to_owned(),
+                uuid: "some-uuid".into(),
             }),
             multystate: None,
         };

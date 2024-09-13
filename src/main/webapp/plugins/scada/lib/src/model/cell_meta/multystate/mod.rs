@@ -1,6 +1,7 @@
 use data_source::DataSource;
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 use state::StateMeta;
+use implicit_clone::unsync::IString;
 
 pub mod state;
 pub mod data_source;
@@ -54,7 +55,7 @@ pub struct MultystateMeta {
 impl MultystateMeta {
     pub fn create_state(&mut self) {
         self.states.push(StateMeta {
-            pk: self.states.len().to_string(), 
+            pk: self.states.len(), 
             ..Default::default()
         });
     }
@@ -140,18 +141,18 @@ mod tests {
         let item = MultystateMeta {
             range_type: RangeType::LINIER,
             data_source: DataSource { 
-                tag: "tag".to_owned(), 
-                path: "path".to_owned(),
+                tag: "tag".into(), 
+                path: "path".into(),
             },
             states: vec![
                 StateMeta {
-                    pk: "1".to_owned(),
-                    name: "name-1".to_owned(),
+                    pk: 1,
+                    name: "name-1".into(),
                     ..Default::default()
                 },
                 StateMeta {
-                    pk: "2".to_owned(),
-                    name: "name-1".to_owned(),
+                    pk: 2,
+                    name: "name-1".into(),
                     ..Default::default()
                 },
             ],

@@ -36,8 +36,7 @@ pub fn component() -> Html {
     let state_select_callback = {
             let selected = selected_state.clone();
             Callback::from(move |meta: Option<Rc<StateMeta>>| {
-                // apply changes to multystate meta
-                log::debug!("state_select_callback: -> {meta:?}");
+                // log::debug!("state_select_callback: -> {meta:?}");
 
                 // change selected
                 selected.set(meta);
@@ -52,10 +51,8 @@ pub fn component() -> Html {
 
     let on_state_add: Callback<MouseEvent> = cell_state_dispatch.reduce_mut_callback(|state| {
             if let Some(m) = state.get_mut_multystate().ok() {
-                let pk = m.states.len().to_string();
-                log::debug!("on_add {pk}");
                 m.states.push(StateMeta {
-                    pk,
+                    pk: m.states.len(),
                     ..Default::default()
                 });    
             };
@@ -63,14 +60,8 @@ pub fn component() -> Html {
 
     // apply changes to multystate meta
     let state_apply_callback: Callback<Rc<StateMeta>> = cell_state_dispatch.reduce_mut_callback_with(|state, meta: Rc<StateMeta>| {
-            log::debug!("state_apply_callback: -> {meta:?}");
-
-            if let Some(i) = meta.get_index()  {
-                if let Some(multy) = &mut state.meta.multystate {
-                    let state = &mut multy.states[i];
-                    state.style = meta.style.clone();
-                }
-            }
+            // log::debug!("state_apply_callback -> {state:?} || {meta:?}");
+            state.set_multystate_state_style(meta.get_index(), meta.style.clone()).ok();
         });        
 
 
@@ -82,7 +73,7 @@ pub fn component() -> Html {
                 .map(|(id, meta)| {
                     let props = state::Props {
                         selected: if let Some(selected) = (*selected).clone() {
-                                selected.get_index().unwrap_or(usize::MAX) == id
+                                selected.get_index() == id
                             } else {
                                 false
                             },

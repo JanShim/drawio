@@ -20,12 +20,13 @@ pub struct StateMeta {
 }
 
 impl StateMeta {
-    pub fn set_style(&mut self, style: String) {
+    pub fn set_style(&mut self, style: IString) {
         self.style = style;
+        log::debug!("set_style:!! {:?}", self.style);
     }
 
-    pub fn get_index(&self) -> Option<usize> {
-        self.pk.parse::<usize>().ok()
+    pub fn get_index(&self) -> usize {
+        self.pk
     }
 }
 
@@ -33,8 +34,8 @@ impl Default for StateMeta {
     fn default() -> Self {
         Self { 
             pk: Default::default(),
-            name: "наименование".to_owned(),
-            style: "".to_owned(),
+            name: "наименование".into(),
+            style: "".into(),
             selected: false,
         }
     }
@@ -51,19 +52,14 @@ impl Reducible for StateMeta {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         match action {
-           StateAction::SetStyle(style) => {
-            let aaa = Self {
-                pk: self.pk.clone(),
+           StateAction::SetStyle(style) => Self {
+                pk: self.pk,
                 name: self.name.clone(),
-                style: style.into(), 
+                style, 
                 selected: self.selected,
-            };
-        
-                log::debug!("StateAction::SetStyle {style}, {aaa:?}");
-                aaa.into()
-            },
+            }.into(),
             StateAction::Clone(meta) => Self {
-                pk: meta.pk.clone(),
+                pk: meta.pk,
                 name: meta.name.clone(),
                 style: meta.style.clone(), 
                 selected: meta.selected,
