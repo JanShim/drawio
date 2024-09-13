@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use serde::{Deserialize, Serialize};
 use yew::Reducible;
+use implicit_clone::unsync::IString;
 
 
 
@@ -9,11 +10,11 @@ use yew::Reducible;
 #[serde(rename = "state")]
 pub struct StateMeta {
     #[serde(rename = "@pk")]
-    pub pk: String,
+    pub pk: usize,
     #[serde(rename = "@name")]
-    pub name: String,
+    pub name: IString,
     #[serde(rename = "@style")]
-    pub style: String,
+    pub style: IString,
     #[serde(skip)]
     pub selected: bool,
 }
@@ -41,8 +42,8 @@ impl Default for StateMeta {
 
 /// reducer's Action
 pub enum StateAction {
-    Clone(StateMeta),
-    SetStyle(String),
+    Clone(Rc<StateMeta>),
+    SetStyle(IString),
 }
 
 impl Reducible for StateMeta {
@@ -54,7 +55,7 @@ impl Reducible for StateMeta {
             let aaa = Self {
                 pk: self.pk.clone(),
                 name: self.name.clone(),
-                style: style.clone(), 
+                style: style.into(), 
                 selected: self.selected,
             };
         
@@ -85,7 +86,7 @@ mod tests {
     #[test]
     fn xml_state_meta_serde_works() {
         let item = StateMeta {
-            pk: "some".to_owned(),
+            pk: 0,
             ..Default::default()
         };
 
