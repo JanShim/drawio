@@ -3,6 +3,7 @@ use multystate::{is_none_multystate, MultystateMeta};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 use widget::{is_none_widget, WidgetMeta};
+use yew::Reducible;
 
 pub mod multystate;
 pub mod widget;
@@ -152,6 +153,28 @@ impl Default for CellMeta {
             multystate: None, 
         }
     }
+}
+
+
+/// reducer's Action
+pub enum Action {
+    SetStyle(IString),
+}
+
+impl Reducible for CellMeta {
+    type Action = Action;
+    
+    fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
+        match action {
+            Action::SetStyle(style) => Self {
+                label: self.label.clone(),
+                widget: self.widget.clone(),
+                multystate: self.multystate.clone(),
+            }.into(),
+            _ => self
+        }
+    }
+
 }
 
 // ==========================================================

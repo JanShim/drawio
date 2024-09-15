@@ -7,9 +7,9 @@ use crate::{components::multystate::MultystateComponent, store::cell};
 #[function_component(CellDetailsComponent)]
 pub fn component() -> Html {
     // let (state, dispatch) = use_store::<cell::State>();
-    let meta = use_selector(|state: &cell::State| state.meta.clone());
+    let meta = use_selector(|state: &cell::CellState| state.meta.clone());
 
-    let multystate: VNode = {
+    let multystate_view: VNode = {
             let meta = meta.clone();
             if let Some(_) = (*meta).multystate  {
                 html!{ 
@@ -85,7 +85,7 @@ pub fn component() -> Html {
             //     <p>{"label: "}{&*name}</p>
             // </div>                
 
-            { multystate }
+            { multystate_view }
 
         </div>
     }

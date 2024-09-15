@@ -1,7 +1,10 @@
-use implicit_clone::unsync::IString;
-use serde::{Deserialize, Serialize};
+use std::rc::Rc;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+use implicit_clone::{unsync::IString, ImplicitClone};
+use serde::{Deserialize, Serialize};
+use yew::Reducible;
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "ds")]
 pub struct DataSource {
     #[serde(rename="@tag")]
@@ -18,6 +21,31 @@ impl Default for DataSource {
         }
     }
 }
+
+/// reducer's Action
+pub enum DataSourceAction {
+    SetTag(IString),
+    SetPath(IString),
+    Set{tag: IString, path: IString},
+}
+
+/// Reducible
+impl Reducible for DataSource {
+    /// Reducer Action Type
+    type Action = DataSourceAction;
+
+    /// Reducer Function
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        let curr = (*self).clone();
+        match action {
+            DataSourceAction::SetTag(tag) => Self { tag, ..curr }.into(),
+            DataSourceAction::SetPath(path) => Self { path, ..curr }.into(),
+            DataSourceAction::Set{tag, path} => Self { tag, path }.into(),
+        }
+    }
+}
+
+
 
 
 // ==========================================================

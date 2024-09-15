@@ -2,11 +2,11 @@ use std::rc::Rc;
 
 use serde::{Deserialize, Serialize};
 use yew::Reducible;
-use implicit_clone::unsync::IString;
+use implicit_clone::{unsync::IString, ImplicitClone};
 
 
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "state")]
 pub struct StateMeta {
     #[serde(rename = "@pk")]

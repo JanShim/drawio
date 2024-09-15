@@ -14,17 +14,17 @@ pub struct Props {
 
 #[styled_component(CellComponent)]
 pub fn app(Props {cell: mxcell}: &Props) -> Html {
-    let (_state, dispatch) = use_store::<cell::State>();
+    let (_state, dispatch) = use_store::<cell::CellState>();
 
     let cell = mxcell.clone();
     let dispatcher = dispatch.clone();
     use_effect_once(move || {
-        let mut new_state = cell::State {cell: Some(cell), ..Default::default()};
+        let mut new_state = cell::CellState {cell: Some(cell), ..Default::default()};
         new_state.set_meta_from_self();
         
         dispatcher.set(new_state);
         
-        move || dispatcher.set(cell::State {..Default::default()})
+        move || dispatcher.set(cell::CellState {..Default::default()})
     });
 
     // let up = dispatch.reduce_mut_callback(|state| state.inc());    

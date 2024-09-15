@@ -1,7 +1,11 @@
+use std::rc::Rc;
+
 use data_source::DataSource;
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 use state::StateMeta;
-use implicit_clone::unsync::IString;
+use implicit_clone::{sync::IArray, ImplicitClone};
+use yew::Reducible;
+use yewdux::Reducer;
 
 pub mod state;
 pub mod data_source;
@@ -28,7 +32,7 @@ where
     Ok(List::deserialize(deserializer)?.state)
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename_all="lowercase")]
 pub enum RangeType {
     DISCRET,
@@ -41,7 +45,8 @@ impl Default for RangeType {
     }
 }
 
-#[derive(Deserialize, PartialEq, Debug, Clone)]
+
+#[derive(Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "multystate")]
 pub struct MultystateMeta {
     #[serde(rename="@range-type", default)]
@@ -77,7 +82,7 @@ impl Default for MultystateMeta {
         Self { 
             range_type: Default::default(), 
             data_source: Default::default(),
-            states: Default::default(),
+            states: vec![],
         }
     }
 }
@@ -112,6 +117,48 @@ impl Serialize for MultystateMeta {
         helper.serialize(serializer)
     }
 }
+
+pub struct SetDataSource(pub DataSource);
+impl Reducer<MultystateMeta> for SetDataSource {
+    fn apply(self, state: Rc<MultystateMeta>) -> Rc<MultystateMeta> {
+        MultystateMeta {
+            data_source: self.0,
+            range_type: state.range_type.clone(),
+            states: state.states.clone(),
+        }.into()
+    }
+}
+
+/// reducer's Action
+pub enum MultystateMetaAction {
+    CreateState,
+    ApplyDataSource(DataSource),
+    // ApplyStates(Vec<StateMeta>)
+}
+
+impl Reducible for MultystateMeta {
+    /// Reducer Action Type
+    type Action = MultystateMetaAction;
+
+    /// Reducer Function
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        let curr = (*self).clone();
+        match action {
+            MultystateMetaAction::CreateState => Self {
+                states: {
+                    let mut states = curr.states.clone();
+                    states.push(StateMeta { pk: states.len(), ..Default::default() }); 
+                    states
+                },
+                ..curr
+            }.into(),
+            MultystateMetaAction::ApplyDataSource(data_source) => Self { data_source, ..curr }.into(),
+            // MultystateMetaAction::ApplyStates(states) => Self { states, ..curr }.into(),
+        }
+    }
+}
+
+
 
 // ==========================================================
 #[cfg(test)]
@@ -166,5 +213,6 @@ mod tests {
 
         assert_eq!(item, meta);
     }
+
 
 }

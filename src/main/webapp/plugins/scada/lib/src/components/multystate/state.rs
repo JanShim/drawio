@@ -4,15 +4,15 @@ use yew::{function_component, html, use_effect, use_effect_with, use_reducer, us
 use yewdux::{dispatch, use_selector, use_store};
 
 use crate::{
-    model::cell_meta::multystate::state::{StateMeta, StateAction}, 
-    store::cell
+    model::cell_meta::{multystate::state::{StateAction, StateMeta}, CellMeta}, 
+    store::cell::{self, CellState}
 };
 
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub select_callback: Callback<Option<Rc<StateMeta>>>,
-    pub apply_callback: Callback<Rc<StateMeta>>,
+    // pub apply_callback: Callback<Rc<StateMeta>>,
     pub selected: bool,
     pub meta: Rc<StateMeta>,
 }
@@ -21,12 +21,12 @@ pub struct Props {
 pub fn component(Props {
     meta, 
     select_callback, 
-    apply_callback, 
+    // apply_callback, 
     selected
 }: &Props) -> Html {
 
     // cell meta storage
-    let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
+    let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
 
     let my_state = {
             let meta =  meta.clone();
@@ -54,8 +54,6 @@ pub fn component(Props {
         let my_state = my_state.clone();
         let is_changed = is_changed.clone();
         let select_callback = select_callback.clone();
-        // let cell_state_dispatch.
-
         Callback::from(move |_: MouseEvent| { 
             if let Some(style) = cell_state.get_cell_style().ok() {
                 my_state.dispatch(StateAction::SetStyle(style));    // dispatch set style
@@ -68,10 +66,31 @@ pub fn component(Props {
     {   
         let is_changed = is_changed.clone(); 
         let my_state = my_state.clone();
-        let apply_callback = apply_callback.clone();
+        // let apply_callback = apply_callback.clone();
+        let cell_state_dispatch = cell_state_dispatch.clone();
         use_effect(move || {
             if *is_changed {
-                apply_callback.emit(Rc::new((*my_state).clone()));
+                // apply_callback.emit(Rc::new((*my_state).clone()));
+                cell_state_dispatch.reduce_mut(|s| {
+                    if let Some(multy) = s.meta.multystate.clone() {
+                        let states = multy.states;
+                        let StateMeta {pk: i, name:_, style, selected:_} =  (*my_state).clone();
+                        if i < states.len() {
+
+                            cell_state_dispatch.apply(cell::SetStyle(style));
+
+                            // let state = &mut states[i];
+                            // state.set_style(style);
+                            // return Ok(());
+                            // log::debug!("set_multystate_state_style: state {:?}", state);
+                            // s.meta = CellMeta {..s.meta.clone()};
+                        }
+                        // return Err(CellStateError::MultyStateStateIndexError{index: i, len: states.len()}.into());
+            
+                    } 
+
+                    // s.set_multystate_state_style(meta.get_index(), meta.style.clone()).ok();
+                });
             }
         });
     }
