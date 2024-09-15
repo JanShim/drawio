@@ -43,7 +43,7 @@ impl Default for StateMeta {
 
 /// reducer's Action
 pub enum StateAction {
-    Clone(Rc<StateMeta>),
+    Clone(StateMeta),
     SetStyle(IString),
 }
 

@@ -133,7 +133,9 @@ impl Reducer<MultystateMeta> for SetDataSource {
 pub enum MultystateMetaAction {
     CreateState,
     ApplyDataSource(DataSourceMeta),
-    // ApplyStates(Vec<StateMeta>)
+    // ApplyStates(Vec<StateMeta>),
+    ApplyMultystateStateMeta(StateMeta),
+    
 }
 
 impl Reducible for MultystateMeta {
@@ -154,11 +156,39 @@ impl Reducible for MultystateMeta {
             }.into(),
             MultystateMetaAction::ApplyDataSource(data_source) => Self { data_source, ..curr }.into(),
             // MultystateMetaAction::ApplyStates(states) => Self { states, ..curr }.into(),
+            MultystateMetaAction::ApplyMultystateStateMeta(state) => { 
+                let index = state.pk;
+                let mut states = curr.states;
+                log::debug!("states before {states:?}");
+                states.splice(index..index+1, vec![state]);
+                log::debug!("states after {states:?}");
+                Self {
+                    states,
+                    ..curr
+                }.into()
+            },
         }
     }
 }
 
 
+/*
+struct ApplyMultystateStateMeta(StateMeta);
+impl Reducer<MultystateMeta> for ApplyMultystateStateMeta {
+    fn apply(self, state: Rc<MultystateMeta>) -> Rc<MultystateMeta> {
+        let curr = (*state).clone();
+        let new_item = self.0;
+        let index = new_item.pk;
+        let mut states = curr.states;
+        log::debug!("states {states:?}");
+        states.splice(index..index+1, vec![new_item]);
+        log::debug!("states {states:?}");
+        MultystateMeta {
+            states,
+            ..curr
+        }.into()        
+    }
+} */
 
 // ==========================================================
 #[cfg(test)]

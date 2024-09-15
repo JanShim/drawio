@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use yew::{function_component, html, use_reducer, use_state, Callback, Html, MouseEvent, Properties,};
-use yewdux::use_store;
+use yewdux::{use_store, Reducer};
 
-use data_source::{DataSourceComponent, _Props::apply};
+use data_source::DataSourceComponent;
 use state::MultystateStateComponent;
 
 use crate::{
@@ -12,7 +12,6 @@ use crate::{
 
 pub mod data_source;
 pub mod state;
-
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -25,25 +24,34 @@ pub struct Props {
 #[function_component(MultystateComponent)]
 pub fn component(Props { value: multystate, apply: value_apply }: &Props) -> Html {
     // let (cell_store, cell_store_dispatch) = use_store::<cell::CellState>();
+    let multy_state = use_reducer(|| multystate.clone());
 
     /* #region selected_state */
     let selected_state = use_state(|| {
-        let value: Option<Rc<StateMeta>> = None;
+        let value: Option<StateMeta> = None;
         value
     });
 
     let state_select_callback = {
         let selected = selected_state.clone();
-        Callback::from(move |meta: Option<Rc<StateMeta>>| {
+        Callback::from(move |value: Option<StateMeta>| {
             // log::debug!("state_select_callback: -> {meta:?}");
 
             // change selected
-            selected.set(meta);
+            selected.set(value);
         })
     };
+
+    let state_apply_callback = {
+        let multy_state = multy_state.clone();
+        Callback::from(move |value: StateMeta| {
+            multy_state.dispatch(MultystateMetaAction::ApplyMultystateStateMeta(value));
+        })
+    };
+
+
     /* #endregion */
 
-    let multy_state = use_reducer(|| multystate.clone());
 
     // -------------------------------------------------------
     let on_state_add = {
@@ -88,14 +96,14 @@ pub fn component(Props { value: multystate, apply: value_apply }: &Props) -> Htm
         multy_state.states.iter().enumerate()
             .map(|(id, meta)| {
                 let props = state::Props {
+                    value: meta.clone(),
                     selected: if let Some(selected) = (*selected).clone() {
                         selected.get_index() == id
                     } else {
                         false
                     },
-                    select_callback: state_select_callback.clone(),
-                    // apply_callback: state_apply_callback.clone(),
-                    meta: Rc::new(meta.clone()),
+                    select: state_select_callback.clone(),
+                    apply: state_apply_callback.clone(),
                 };
                 html! { <MultystateStateComponent ..props/> }
             })

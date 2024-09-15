@@ -11,88 +11,53 @@ use crate::{
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
-    pub select_callback: Callback<Option<Rc<StateMeta>>>,
-    // pub apply_callback: Callback<Rc<StateMeta>>,
     pub selected: bool,
-    pub meta: Rc<StateMeta>,
+    pub value: StateMeta,
+    pub select: Callback<Option<StateMeta>>,
+    pub apply: Callback<StateMeta>,
 }
 
 #[function_component(MultystateStateComponent)]
 pub fn component(Props {
-    meta, 
-    select_callback, 
-    // apply_callback, 
+    value, 
+    select, 
+    apply, 
     selected
 }: &Props) -> Html {
-
     // cell meta storage
-    let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
+    let (cell_state, _cell_state_dispatch) = use_store::<cell::CellState>();
 
-    let my_state = {
-            let meta =  meta.clone();
-            use_reducer(move || (*meta).clone())
-        };
+    let my_state = use_reducer(|| value.clone());
     {
         let my_state = my_state.clone();
-        use_effect_with((*meta).clone(), move |meta| {
-            my_state.dispatch(StateAction::Clone((*meta).clone()));
+        use_effect_with(value.clone(), move |value| {
+            my_state.dispatch(StateAction::Clone((*value).clone()));
         });
     }
 
-
     let toggle_edit = {
         let my_state = my_state.clone();
-        let select_callback = select_callback.clone();
-        Callback::from(move |_: MouseEvent| {
-            select_callback.emit(Some(Rc::new((*my_state).clone())))
-        })
+        let select = select.clone();
+        Callback::from(move |_: MouseEvent| { select.emit(Some((*my_state).clone())) })
     };      
 
-    let is_changed = use_state_eq(|| false);
     let toggle_apply = {
         let cell_state = cell_state.clone();
         let my_state = my_state.clone();
-        let is_changed = is_changed.clone();
-        let select_callback = select_callback.clone();
+        let select = select.clone();
         Callback::from(move |_: MouseEvent| { 
             if let Some(style) = cell_state.get_cell_style().ok() {
                 my_state.dispatch(StateAction::SetStyle(style));    // dispatch set style
-                is_changed.set(true); // mark as changed
-                select_callback.emit(None);  // remove selection
+                select.emit(None);  // remove selection
             }
         })
     };   
-    // effect он toggle_apply
-    {   
-        let is_changed = is_changed.clone(); 
+    {   // effect он toggle_apply
         let my_state = my_state.clone();
-        // let apply_callback = apply_callback.clone();
-        let cell_state_dispatch = cell_state_dispatch.clone();
-        use_effect(move || {
-            if *is_changed {
-                // apply_callback.emit(Rc::new((*my_state).clone()));
-                cell_state_dispatch.reduce_mut(|s| {
-                    if let Some(multy) = s.meta.multystate.clone() {
-                        let states = multy.states;
-                        let StateMeta {pk: i, name:_, style, selected:_} =  (*my_state).clone();
-                        if i < states.len() {
-
-                            cell_state_dispatch.apply(cell::SetStyle(style));
-
-                            // let state = &mut states[i];
-                            // state.set_style(style);
-                            // return Ok(());
-                            // log::debug!("set_multystate_state_style: state {:?}", state);
-                            // s.meta = CellMeta {..s.meta.clone()};
-                        }
-                        // return Err(CellStateError::MultyStateStateIndexError{index: i, len: states.len()}.into());
-            
-                    } 
-
-                    // s.set_multystate_state_style(meta.get_index(), meta.style.clone()).ok();
-                });
-            }
-        });
+        let apply = apply.clone();
+        use_effect_with((*my_state).clone(), move |v| {
+            apply.emit((*v).clone());
+        })
     }
 
     // --- view items
@@ -107,7 +72,7 @@ pub fn component(Props {
                     <td>{ my_state.name.as_str() }</td>
                 </tr>
                 <tr>
-                    <td>{"aaaaaaaaaaaaa"}</td>
+                    <td>{"here must be style"}</td>
                 </tr>
             </table>
         </td>
