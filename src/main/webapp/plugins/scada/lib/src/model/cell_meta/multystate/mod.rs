@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use data_source::DataSource;
+use data_source::DataSourceMeta;
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 use state::StateMeta;
 use implicit_clone::{sync::IArray, ImplicitClone};
@@ -52,7 +52,7 @@ pub struct MultystateMeta {
     #[serde(rename="@range-type", default)]
     pub range_type: RangeType,
     #[serde(rename="ds", default)]
-    pub data_source: DataSource,
+    pub data_source: DataSourceMeta,
     #[serde(deserialize_with = "unwrap_states", default)]
     pub states: Vec<StateMeta>,
 }
@@ -65,7 +65,7 @@ impl MultystateMeta {
         });
     }
 
-    pub fn set_data_source(&mut self, ds: DataSource) {
+    pub fn set_data_source(&mut self, ds: DataSourceMeta) {
         self.data_source = ds;
     }
 
@@ -98,7 +98,7 @@ impl Serialize for MultystateMeta {
             #[serde(rename="@range-type", default)]
             range_type: &'a RangeType,
             #[serde(rename="ds", default)]
-            pub data_source: &'a DataSource,
+            pub data_source: &'a DataSourceMeta,
             states: List<'a>,
         }
 
@@ -118,7 +118,7 @@ impl Serialize for MultystateMeta {
     }
 }
 
-pub struct SetDataSource(pub DataSource);
+pub struct SetDataSource(pub DataSourceMeta);
 impl Reducer<MultystateMeta> for SetDataSource {
     fn apply(self, state: Rc<MultystateMeta>) -> Rc<MultystateMeta> {
         MultystateMeta {
@@ -132,7 +132,7 @@ impl Reducer<MultystateMeta> for SetDataSource {
 /// reducer's Action
 pub enum MultystateMetaAction {
     CreateState,
-    ApplyDataSource(DataSource),
+    ApplyDataSource(DataSourceMeta),
     // ApplyStates(Vec<StateMeta>)
 }
 
@@ -187,7 +187,7 @@ mod tests {
     fn xml_multystate_meta_states_serde_works() {
         let item = MultystateMeta {
             range_type: RangeType::LINIER,
-            data_source: DataSource { 
+            data_source: DataSourceMeta { 
                 tag: "tag".into(), 
                 path: "path".into(),
             },
