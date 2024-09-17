@@ -1,7 +1,6 @@
 use std::rc::Rc;
-
-use yew::{function_component, html, use_effect, use_effect_with, use_reducer, use_state, use_state_eq, Callback, Html, MouseEvent, Properties};
-use yewdux::{dispatch, use_selector, use_store, Reducer};
+use yew::{html, function_component, use_effect_with, use_reducer, Callback, Html, MouseEvent, Properties};
+use yewdux::{use_store, Reducer};
 
 use crate::{
     errors::CellStateError, 
@@ -42,14 +41,12 @@ pub struct Props {
     pub selected: bool,
     pub value: StateMeta,
     pub select: Callback<Option<StateMeta>>,
-    // pub apply: Callback<StateMeta>,
 }
 
 #[function_component(MultystateStateComponent)]
 pub fn component(Props {
     value, 
     select, 
-    // apply, 
     selected
 }: &Props) -> Html {
     // cell meta storage
@@ -108,13 +105,6 @@ pub fn component(Props {
         </td>
     };
 
-
-    // let state = match state.get_multystate_state(*index).ok() {
-    //     Some(state) => {
-    //         html! {<div>{ format!("{state:#?}") }</div>}
-    //     },
-    //     _ => html! {<div>{"state not found"}</div>}
-    // }; 
 
     let img = {
         if *selected { 

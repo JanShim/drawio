@@ -1,11 +1,14 @@
 use std::rc::Rc;
-
 use data_source::DataSourceMeta;
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 use state::StateMeta;
-use implicit_clone::{sync::IArray, ImplicitClone};
+use implicit_clone::ImplicitClone;
 use yew::Reducible;
 use yewdux::Reducer;
+
+use crate::{errors::CellStateError, store::cell};
+
+use super::CellMeta;
 
 pub mod state;
 pub mod data_source;
@@ -133,9 +136,7 @@ impl Reducer<MultystateMeta> for SetDataSource {
 pub enum MultystateMetaAction {
     CreateState,
     ApplyDataSource(DataSourceMeta),
-    // ApplyStates(Vec<StateMeta>),
     ApplyMultystateStateMeta(StateMeta),
-    
 }
 
 impl Reducible for MultystateMeta {
@@ -168,6 +169,22 @@ impl Reducible for MultystateMeta {
                 }.into()
             },
         }
+    }
+}
+
+pub struct MultystateAddStateAction;
+impl Reducer<cell::CellState> for MultystateAddStateAction {
+    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+        let mut multystate = state.meta.multystate.clone()
+            .expect(format!("{}", CellStateError::NotMultystate).as_str());
+
+        multystate.states.push(StateMeta { pk: multystate.states.len(), ..Default::default() });
+
+        cell::CellState {
+           cell: state.cell.clone(),
+           meta: CellMeta { multystate: Some(multystate), ..state.meta.clone() },
+        }
+        .into()
     }
 }
 

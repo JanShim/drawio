@@ -1,65 +1,39 @@
-use std::rc::Rc;
-
 use quick_xml::se::to_string;
-use yew::{function_component, html, virtual_dom::VNode, Callback, Html, MouseEvent};
-use yewdux::{use_selector, use_store, Reducer};
+use yew::{function_component, html, use_state, virtual_dom::VNode, Callback, Html, MouseEvent, Properties};
+use yewdux::{use_selector, use_store};
 
 use crate::{components::{
         multystate::{self, MultystateComponent}, 
         value::{self, ValueComponent}
     }, 
-    model::cell_meta::{
-        CellMeta, 
-        multystate::MultystateMeta, 
-        value::ValueMeta, 
-    }, 
+    model::cell_meta::value::{ApplyValueMetaAction, ValueMeta}, 
     store::cell
 };
 
-
-struct ApplyValueMeta(ValueMeta);
-impl Reducer<cell::CellState> for ApplyValueMeta {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        cell::CellState {
-            meta: CellMeta { value: Some(self.0), ..(state.meta.clone()) },
-            cell: state.cell.clone(),
-        }.into()        
-    }
-}
-
-struct ApplyMultyStateMeta(MultystateMeta);
-impl Reducer<cell::CellState> for ApplyMultyStateMeta {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        cell::CellState {
-            meta: CellMeta { multystate: Some(self.0), ..(state.meta.clone()) },
-            cell: state.cell.clone(),
-        }.into()        
-    }
-}
 
 #[function_component(CellDetailsComponent)]
 pub fn component() -> Html {
     let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
     let cell_meta = use_selector(|cell_state: &cell::CellState| cell_state.meta.clone());
 
-    let value_apply = cell_state_dispatch.apply_callback(|value: ValueMeta| ApplyValueMeta(value));
-    let multystate_apply = cell_state_dispatch.apply_callback(|value: MultystateMeta| ApplyMultyStateMeta(value));
+    let edit_mode = use_state(|| false);
+
+    let value_apply = cell_state_dispatch.apply_callback(|value: ValueMeta| ApplyValueMetaAction(value));
+
+    let edit_mode_toggle = {
+            let edit_mode = edit_mode.clone();
+            Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
+        };
 
     let cell_details_apply: Callback<MouseEvent> = {
+        let edit_mode = edit_mode.clone();
         let cell_meta = cell_meta.clone();
-        // let cell_state = cell_state.clone();
-        // let multy_state = multy_state.clone();
-        // cell_store_dispatch.reduce_mut_callback(move |cell_state| {
-        //     log::debug!("cell_meta_apply:: multy {:?}", *multy_state);
-
-        //     cell_state.set_multystate((*multy_state).clone());
-        //     cell_state.apply_meta_to_cell();
-        // }
         Callback::from(move |_: MouseEvent| {
-            log::debug!("cell_details_apply:: {:?}", *cell_meta);
+            // log::debug!("cell_details_apply:: {:?}", *cell_meta);
             if let Some(cell) = &cell_state.cell {
                 let meta = cell.set_meta(&cell_meta).ok();
                 log::debug!("NEW CELL META:: {:?}", meta);
+                edit_mode.set(false);
             }
         })
     };
@@ -77,9 +51,10 @@ pub fn component() -> Html {
     
     let multystate_view: VNode =  {
             let multy = cell_meta.multystate.clone();
+            let edit_mode = edit_mode.clone();
             if let Some(value) = multy  {
-                // let props = yew::props! { multystate::Props { apply: multystate_apply} };
-                html!{ <MultystateComponent /> }    
+                let props = yew::props! { multystate::Props { edit_mode: *edit_mode} };
+                html!{ <MultystateComponent ..props/> }    
             } else {
                 html!{<div/>}
             }
@@ -89,7 +64,11 @@ pub fn component() -> Html {
         <div>
             <pre width="300">{ to_string(&cell_meta).unwrap()}</pre>
             <div class="flex-box-2" style="background-color: green;">
-                <button onclick={cell_details_apply}><img src="images/checkmark.gif"/></button>
+                if *edit_mode {
+                    <button onclick={cell_details_apply}><img src="images/checkmark.gif" width="16" height="16"/></button>
+                } else {
+                    <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
+                }
             </div>            
             // <button onclick={on_add}>{"+"}</button><br/>
             // <ul>{entries}</ul>

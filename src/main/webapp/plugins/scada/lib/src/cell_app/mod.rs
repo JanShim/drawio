@@ -111,8 +111,6 @@ table.prop-table td.img {
 "#)} />
 
         <div>
-            // <button onclick={up}>{ "+1" }</button><button onclick={dwn}>{ "-1" }</button>
-            // <p>{ state.count }</p>
             <CellDetailsComponent/>
         </div>
     </>        

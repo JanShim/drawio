@@ -19,6 +19,7 @@ reqwasm = { version = "0.5.0"}
 yew = { version="0.21.0", features=["csr"] }
 yewdux = "0.10.0"
 yew-hooks = "0.3.2"
+# material-yew = {version = "0.3.0", features = ["icon", "icon-button", "icon-button-toggle", "button", "checkbox"]}
 implicit-clone = {version = "0.5.0", features = ["map", "serde"]}
 wasm-logger = "0.2.0"
 wasm-bindgen = {version = "0.2.93", features = ["serde-serialize"] }

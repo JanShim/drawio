@@ -2,6 +2,11 @@ use std::rc::Rc;
 use yew::Reducible;
 use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
+use yewdux::Reducer;
+
+use crate::store::cell;
+
+use super::CellMeta;
 
 pub fn is_none_value(tst: &Option<ValueMeta>) -> bool {
     match tst {
@@ -50,6 +55,16 @@ impl Reducible for ValueMeta {
             ValueAction::SetPath(path) => Self { path, ..curr }.into(),
             ValueAction::Set{tag, path} => Self { tag, path }.into(),
         }
+    }
+}
+
+pub struct ApplyValueMetaAction(pub ValueMeta);
+impl Reducer<cell::CellState> for ApplyValueMetaAction {
+    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+        cell::CellState {
+            meta: CellMeta { value: Some(self.0), ..(state.meta.clone()) },
+            cell: state.cell.clone(),
+        }.into()        
     }
 }
 

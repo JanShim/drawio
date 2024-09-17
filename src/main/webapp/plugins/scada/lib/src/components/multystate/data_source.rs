@@ -4,7 +4,14 @@ use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_reducer, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
 use yewdux::{use_store, Reducer};
 
-use crate::{errors::CellStateError, model::cell_meta::{multystate::data_source::{DataSourceAction, DataSourceMeta}, CellMeta}, store::cell};
+use crate::{
+    errors::CellStateError, 
+    model::cell_meta::{
+            CellMeta,
+            multystate::data_source::{DataSourceAction, DataSourceMeta}, 
+        }, 
+    store::cell,
+};
 
 
 pub struct MultystateApplyDsAction(DataSourceMeta);
@@ -29,11 +36,11 @@ impl Reducer<cell::CellState> for MultystateApplyDsAction {
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub ds: DataSourceMeta,
-    // pub apply: Callback<DataSourceMeta>,
+    pub edit_mode: bool,
 }
 
 #[function_component(DataSourceComponent)]
-pub fn component(Props {ds}: &Props ) -> Html {
+pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
     let (_, cell_store_dispatch) = use_store::<cell::CellState>();
 
     let data_source_state = use_reducer(|| ds.clone());
@@ -67,17 +74,23 @@ pub fn component(Props {ds}: &Props ) -> Html {
     // item view
     let img_view = {
         let is_edit = is_edit.clone();
-        if *is_edit { 
-           html! { <img src="images/checkmark.gif" onclick={togle_apply}/> }
+        if *edit_mode {
+            if *is_edit { 
+                html! { <img src="images/checkmark.gif" onclick={togle_apply}/> }
+             } else {
+                html! { <img src="images/edit16.png" onclick={togle_edit}/> }
+             }
         } else {
-           html! { <img src="images/edit16.png" onclick={togle_edit}/> }
+            html! { <span/> }
         }
+
     };    
 
     let tag_view = {
         let ds = data_source_state.clone();
+        let is_edit = is_edit.clone();
         html! {
-            if *(is_edit.clone()) {
+            if *edit_mode && *is_edit {
                 <input id="tag" {oninput} value={ format!("{}", ds.tag) }/>
             } else {
                 {ds.tag.clone()}
