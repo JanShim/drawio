@@ -1,19 +1,41 @@
+use std::rc::Rc;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_reducer, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
-use yewdux::use_store;
+use yewdux::{use_store, Reducer};
 
-use crate::{model::cell_meta::multystate::data_source::{DataSourceMeta, DataSourceAction}, store::cell};
+use crate::{errors::CellStateError, model::cell_meta::{multystate::data_source::{DataSourceAction, DataSourceMeta}, CellMeta}, store::cell};
+
+
+pub struct MultystateApplyDsAction(DataSourceMeta);
+impl Reducer<cell::CellState> for MultystateApplyDsAction {
+    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+        let mut multystate = state.meta.multystate.clone()
+            .expect(format!("{}", CellStateError::NotMultystate).as_str());
+
+        multystate.data_source = self.0;
+
+        cell::CellState {
+            cell: state.cell.clone(),
+            meta: CellMeta { 
+                    multystate: Some(multystate), 
+                    ..state.meta.clone() 
+                },
+            }
+            .into()            
+    }
+}
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub ds: DataSourceMeta,
-    pub apply: Callback<DataSourceMeta>,
+    // pub apply: Callback<DataSourceMeta>,
 }
 
 #[function_component(DataSourceComponent)]
-pub fn component(Props {ds, apply}: &Props ) -> Html {
-    // let (cell_store, cell_store_dispatch) = use_store::<cell::CellState>();
+pub fn component(Props {ds}: &Props ) -> Html {
+    let (_, cell_store_dispatch) = use_store::<cell::CellState>();
+
     let data_source_state = use_reducer(|| ds.clone());
 
     let is_edit = use_state(|| false);
@@ -25,9 +47,8 @@ pub fn component(Props {ds, apply}: &Props ) -> Html {
     let togle_apply = {
         let is_edit = is_edit.clone();
         let ds = data_source_state.clone();
-        let apply = apply.clone();
         Callback::from(move |_: MouseEvent| {
-            apply.emit((*ds).clone());
+            cell_store_dispatch.apply(MultystateApplyDsAction((*ds).clone()));
             is_edit.set(!*is_edit);     // togle is_edit
         })
     };        

@@ -1,15 +1,15 @@
 use std::rc::Rc;
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use yewdux::{store::Store, Reducer};
+use yewdux::{store::{self, Store}, Reducer};
 
-use crate::model::{
+use crate::{errors::CellStateError, model::{
     cell_meta::{
-        multystate::MultystateMeta, 
+        multystate::{state::StateMeta, MultystateMeta}, 
         CellMeta
     }, 
     mx_cell::MxCell
-};
+}};
 
 #[derive(Clone, PartialEq, Debug)]
 // #[store(storage = "local")]
@@ -32,12 +32,12 @@ impl CellState {
         self.meta = Default::default();
     }
 
-    pub fn apply_meta_to_cell(&self) {
-        if let Some(cell) = &self.cell {
-            let meta = &self.meta;
-            cell.set_meta(meta).ok();
-        }        
-    }
+    // pub fn apply_meta_to_cell(&self) {
+    //     if let Some(cell) = &self.cell {
+    //         let meta = &self.meta;
+    //         cell.set_meta(meta).ok();
+    //     }        
+    // }
 
     // pub fn get_ref_meta(&self) -> Result<&CellMeta, JsValue> {
     //     Ok(&self.meta)
@@ -66,9 +66,9 @@ impl CellState {
     //     self.meta.get_mut_multystate()
     // }
 
-    pub fn set_multystate(&mut self, ms: MultystateMeta)  {
-        self.meta.multystate.replace(ms);
-    }
+    // pub fn set_multystate(&mut self, ms: MultystateMeta)  {
+    //     self.meta.multystate.replace(ms);
+    // }
 
     // pub fn get_multystate_data_source(&self) ->  Result<&DataSource, JsValue> {
     //     self.meta.get_multystate()
@@ -147,6 +147,8 @@ impl Reducer<CellState> for SetStyle {
         }.into()
     }
 }
+
+
 
 ///// reducer's Action
 // pub enum Action {

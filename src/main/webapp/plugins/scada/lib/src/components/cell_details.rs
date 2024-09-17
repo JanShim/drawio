@@ -78,8 +78,8 @@ pub fn component() -> Html {
     let multystate_view: VNode =  {
             let multy = cell_meta.multystate.clone();
             if let Some(value) = multy  {
-                let props = yew::props! { multystate::Props { value, apply: multystate_apply} };
-                html!{ <MultystateComponent ..props/> }    
+                // let props = yew::props! { multystate::Props { apply: multystate_apply} };
+                html!{ <MultystateComponent /> }    
             } else {
                 html!{<div/>}
             }
@@ -98,7 +98,7 @@ pub fn component() -> Html {
             //     <label for="label">{"label: "}</label><input id="label" {oninput}/><br/>
             //     <p>{"label: "}{&*name}</p>
             // </div>                
-            { value_view }
+            // { value_view }
             { multystate_view }
 
         </div>

@@ -1,12 +1,40 @@
 use std::rc::Rc;
 
 use yew::{function_component, html, use_effect, use_effect_with, use_reducer, use_state, use_state_eq, Callback, Html, MouseEvent, Properties};
-use yewdux::{dispatch, use_selector, use_store};
+use yewdux::{dispatch, use_selector, use_store, Reducer};
 
 use crate::{
-    model::cell_meta::{multystate::state::{StateAction, StateMeta}, CellMeta}, 
-    store::cell::{self, CellState}
+    errors::CellStateError, 
+    model::cell_meta::{
+        CellMeta,
+        multystate::state::{StateAction, StateMeta}, 
+    }, 
+    store::cell,
 };
+
+pub struct MultystateApplyStateAction(StateMeta);
+impl Reducer<cell::CellState> for MultystateApplyStateAction {
+    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+        let mut multystate = state.meta.multystate.clone()
+            .expect(format!("{}", CellStateError::NotMultystate).as_str());
+
+        let new_state = self.0;            
+        let index = new_state.get_index();
+        let states = &mut multystate.states;
+        states[index] = StateMeta { ..new_state };
+
+        log::debug!("states: {states:?}");
+
+        cell::CellState {
+            cell: state.cell.clone(),
+            meta: CellMeta { 
+                    multystate: Some(multystate), 
+                    ..state.meta.clone() 
+                },
+            }
+            .into()            
+    }
+}
 
 
 #[derive(Properties, PartialEq, Debug)]
@@ -14,18 +42,18 @@ pub struct Props {
     pub selected: bool,
     pub value: StateMeta,
     pub select: Callback<Option<StateMeta>>,
-    pub apply: Callback<StateMeta>,
+    // pub apply: Callback<StateMeta>,
 }
 
 #[function_component(MultystateStateComponent)]
 pub fn component(Props {
     value, 
     select, 
-    apply, 
+    // apply, 
     selected
 }: &Props) -> Html {
     // cell meta storage
-    let (cell_state, _cell_state_dispatch) = use_store::<cell::CellState>();
+    let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
 
     let my_state = use_reducer(|| value.clone());
     {
@@ -42,23 +70,25 @@ pub fn component(Props {
     };      
 
     let toggle_apply = {
-        let cell_state = cell_state.clone();
+        // let cell_state = cell_state.clone();
         let my_state = my_state.clone();
         let select = select.clone();
         Callback::from(move |_: MouseEvent| { 
             if let Some(style) = cell_state.get_cell_style().ok() {
-                my_state.dispatch(StateAction::SetStyle(style));    // dispatch set style
-                select.emit(None);  // remove selection
+                let state = StateMeta { style, ..(*my_state).clone() };
+                cell_state_dispatch.apply(MultystateApplyStateAction(state));
             }
+
+            select.emit(None);  // remove selection
         })
     };   
-    {   // effect он toggle_apply
-        let my_state = my_state.clone();
-        let apply = apply.clone();
-        use_effect_with((*my_state).clone(), move |v| {
-            apply.emit((*v).clone());
-        })
-    }
+    // {   // effect он toggle_apply
+    //     let my_state = my_state.clone();
+    //     let apply = apply.clone();
+    //     use_effect_with((*my_state).clone(), move |v| {
+    //         apply.emit((*v).clone());
+    //     })
+    // }
 
     // --- view items
     let view_mode = html! {
