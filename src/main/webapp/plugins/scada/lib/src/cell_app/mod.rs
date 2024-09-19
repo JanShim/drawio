@@ -14,7 +14,7 @@ pub struct Props {
 
 #[styled_component(CellComponent)]
 pub fn app(Props {cell: mxcell}: &Props) -> Html {
-    let (_state, dispatch) = use_store::<cell::CellState>();
+    let (_, dispatch) = use_store::<cell::CellState>();
 
     let cell = mxcell.clone();
     let dispatcher = dispatch.clone();
@@ -88,6 +88,12 @@ pub fn app(Props {cell: mxcell}: &Props) -> Html {
     display:flex;
     justify-content: flex-end;
 }
+
+.delim-label {
+    background-color: #e9e9e9;
+    height: 25px;
+    padding: 3px;
+}    
     
 table.prop-table {
     width: 100%;
@@ -106,7 +112,16 @@ table.prop-table td.label {
 table.prop-table td.img {
     width: 16px;
     padding: 0px;
-}        
+}     
+
+.img-16 {
+    width: 16px;
+    padding: 0px;
+}
+
+form.input-form input {
+    margin: 0px 5px 0px 5px;
+}    
 
 "#)} />
 

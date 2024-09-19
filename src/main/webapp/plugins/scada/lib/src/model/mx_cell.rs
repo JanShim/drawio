@@ -5,7 +5,7 @@ use quick_xml::{
     se::to_string,
 };
 
-use crate::{model::scada_diagram, schema_app::js_functions::get_pretty_xml};
+use crate::{errors::CellStateError, model::scada_diagram, schema_app::js_functions::get_pretty_xml};
 
 use super::cell_meta::CellMeta;
 
@@ -120,7 +120,7 @@ impl MxCell {
         match self.get_value() {
             Ok(CellValue::Object(el)) => from_str(el.outer_html().as_str())
                     .map_err(|err| JsValue::from(err.to_string().as_str())),
-            _ => Err(JsValue::from("no meta data for this cell"))
+            _ => Err(CellStateError::NoMeta.into())
         }
     }
 

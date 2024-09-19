@@ -314,8 +314,8 @@ Draw.loadPlugin(async function(ui) {
 	divScadaCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
 	divScadaCellData.style.border = '1px solid gray';
 	divScadaCellData.style.opacity = '0.8';
-	divScadaCellData.style.padding = '10px';
-	divScadaCellData.style.paddingTop = '0px';
+	// divScadaCellData.style.padding = '10px';
+	// divScadaCellData.style.paddingTop = '0px';
 	divScadaCellData.style.width = '20%';
 
 	divScadaCellData.style.boxSizing = 'border-box';

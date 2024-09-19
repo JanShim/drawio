@@ -50,20 +50,20 @@ pub fn component() -> Html {
         };
     
     let multystate_view: VNode =  {
-            let multy = cell_meta.multystate.clone();
-            let edit_mode = edit_mode.clone();
-            if let Some(value) = multy  {
-                let props = yew::props! { multystate::Props { edit_mode: *edit_mode} };
-                html!{ <MultystateComponent ..props/> }    
-            } else {
-                html!{<div/>}
-            }
-        };
+        let edit_mode = edit_mode.clone();
+        let multy = cell_meta.multystate.clone();
+        if let Some(_) = multy  {
+            let props = yew::props! { multystate::Props { edit_mode: *edit_mode} };
+            html!{ <MultystateComponent ..props/> }    
+        } else {
+            html!{<div>{"здесь должен быть мультик"}</div>}
+        }
+    };
 
     html! {
         <div>
-            <pre width="300">{ to_string(&cell_meta).unwrap()}</pre>
-            <div class="flex-box-2" style="background-color: green;">
+            // <pre width="300">{ to_string(&cell_meta).unwrap()}</pre>
+            <div class="flex-box-2 delim-label" >
                 if *edit_mode {
                     <button onclick={cell_details_apply}><img src="images/checkmark.gif" width="16" height="16"/></button>
                 } else {
@@ -83,20 +83,4 @@ pub fn component() -> Html {
         </div>
     }
 
-
-    // match &state.meta {
-    //     Some(meta) => html! {
-    //         <div>
-    //             <pre width="300">{ to_string(&meta).unwrap()}</pre>
-    //             <button onclick={on_add}>{"+"}</button><br/>
-    //             <ul>{entries}</ul>
-    //             <div>
-    //                 <button {onclick}>{"set label"}</button><br/>
-    //                 <label for="label">{"label: "}</label><input id="label" {oninput}/><br/>
-    //                 <p>{"label: "}{&*name}</p>
-    //             </div>                
-    //         </div>
-    //     },
-    //     _ => html! {<div></div>},
-    // }
 }

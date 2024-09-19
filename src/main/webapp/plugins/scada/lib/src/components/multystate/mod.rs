@@ -1,3 +1,4 @@
+use state_edit::MultystateStateEditComponent;
 use yew::{function_component, html, use_state, Callback, Html, Properties,};
 use yewdux::{use_selector, use_store, };
 
@@ -5,14 +6,17 @@ use data_source::DataSourceComponent;
 use state::MultystateStateComponent;
 
 use crate::{
-    errors::CellStateError, model::cell_meta::{
-        multystate::{state::StateMeta, MultystateAddStateAction},
-        CellMeta 
-    }, store::cell 
+    store::cell,
+    errors::CellStateError, 
+    model::cell_meta::multystate::{
+        state::StateMeta, 
+        MultystateAddStateAction
+    },
 };
 
 pub mod data_source;
 pub mod state;
+pub mod state_edit;
 
 // struct ApplyMultyStateMeta(MultystateMeta);
 // impl Reducer<cell::CellState> for ApplyMultyStateMeta {
@@ -70,16 +74,24 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
         let selected = selected_state.clone();
         multy_state.states.iter().enumerate()
             .map(|(id, meta)| {
-                let props = state::Props {
-                    value: meta.clone(),
-                    selected: if let Some(selected) = (*selected).clone() {
-                        selected.get_index() == id
-                    } else {
-                        false
-                    },
-                    select: state_select_callback.clone(),
-                };
-                html! { <MultystateStateComponent ..props/> }
+                if *edit_mode {
+                    let props = state_edit::Props {
+                        value: meta.clone(),
+                        selected: if let Some(selected) = (*selected).clone() {
+                            selected.get_index() == id
+                        } else {
+                            false
+                        },
+                        select: state_select_callback.clone(),
+                    };
+                    html! { <MultystateStateEditComponent ..props/> }
+                } else {
+                    let props = state::Props {
+                        value: meta.clone(),
+                    };
+
+                    html!{ <MultystateStateComponent ..props/> }
+                }   
             })
             .collect::<Html>()
     };
@@ -89,7 +101,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
         // <pre>{ format!("{:?}", *multy_state) }</pre>
         <hr/>
         { data_source_view }
-        <div class="flex-box">{"Состояния"}
+        <div class="flex-box delim-label">{"Состояния"}
             if *edit_mode {
                 <button onclick={on_state_add}>{"+"}</button>
             } 

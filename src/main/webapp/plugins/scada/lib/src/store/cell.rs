@@ -22,7 +22,6 @@ impl CellState {
     pub fn set_meta_from_self(&mut self) {
         if let Some(cell) = &self.cell {
            if let Some(meta) = cell.get_meta().ok()
-                // .or_else(|err| { log::error!("{err:#?}"); Err(()) }).ok()
             {
                 self.meta = meta;
                 return;

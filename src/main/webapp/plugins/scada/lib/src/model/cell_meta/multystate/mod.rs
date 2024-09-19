@@ -3,6 +3,7 @@ use data_source::DataSourceMeta;
 use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
 use state::StateMeta;
 use implicit_clone::ImplicitClone;
+use state_range::{Range, RangeType};
 use yew::Reducible;
 use yewdux::Reducer;
 
@@ -33,19 +34,6 @@ where
     }
 
     Ok(List::deserialize(deserializer)?.state)
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
-#[serde(rename_all="lowercase")]
-pub enum RangeType {
-    DISCRET,
-    LINIER,
-}
-
-impl Default for RangeType {
-    fn default() -> Self {
-        RangeType::DISCRET
-    }
 }
 
 
@@ -178,7 +166,31 @@ impl Reducer<cell::CellState> for MultystateAddStateAction {
         let mut multystate = state.meta.multystate.clone()
             .expect(format!("{}", CellStateError::NotMultystate).as_str());
 
-        multystate.states.push(StateMeta { pk: multystate.states.len(), ..Default::default() });
+        match multystate.range_type {
+            RangeType::DISCRET => {
+                let prev = multystate.states.last()
+                    .map(|o| o.range.get_value())
+                    .unwrap_or(0);
+
+                multystate.states.push(StateMeta { 
+                    pk: multystate.states.len(), 
+                    name: format!("state-{}", multystate.states.len()).into(),
+                    range: Range::Discret { value: prev },
+                    ..Default::default() 
+                })
+            },
+            RangeType::LINEAR => {
+                let prev = multystate.states.last()
+                    .map(|o| o.range.get_to())
+                    .unwrap_or(0.0);
+
+                multystate.states.push(StateMeta { 
+                    pk: multystate.states.len(), 
+                    range: Range::Linear { from: prev, to: prev },
+                    ..Default::default() 
+                })
+            },            
+        };
 
         cell::CellState {
            cell: state.cell.clone(),
@@ -187,25 +199,6 @@ impl Reducer<cell::CellState> for MultystateAddStateAction {
         .into()
     }
 }
-
-
-/*
-struct ApplyMultystateStateMeta(StateMeta);
-impl Reducer<MultystateMeta> for ApplyMultystateStateMeta {
-    fn apply(self, state: Rc<MultystateMeta>) -> Rc<MultystateMeta> {
-        let curr = (*state).clone();
-        let new_item = self.0;
-        let index = new_item.pk;
-        let mut states = curr.states;
-        log::debug!("states {states:?}");
-        states.splice(index..index+1, vec![new_item]);
-        log::debug!("states {states:?}");
-        MultystateMeta {
-            states,
-            ..curr
-        }.into()        
-    }
-} */
 
 // ==========================================================
 #[cfg(test)]
@@ -233,7 +226,7 @@ mod tests {
     #[test]
     fn xml_multystate_meta_states_serde_works() {
         let item = MultystateMeta {
-            range_type: RangeType::LINIER,
+            range_type: RangeType::LINEAR,
             data_source: DataSourceMeta { 
                 tag: "tag".into(), 
                 path: "path".into(),
@@ -242,11 +235,13 @@ mod tests {
                 StateMeta {
                     pk: 1,
                     name: "name-1".into(),
+                    // range: Range::Linear { from: 1.0, to: 2.0 },
                     ..Default::default()
                 },
                 StateMeta {
                     pk: 2,
                     name: "name-1".into(),
+                    // range: Range::Discret { value: 123 },
                     ..Default::default()
                 },
             ],

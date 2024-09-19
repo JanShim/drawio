@@ -61,7 +61,7 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
     };        
 
     // tag name input
-    let oninput = {
+    let on_tag_input = {
             let ds = data_source_state.clone();
             Callback::from(move |e:InputEvent| {
                 e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
@@ -91,7 +91,7 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
         let is_edit = is_edit.clone();
         html! {
             if *edit_mode && *is_edit {
-                <input id="tag" {oninput} value={ format!("{}", ds.tag) }/>
+                <input id="tag" oninput={on_tag_input} value={ format!("{}", ds.tag) }/>
             } else {
                 {ds.tag.clone()}
             }

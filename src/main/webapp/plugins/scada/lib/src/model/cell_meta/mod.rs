@@ -104,7 +104,7 @@ impl Default for CellMeta {
         Self { 
             label: Default::default(), 
             widget: None, 
-            multystate: None, 
+            multystate: Some(MultystateMeta::default()), 
             value: None,
         }
     }
