@@ -187,6 +187,7 @@ mod tests {
             label: "test".into(),
             widget: Some(WidgetMeta {
                 uuid: "some-uuid".into(),
+                data_source: todo!(),
             }),
             ..Default::default()
         };

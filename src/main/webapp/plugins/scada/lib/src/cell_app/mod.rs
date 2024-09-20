@@ -112,6 +112,8 @@ table.prop-table {
 }
 table.prop-table td {
     padding: 0px 5px 0px 5px;
+    height: 25px;
+    vertical-align: middle;
 }
 table.prop-table td input {
     width: 100%;
@@ -128,12 +130,17 @@ table.prop-table td.img {
 
 .img-16 {
     width: 16px;
+    height: 16px;
     padding: 0px;
 }
 
 form.input-form input {
     margin: 0px 5px 0px 5px;
 }    
+
+div.svg-view {
+    text-align: center;
+}
 
 "#)} />
 

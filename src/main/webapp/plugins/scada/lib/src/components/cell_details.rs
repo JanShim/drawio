@@ -65,7 +65,8 @@ pub fn component() -> Html {
                 <UndefiendComponent ..props/> 
             }    
         } else {
-            html!{<div>{"здесь должен быть undefiend"}</div>}
+            // html!{<div>{"здесь должен быть undefiend"}</div>}
+            html!{<div/>}
         }
     };
 
@@ -99,7 +100,8 @@ pub fn component() -> Html {
                 </>
             }    
         } else {
-            html!{<div>{"здесь должен быть мультик"}</div>}
+            // html!{<div>{"здесь должен быть мультик"}</div>}
+            html!{<div/>}
         }
     };
 
@@ -116,7 +118,8 @@ pub fn component() -> Html {
                 </>
             }    
         } else {
-            html!{<div>{"здесь должен быть виджет"}</div>}
+            // html!{<div>{"здесь должен быть виджет"}</div>}
+            html!{<div/>}
         }
     };
 

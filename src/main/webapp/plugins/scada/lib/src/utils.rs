@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use implicit_clone::sync::IString;
 use reqwasm::{
     http::Request, 
 //    Error
@@ -42,3 +45,48 @@ where
         .map_err(|err| FetchError::SerdeError(err.to_string()));
 }
 
+
+pub fn string_to_map<'a>(s: &'a str) -> HashMap<&'a str, &'a str> {
+    s.split(';')
+        .map(|o| o.trim())
+        .map(|o| {
+            o.split(':')
+                .map(|p| p.trim())
+                .filter(|s| s.len() > 0)
+                .collect::<Vec<_>>()
+        })
+        .filter(|v| v.len() == 2)
+        .map(|kv| (kv[0], kv[1]))
+        .fold(HashMap::new(), |mut acc, i| {
+            acc.insert(i.0, i.1);
+            acc
+        })
+}
+
+pub fn map_to_string<'a>(m: HashMap<&'a str, &'a str>) -> String {
+    m.iter()
+        .map(|o| format!("{}:{}", o.0, o.1))
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
+// ==========================================================
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn string_to_map_works() {
+        let str = "aaa: bbb; ccc:ddd;";
+
+        let map = string_to_map(str);
+        println!("{map:#?}");
+
+        assert_eq!(map.get("aaa"), Some(&"bbb"));
+
+        let res = map_to_string(map);
+        println!("{res:#?}");
+
+        // assert_eq!(res, "ccc:ddd;aaa:bbb");
+    }
+}

@@ -1,37 +1,13 @@
-use std::rc::Rc;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_reducer, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
 use yewdux::{use_store, Reducer};
 
 use crate::{
-    errors::CellStateError, 
-    model::cell_meta::{
-            CellMeta,
-            multystate::data_source::{DataSourceAction, DataSourceMeta}, 
-        }, 
-    store::cell,
+    model::cell_meta::widget::data_source::{DataSourceAction, DataSourceMeta, WidgetApplyDsAction, }, store::cell 
 };
 
 
-pub struct MultystateApplyDsAction(DataSourceMeta);
-impl Reducer<cell::CellState> for MultystateApplyDsAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        let mut multystate = state.meta.multystate.clone()
-            .expect(format!("{}", CellStateError::NotMultystate).as_str());
-
-        multystate.data_source = self.0;
-
-        cell::CellState {
-            cell: state.cell.clone(),
-            meta: CellMeta { 
-                    multystate: Some(multystate), 
-                    ..state.meta.clone() 
-                },
-            }
-            .into()            
-    }
-}
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -51,11 +27,18 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
         Callback::from(move |_: MouseEvent| { edit.set(!*edit); })
     };  
 
+    // let toggle_close = {
+    //     let edit = is_edit.clone();
+    //     Callback::from(move |_: MouseEvent| { 
+    //         edit.set(false);
+    //     })
+    // };  
+
     let togle_apply = {
         let is_edit = is_edit.clone();
         let ds = data_source_state.clone();
         Callback::from(move |_: MouseEvent| {
-            cell_store_dispatch.apply(MultystateApplyDsAction((*ds).clone()));
+            cell_store_dispatch.apply(WidgetApplyDsAction((*ds).clone()));
             is_edit.set(!*is_edit);     // togle is_edit
         })
     };        
@@ -76,14 +59,13 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
         let is_edit = is_edit.clone();
         if *edit_mode {
             if *is_edit { 
-                html! { <img src="images/checkmark.gif" onclick={togle_apply}/> }
+                html! { <img src="images/checkmark.gif" onclick={togle_apply}/>  }
              } else {
                 html! { <img src="images/edit16.png" onclick={togle_edit}/> }
              }
         } else {
             html! { <span/> }
         }
-
     };    
 
     let tag_view = {
@@ -100,7 +82,7 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
 
     html!{
         <table class="prop-table">
-        <td class="label" width="20">{"Тэг свойства"}</td>
+        <td class="label" width="70">{"Тэг объекта"}</td>
         <td>{ tag_view }</td>
         <td class="img">{ img_view }</td>
         </table>
