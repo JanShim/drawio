@@ -1,7 +1,7 @@
 use wasm_bindgen::JsCast;
-use web_sys::{EventTarget, FormData, HtmlFormElement, HtmlInputElement};
-use yew::{function_component, html, use_effect_with, use_reducer, use_state, Callback, Html, InputEvent, MouseEvent, Properties, SubmitEvent};
-use yewdux::{use_selector, use_selector_eq, use_store};
+use web_sys::{FormData, HtmlFormElement};
+use yew::{function_component, html, use_effect_with, use_reducer, use_state, Callback, Html, MouseEvent, Properties, SubmitEvent};
+use yewdux::use_store;
 
 use crate::{
     model::cell_meta::multystate::{state::{MultystateApplyStateAction, StateAction, StateMeta}, state_range::RangeType}, store::cell 

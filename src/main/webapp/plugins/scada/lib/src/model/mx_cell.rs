@@ -118,8 +118,11 @@ impl MxCell {
 
     pub fn get_meta(&self) -> Result<CellMeta, JsValue> {
         match self.get_value() {
-            Ok(CellValue::Object(el)) => from_str(el.outer_html().as_str())
-                    .map_err(|err| JsValue::from(err.to_string().as_str())),
+            Ok(CellValue::Object(el)) => {
+                log::debug!("ELEMENT:  {:#?}", el.outer_html());
+                from_str(el.outer_html().as_str())
+                    .map_err(|err| JsValue::from(err.to_string().as_str()))
+            },
             _ => Err(CellStateError::NoMeta.into())
         }
     }

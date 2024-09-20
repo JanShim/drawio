@@ -6,7 +6,7 @@ use yewdux::{store::{self, Store}, Reducer};
 use crate::{errors::CellStateError, model::{
     cell_meta::{
         multystate::{state::StateMeta, MultystateMeta}, 
-        CellMeta
+        CellMeta, CellType
     }, 
     mx_cell::MxCell
 }};
@@ -19,16 +19,15 @@ pub struct CellState {
 }
 
 impl CellState {
-    pub fn set_meta_from_self(&mut self) {
+    pub fn set_meta_from_self(&mut self) -> Result<(), JsValue> {
         if let Some(cell) = &self.cell {
-           if let Some(meta) = cell.get_meta().ok()
+            if let Some(meta) = cell.get_meta().ok()
             {
                 self.meta = meta;
-                return;
+                return Ok(());
             };
         }
-
-        self.meta = Default::default();
+        Err(CellStateError::NoMeta.into())
     }
 
     // pub fn apply_meta_to_cell(&self) {
@@ -135,18 +134,51 @@ impl Store for CellState {
     }
 }
 
-pub struct SetStyle(pub IString);
-impl Reducer<CellState> for SetStyle {
+// pub struct SetStyleAction(pub IString);
+// impl Reducer<CellState> for SetStyleAction {
+//     fn apply(self, state: Rc<CellState>) -> Rc<CellState> {
+//         log::debug!("{}", self.0);
+//         CellState {
+//             cell: state.cell.clone(),
+//             meta: state.meta.clone(),
+//         }.into()
+//     }
+// }
+
+pub struct SetCellTypeAction(pub CellType);
+impl Reducer<CellState> for SetCellTypeAction {
     fn apply(self, state: Rc<CellState>) -> Rc<CellState> {
-        log::debug!("{}", self.0);
+        if let Some(cell) = &state.cell.clone() {
+            let meta = match self.0 {
+                CellType::MULTYSTATE => CellMeta {
+                    label: cell.get_label().into(),
+                    multystate: Some(Default::default()),
+                    ..Default::default()
+                },
+                CellType::VALUE => CellMeta {
+                    label: cell.get_label().into(),
+                    value: Some(Default::default()),
+                    ..Default::default()
+                },
+                _ => Default::default(),
+            };
+
+            log::debug!("{meta:?}");
+
+            cell.set_meta(&meta).unwrap();
+            
+            return CellState {
+                cell: Some(cell.clone()),
+                meta,
+            }.into();
+        };
 
         CellState {
-            cell: state.cell.clone(),
-            meta: state.meta.clone(),
+            cell: None,
+            meta: Default::default(),
         }.into()
     }
 }
-
 
 
 ///// reducer's Action

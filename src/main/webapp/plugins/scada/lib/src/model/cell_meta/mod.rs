@@ -1,7 +1,9 @@
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
+use web_sys::FormData;
 use yew::Reducible;
 use serde::{Deserialize, Serialize};
+use undefiend::{is_none_undefiend, UndefiendMeta};
 use multystate::{is_none_multystate, MultystateMeta};
 use value::{is_none_value, ValueMeta};
 use widget::{is_none_widget, WidgetMeta};
@@ -11,6 +13,7 @@ use crate::errors::CellStateError;
 pub mod multystate;
 pub mod widget;
 pub mod value;
+pub mod undefiend;
 
 // fn serialize_meta<S>(item: &CellType, serializer: S) -> Result<S::Ok, S::Error>
 // where
@@ -35,19 +38,36 @@ pub mod value;
 //         }
 // }
 
-// #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Debug)]
 // #[serde(untagged)]
 pub enum CellType {
     UNDEFIEND,
     WIDGET,
     MULTYSTATE,
+    VALUE,
 }
+
+impl From<FormData> for CellType {
+    fn from(data: FormData) -> Self {
+        match data.get("cell-type").as_string() {
+            Some(value) => match value {
+                _ if value=="value" => CellType::VALUE,
+                _ => CellType::MULTYSTATE,
+            },
+            None => CellType::MULTYSTATE,
+        }
+    }
+}
+
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename = "iiot")]
 pub struct CellMeta {
     #[serde(rename = "@label")]
     pub label: IString,
+
+    #[serde(skip_serializing_if = "is_none_undefiend")]
+    pub undefiend: Option<UndefiendMeta>,
 
     #[serde(skip_serializing_if = "is_none_value")]
     pub value: Option<ValueMeta>,
@@ -103,8 +123,9 @@ impl Default for CellMeta {
     fn default() -> Self {
         Self { 
             label: Default::default(), 
+            undefiend: None,
             widget: None, 
-            multystate: Some(MultystateMeta::default()), 
+            multystate: None, 
             value: None,
         }
     }
@@ -140,6 +161,7 @@ mod tests {
     // use multystate::StateMeta;
     use quick_xml::{de::from_str, se::to_string};
     use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
+    use value::ValueMeta;
 
     use super::*;
 

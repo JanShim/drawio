@@ -5,27 +5,39 @@ use wasm_bindgen::prelude::*;
 use yew_hooks::use_effect_once;
 use web_sys::HtmlDivElement;
 
-use crate::{components::cell_details::CellDetailsComponent, model::mx_cell::MxCell, store::cell};
+use crate::{components::cell_details::CellDetailsComponent, model::mx_cell::MxCell, store::cell::{self, CellState}};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub cell: MxCell,
+    pub cell_state: CellState,
 }
 
 #[styled_component(CellComponent)]
-pub fn app(Props {cell: mxcell}: &Props) -> Html {
+pub fn app(Props {cell_state}: &Props) -> Html {
     let (_, dispatch) = use_store::<cell::CellState>();
+    {
+        let dispatch = dispatch.clone();
+        let cell_state = cell_state.clone();
+        use_effect_once(move || {
+            dispatch.set(cell_state);
 
-    let cell = mxcell.clone();
-    let dispatcher = dispatch.clone();
-    use_effect_once(move || {
-        let mut new_state = cell::CellState {cell: Some(cell), ..Default::default()};
-        new_state.set_meta_from_self();
+            // destructor
+            move || dispatch.set(cell::CellState {..Default::default()})
+        })
+    };
+
+    // let cell = mxcell.clone();
+    // let dispatcher = dispatch.clone();
+    // use_effect_once(move || {
+    //     let mut new_state = cell::CellState {cell: Some(cell), ..Default::default()};
+    //     new_state.set_meta_from_self().unwrap();
         
-        dispatcher.set(new_state);
+    //     log::debug!("use_effect_once!!!!!!!!! {:?}", new_state);
+
+    //     dispatcher.set(new_state);
         
-        move || dispatcher.set(cell::CellState {..Default::default()})
-    });
+    //     move || dispatcher.set(cell::CellState {..Default::default()})
+    // });
 
     // let up = dispatch.reduce_mut_callback(|state| state.inc());    
     // let dwn = dispatch.reduce_mut_callback(|state| state.dec());    
@@ -135,5 +147,8 @@ form.input-form input {
 
 #[wasm_bindgen(js_name=renderCell)]
 pub fn render_cell(div: HtmlDivElement, cell: MxCell) {
-    yew::Renderer::<CellComponent>::with_root_and_props(div.into(), Props {cell}).render();
+    let mut cell_state = cell::CellState {cell: Some(cell), ..Default::default()};
+    cell_state.set_meta_from_self().unwrap();
+
+    yew::Renderer::<CellComponent>::with_root_and_props(div.into(), Props {cell_state}).render();
 }
