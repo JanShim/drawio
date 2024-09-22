@@ -6,7 +6,7 @@ use yewdux::{use_selector, use_store};
 use implicit_clone::unsync::IString;
 use svg_view::SvgViewComponent;
 
-use crate::{errors::CellStateError, model::cell_meta::widget, store::cell};
+use crate::{errors::CellStateError, model::cell_meta::{widget::{self, WidgetMeta}, CellMetaVariant}, store::cell};
 
 pub mod data_source;
 pub mod svg_view;
@@ -19,10 +19,13 @@ pub struct Props {
 #[function_component(WidgetComponent)]
 pub fn component(Props { edit_mode }: &Props) -> Html {
     // let (_, cell_store_dispatch) = use_store::<cell::CellState>();
-    let widget = use_selector(|cell_state: &cell::CellState| 
-        cell_state.meta.widget.clone()
-            .expect(format!("{}", CellStateError::NotWidget).as_str())
-    );  
+    let widget = use_selector(|cell_state: &cell::CellState| {
+		if let CellMetaVariant::Widget(widget) = cell_state.meta.data.clone() {
+			return widget;
+		};
+		log::error!("{}", CellStateError::NotWidget);
+		WidgetMeta::default()
+	});  
 
     let is_edit = use_state(|| false);
     let togle_edit = {

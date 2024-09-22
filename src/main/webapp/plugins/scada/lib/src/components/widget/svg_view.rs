@@ -17,8 +17,6 @@ pub fn component(props: &Props) -> Html {
         let window = web_sys::window().expect("no global `window` exists");
         let document = window.document().expect("should have a document on window");
     
-        // let html = html.replace("display: block;", "");
-
         let div = document.create_element("div").unwrap();   
         div.set_class_name("svg-view"); 
         div.set_inner_html(&html);
@@ -32,7 +30,6 @@ pub fn component(props: &Props) -> Html {
                     style_map.remove(&"height");
 
                     let style = map_to_string(style_map);
-                    log::debug!("{style:?}");
                     svg.set_attribute("style", &style).ok();
                 };  
 

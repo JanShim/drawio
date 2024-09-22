@@ -1,10 +1,12 @@
+use std::rc::Rc;
+
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
 use crate::{components::{
         multystate::{self, MultystateComponent}, undefiend::{self, UndefiendComponent}, value::{self, ValueComponent}, widget::{self, WidgetComponent}
     }, 
-    model::cell_meta::{value::{ApplyValueMetaAction, ValueMeta}, CellType}, 
+    model::cell_meta::{value::{ApplyValueMetaAction, ValueMeta}, CellMetaVariant, CellType}, 
     store::cell::{self, SetCellTypeAction}
 };
 
@@ -54,81 +56,55 @@ pub fn component() -> Html {
         </div>           
     };
 
-    let undefiend_view =  {
-        let undefiend = cell_meta.undefiend.clone();
-        if let Some(_) = undefiend  {
-            let props = yew::props! { undefiend::Props {
-                apply: cell_type_apply,
-            }};
-
-            html!{ 
-                <UndefiendComponent ..props/> 
-            }    
-        } else {
-            // html!{<div>{"здесь должен быть undefiend"}</div>}
-            html!{<div/>}
-        }
-    };
-
-
-    let value_view = {
-        let header = header.clone();
-        let value_meta = cell_meta.value.clone();
-        if let Some(value) = value_meta  {
-            let props = yew::props! { value::Props { value, apply: value_apply} };
-            html!{ 
-                <>
-                {header}
-                <ValueComponent ..props/> 
-                </>
-            }    
-        } else {
-            html!{<div/>}
-        }
-    };
-    
-    let multystate_view =  {
+    let details_vew = {
         let header = header.clone();
         let edit_mode = edit_mode.clone();
-        let multy = cell_meta.multystate.clone();
-        if let Some(_) = multy  {
-            let props = yew::props! { multystate::Props { edit_mode: *edit_mode} };
-            html!{ 
-                <>
-                {header}
-                <MultystateComponent ..props/> 
-                </>
-            }    
-        } else {
-            // html!{<div>{"здесь должен быть мультик"}</div>}
-            html!{<div/>}
-        }
-    };
-
-    let widget_view =  {
-        let header = header.clone();
-        let edit_mode = edit_mode.clone();
-        let widget = cell_meta.widget.clone();
-        if let Some(_) = widget  {
-            let props = yew::props! { widget::Props { edit_mode: *edit_mode} };
-            html!{ 
-                <>
-                {header}
-                <WidgetComponent ..props/> 
-                </>
-            }    
-        } else {
-            // html!{<div>{"здесь должен быть виджет"}</div>}
-            html!{<div/>}
+        match &cell_meta.data {
+            CellMetaVariant::Undefiend(_) => {
+                log::debug!("cell as undefiend: {cell_meta:?}");
+                let props = yew::props! { undefiend::Props {
+                    apply: cell_type_apply,
+                }};
+                html!{
+                    <UndefiendComponent ..props/>
+                }
+            },
+            CellMetaVariant::Value(value) => {
+                log::debug!("cell as value: {cell_meta:?}");
+                let props = yew::props! { value::Props {value: value.clone(), apply: value_apply} };
+                html!{ 
+                    <>
+                    { header }
+                    <ValueComponent ..props/> 
+                    </>
+                }                    
+            },
+            CellMetaVariant::Multystate(_) => {
+                log::debug!("cell as multystae: {cell_meta:?}");
+                let props = yew::props! { multystate::Props {edit_mode: *edit_mode} };
+                html!{ 
+                    <>
+                    { header }
+                    <MultystateComponent ..props/> 
+                    </>
+                }    
+            },
+            CellMetaVariant::Widget(_) => {
+                log::debug!("cell as widget: {cell_meta:?}");
+                let props = yew::props! { widget::Props { edit_mode: *edit_mode} };
+                html!{
+                    <>
+                    { header }
+                    <WidgetComponent ..props/> 
+                    </>
+                }                    
+            },
         }
     };
 
     html! {
         <div>
-            { undefiend_view }
-            { value_view }
-            { multystate_view }
-            { widget_view }
+            { details_vew }
         </div>
     }
 

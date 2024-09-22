@@ -9,18 +9,11 @@ use yewdux::Reducer;
 
 use crate::{errors::CellStateError, store::cell};
 
-use super::CellMeta;
+use super::{CellMeta, CellMetaVariant};
 
 pub mod state;
 pub mod data_source;
 pub mod state_range;
-
-pub fn is_none_multystate(tst: &Option<MultystateMeta>) -> bool {
-    match tst {
-        Some(_) => false,
-        None => true,
-    }
-}
 
 fn unwrap_states<'de, D>(deserializer: D) -> Result<Vec<StateMeta>, D::Error>
 where
@@ -163,40 +156,45 @@ impl Reducible for MultystateMeta {
 pub struct MultystateAddStateAction;
 impl Reducer<cell::CellState> for MultystateAddStateAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        let mut multystate = state.meta.multystate.clone()
-            .expect(format!("{}", CellStateError::NotMultystate).as_str());
-
-        match multystate.range_type {
-            RangeType::DISCRET => {
-                let prev = multystate.states.last()
-                    .map(|o| o.range.get_value())
-                    .unwrap_or(0);
-
-                multystate.states.push(StateMeta { 
-                    pk: multystate.states.len(), 
-                    name: format!("state-{}", multystate.states.len()).into(),
-                    range: Range::Discret { value: prev },
-                    ..Default::default() 
-                })
-            },
-            RangeType::LINEAR => {
-                let prev = multystate.states.last()
-                    .map(|o| o.range.get_to())
-                    .unwrap_or(0.0);
-
-                multystate.states.push(StateMeta { 
-                    pk: multystate.states.len(), 
-                    range: Range::Linear { from: prev, to: prev },
-                    ..Default::default() 
-                })
-            },            
-        };
-
-        cell::CellState {
-           cell: state.cell.clone(),
-           meta: CellMeta { multystate: Some(multystate), ..state.meta.clone() },
+        if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone() {
+            match multystate.range_type {
+                RangeType::DISCRET => {
+                    let prev = multystate.states.last()
+                        .map(|o| o.range.get_value())
+                        .unwrap_or(0);
+    
+                    multystate.states.push(StateMeta { 
+                        pk: multystate.states.len(), 
+                        name: format!("state-{}", multystate.states.len()).into(),
+                        range: Range::Discret { value: prev },
+                        ..Default::default() 
+                    })
+                },
+                RangeType::LINEAR => {
+                    let prev = multystate.states.last()
+                        .map(|o| o.range.get_to())
+                        .unwrap_or(0.0);
+    
+                    multystate.states.push(StateMeta { 
+                        pk: multystate.states.len(), 
+                        name: format!("state-{}", multystate.states.len()).into(),
+                        range: Range::Linear { from: prev, to: prev },
+                        ..Default::default() 
+                    })
+                },            
+            };
+    
+            return cell::CellState {
+               cell: state.cell.clone(),
+               meta: CellMeta { 
+                    data: CellMetaVariant::Multystate(multystate.clone()),
+                    ..state.meta.clone() 
+                },
+            }
+            .into()
         }
-        .into()
+        log::error!("can't add state for not multystate");
+        state
     }
 }
 

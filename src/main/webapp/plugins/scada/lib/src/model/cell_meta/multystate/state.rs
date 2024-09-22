@@ -7,7 +7,7 @@ use implicit_clone::{unsync::IString, ImplicitClone};
 use yewdux::Reducer;
 
 use crate::{
-     errors::CellStateError, model::cell_meta::CellMeta, store::cell
+     errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant}, store::cell
 };
 
 use super::state_range::{Range, RangeType};
@@ -142,22 +142,22 @@ impl Reducible for StateMeta {
 pub struct MultystateApplyStateAction(pub StateMeta);
 impl Reducer<cell::CellState> for MultystateApplyStateAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        let mut multystate = state.meta.multystate.clone()
-            .expect(format!("{}", CellStateError::NotMultystate).as_str());
+        if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
+            let new_state = self.0;            
+            let index = new_state.get_index();
+            let states = &mut multystate.states;
+            states[index] = StateMeta { ..new_state };
 
-        let new_state = self.0;            
-        let index = new_state.get_index();
-        let states = &mut multystate.states;
-        states[index] = StateMeta { ..new_state };
-
-        cell::CellState {
-            cell: state.cell.clone(),
-            meta: CellMeta { 
-                    multystate: Some(multystate), 
-                    ..state.meta.clone() 
-                },
-            }
-            .into()            
+            return  cell::CellState {
+                cell: state.cell.clone(),
+                meta: CellMeta { 
+                        data: CellMetaVariant::Multystate(multystate.clone()), 
+                        ..state.meta.clone() 
+                    },
+                }
+                .into();
+        }
+        state
     }
 }
 

@@ -5,8 +5,8 @@ use yewdux::{store::{self, Store}, Reducer};
 
 use crate::{errors::CellStateError, model::{
     cell_meta::{
-        multystate::{state::StateMeta, MultystateMeta}, 
-        CellMeta, CellType
+        // multystate::{state::StateMeta, MultystateMeta}, 
+        CellMeta, CellMetaVariant, CellType
     }, 
     mx_cell::MxCell
 }};
@@ -152,13 +152,11 @@ impl Reducer<CellState> for SetCellTypeAction {
             let meta = match self.0 {
                 CellType::MULTYSTATE => CellMeta {
                     label: cell.get_label().into(),
-                    multystate: Some(Default::default()),
-                    ..Default::default()
+                    data: CellMetaVariant::Multystate(Default::default()),
                 },
                 CellType::VALUE => CellMeta {
                     label: cell.get_label().into(),
-                    value: Some(Default::default()),
-                    ..Default::default()
+                    data: CellMetaVariant::Value(Default::default()),
                 },
                 _ => Default::default(),
             };

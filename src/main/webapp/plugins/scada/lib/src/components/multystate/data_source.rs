@@ -5,31 +5,34 @@ use yew::{function_component, html, use_reducer, use_state, Callback, Html, Inpu
 use yewdux::{use_store, Reducer};
 
 use crate::{
-    errors::CellStateError, 
     model::cell_meta::{
-            CellMeta,
-            multystate::data_source::{DataSourceAction, DataSourceMeta}, 
+            multystate::{data_source::{DataSourceAction, DataSourceMeta}, MultystateMeta}, CellMeta, CellMetaVariant 
         }, 
     store::cell,
 };
 
 
-pub struct MultystateApplyDsAction(DataSourceMeta);
+pub struct MultystateApplyDsAction(pub DataSourceMeta);
 impl Reducer<cell::CellState> for MultystateApplyDsAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        let mut multystate = state.meta.multystate.clone()
-            .expect(format!("{}", CellStateError::NotMultystate).as_str());
-
-        multystate.data_source = self.0;
-
-        cell::CellState {
-            cell: state.cell.clone(),
-            meta: CellMeta { 
-                    multystate: Some(multystate), 
-                    ..state.meta.clone() 
+        if let CellMetaVariant::Multystate(multy) = &state.meta.data  {
+            return cell::CellState {
+                cell: state.cell.clone(),
+                meta: CellMeta { 
+                    data: CellMetaVariant::Multystate(
+                        MultystateMeta {
+                            data_source: self.0,
+                            ..multy.clone()
+                        }
+                    ),
+                    ..state.meta.clone()
                 },
-            }
-            .into()            
+                }.into()            
+        }
+
+        // multystate.data_source = self.0;
+        state
+
     }
 }
 

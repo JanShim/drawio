@@ -73,7 +73,7 @@ Draw.loadPlugin(async function(ui) {
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		
 		// main window
-		let dataWindow = new mxWindow('IIoT-Hub diagram data', div, iiw - 320, 60, 300, 500, true, true);
+		let dataWindow = new mxWindow('DFlow diagram data', div, iiw - 320, 60, 300, 500, true, true);
 		dataWindow.destroyOnClose = false;
 		dataWindow.setMaximizable(true);
 		dataWindow.setResizable(true);
@@ -82,10 +82,10 @@ Draw.loadPlugin(async function(ui) {
 		dataWindow.contentWrapper.style.overflowY = 'scroll';
 
 		// Adds resource for action
-		mxResources.parse('iiot=IIoT-Hub');
+		mxResources.parse('dflow=DFlow');
 
 		// Adds action
-		ui.actions.addAction('iiot', function()
+		ui.actions.addAction('dflow', function()
 		{
 			dataWindow.setVisible(!dataWindow.isVisible());
 		});
@@ -96,7 +96,7 @@ Draw.loadPlugin(async function(ui) {
 		menu.funct = function(menu, parent)
 		{
 			oldFunct.apply(this, arguments);
-			ui.menus.addMenuItems(menu, ['-', 'iiot'], parent);
+			ui.menus.addMenuItems(menu, ['-', 'dflow'], parent);
 		};
 	}
 	else
@@ -159,7 +159,7 @@ Draw.loadPlugin(async function(ui) {
 				console.log("model changed", cell);
 				// app.cell_updated(cell);
 			} else {
-				//let doc = mxUtils.parseXml("<iiot><som-data p='test' as='data'/></iiot>").documentElement;
+				//let doc = mxUtils.parseXml("<d-flow><som-data p='test' as='data'/></d-flow>").documentElement;
 				//cell.setValue(doc);
 
 				//console.log("selection changed", cell.value);
@@ -260,7 +260,7 @@ Draw.loadPlugin(async function(ui) {
 	let sb = ui.sidebar;
 	function addPalette()
 	{
-		sb.addPalette('iiot', 'IIoT', false, function(content)
+		sb.addPalette('dflow', 'DFlow items', false, function(content)
 		{
 			(function()
 			{
@@ -268,7 +268,7 @@ Draw.loadPlugin(async function(ui) {
 					'rectangle;whiteSpace=wrap;html=1;align=center;collapsible=0;container=1;recursiveResize=0;');
 				cell.vertex = true;
 
-				let value = mxUtils.parseXml("<iiot><widget uuid='00000000-0000-0000-0000-000000000000'/></iiot>").documentElement;
+				let value = mxUtils.parseXml("<d-flow><widget uuid='00000000-0000-0000-0000-000000000000'/></d-flow>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
 
@@ -310,7 +310,7 @@ Draw.loadPlugin(async function(ui) {
 
 	// ================ MENUS =================
 	let divScadaCellData = document.createElement('div');
-	divScadaCellData.setAttribute("id", "container");
+	divScadaCellData.setAttribute("id", "cell-container");
 	divScadaCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
 	divScadaCellData.style.border = '1px solid gray';
 	divScadaCellData.style.opacity = '0.8';
@@ -322,29 +322,34 @@ Draw.loadPlugin(async function(ui) {
 	divScadaCellData.style.minHeight = '100%';
 	divScadaCellData.style.width = '100%';
 
-	let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	
-	// main window
-	let scadaDataWindow = new mxWindow('IIoT-Hub data', divScadaCellData, iiw - 320, 60, 300, 450, true, true);
-	scadaDataWindow.destroyOnClose = false;
-	scadaDataWindow.setMaximizable(true);
-	scadaDataWindow.setResizable(true);
-	scadaDataWindow.setScrollable(true);
-	scadaDataWindow.setClosable(true);
-	scadaDataWindow.contentWrapper.style.overflowY = 'scroll';
+	// cell window
+	function newCellWindow(div) {
+		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+		let wnd = new mxWindow('IIoT-Hub data', div, iiw - 320, 60, 300, 450, true, true);
+		wnd.destroyOnClose = false;
+		wnd.setMaximizable(true);
+		wnd.setResizable(true);
+		wnd.setScrollable(true);
+		wnd.setClosable(true);
+		wnd.contentWrapper.style.overflowY = 'scroll';
+		return wnd;	
+	}
+
+	let cellDataWindow = null;
 
 	function isScadaCell(cell)
 	{
 		if (cell != null && cell.value !== null && typeof cell.value !== 'string')
 		{
-			return cell.value.tagName === "iiot";
+			return cell.value.tagName === "d-flow";
 		}
 		return false;
 	};
 
 
 	/**
-	 * Updates the iiot data panel
+	 * Updates the DFlow data panel
 	 */
 	function scadaCellClicked(cell)
 	{
@@ -352,12 +357,25 @@ Draw.loadPlugin(async function(ui) {
 		if (cell != null && isScadaCell(cell))
 		{
 			highlight.highlight(graph.view.getState(cell));
-			scadaDataWindow.setVisible(true);
+			// destroy window if exist
+			if (cellDataWindow != null) {
+				cellDataWindow.setVisible(false);
+				cellDataWindow.destroy();
+				console.log("cell window destroyed!");
+			}
+			cellDataWindow = newCellWindow(divScadaCellData);
+			cellDataWindow.setVisible(true);
+
 			renderCell(divScadaCellData, cell);
 		} 
 		else {
 			highlight.highlight(null);
-			scadaDataWindow.setVisible(false);
+			// destroy window if exist
+			if (cellDataWindow != null) {
+				cellDataWindow.setVisible(false);
+				cellDataWindow.destroy();
+				cellDataWindow = null;
+			}
 		}
 
 	}	
@@ -377,7 +395,7 @@ Draw.loadPlugin(async function(ui) {
 	// Adds actions
 	ui.actions.addAction('scadaData', function()
 	{
-		scadaDataWindow.setVisible(!scadaDataWindow.isVisible());
+		cellDataWindow.setVisible(!cellDataWindow.isVisible());
 
 		// if (graph.isEnabled() && graph.getSelectionCount() == 1)
 		// {
@@ -403,7 +421,7 @@ Draw.loadPlugin(async function(ui) {
 		{
 			let cell = graph.getSelectionCell();
 			if (!isScadaCell(cell)) {
-				let value = mxUtils.parseXml("<iiot><undefiend/></iiot>").documentElement;
+				let value = mxUtils.parseXml("<d-flow><undefiend/></d-flow>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
 				scadaCellClicked(cell);

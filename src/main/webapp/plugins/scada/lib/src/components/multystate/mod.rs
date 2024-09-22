@@ -6,12 +6,10 @@ use data_source::DataSourceComponent;
 use state::MultystateStateComponent;
 
 use crate::{
-    store::cell,
-    errors::CellStateError, 
-    model::cell_meta::multystate::{
+    errors::CellStateError, model::cell_meta::{multystate::{
         state::StateMeta, 
-        MultystateAddStateAction
-    },
+        MultystateAddStateAction, MultystateMeta
+    }, CellMetaVariant}, store::cell
 };
 
 pub mod data_source;
@@ -36,10 +34,14 @@ pub struct Props {
 #[function_component(MultystateComponent)]
 pub fn component(Props { edit_mode }: &Props) -> Html {
     let (_, cell_store_dispatch) = use_store::<cell::CellState>();
-    let multy_state = use_selector(|cell_state: &cell::CellState| 
-        cell_state.meta.multystate.clone()
-            .expect(format!("{}", CellStateError::NotMultystate).as_str())
-    );    
+
+    let multy_state = use_selector(|cell_state: &cell::CellState| {
+        if let CellMetaVariant::Multystate(multystate) = cell_state.meta.data.clone() {
+			return multystate;
+		};
+        log::error!("{}", CellStateError::NotMultystate);
+        MultystateMeta::default().into()
+    });    
     
     /* #region selected_state */
     let selected_state = use_state(|| {
@@ -61,7 +63,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
     // -------------------------------------------------------
     let on_state_add = cell_store_dispatch.apply_callback(|_| MultystateAddStateAction); 
 
-    // ------------ View Items
+    //====== View Items =====
     let data_source_view = {
         let props = yew::props!(data_source::Props {
             ds: multy_state.data_source.clone(),
@@ -98,7 +100,6 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 
     html! {
         <>
-        // <pre>{ format!("{:?}", *multy_state) }</pre>
         <hr/>
         { data_source_view }
         <div class="flex-box delim-label">{"Состояния"}

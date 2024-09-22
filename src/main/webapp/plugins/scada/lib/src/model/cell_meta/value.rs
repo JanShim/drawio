@@ -6,15 +6,7 @@ use yewdux::Reducer;
 
 use crate::store::cell;
 
-use super::CellMeta;
-
-pub fn is_none_value(tst: &Option<ValueMeta>) -> bool {
-    match tst {
-        Some(_) => false,
-        None => true,
-    }
-}
-
+use super::{CellMeta, CellMetaVariant};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename = "value")]
@@ -61,10 +53,17 @@ impl Reducible for ValueMeta {
 pub struct ApplyValueMetaAction(pub ValueMeta);
 impl Reducer<cell::CellState> for ApplyValueMetaAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        cell::CellState {
-            meta: CellMeta { value: Some(self.0), ..(state.meta.clone()) },
-            cell: state.cell.clone(),
-        }.into()        
+        if let CellMetaVariant::Value(_) = state.meta.data {
+            return cell::CellState {
+                meta: CellMeta {
+                    data: CellMetaVariant::Value(self.0),
+                    ..state.meta.clone()
+                }, 
+                cell: state.cell.clone(),
+            }.into();
+                
+        }
+        state
     }
 }
 

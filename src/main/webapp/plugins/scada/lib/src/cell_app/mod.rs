@@ -15,74 +15,20 @@ pub struct Props {
 #[styled_component(CellComponent)]
 pub fn app(Props {cell_state}: &Props) -> Html {
     let (_, dispatch) = use_store::<cell::CellState>();
-    {
-        let dispatch = dispatch.clone();
-        let cell_state = cell_state.clone();
-        use_effect_once(move || {
-            dispatch.set(cell_state);
+    let cell_state = cell_state.clone();
+    use_effect_once(move || {
+        log::debug!("cell-component init: {cell_state:?}");
+        dispatch.set(cell_state);
 
-            // destructor
-            move || dispatch.set(cell::CellState {..Default::default()})
-        })
-    };
+        // destructor
+        move || {
+            dispatch.set(cell::CellState {..Default::default()});
+            log::debug!("cell-component destruct");
+        }
+    });
 
-    // let cell = mxcell.clone();
-    // let dispatcher = dispatch.clone();
-    // use_effect_once(move || {
-    //     let mut new_state = cell::CellState {cell: Some(cell), ..Default::default()};
-    //     new_state.set_meta_from_self().unwrap();
-        
-    //     log::debug!("use_effect_once!!!!!!!!! {:?}", new_state);
 
-    //     dispatcher.set(new_state);
-        
-    //     move || dispatcher.set(cell::CellState {..Default::default()})
-    // });
-
-    // let up = dispatch.reduce_mut_callback(|state| state.inc());    
-    // let dwn = dispatch.reduce_mut_callback(|state| state.dec());    
-
-    // let counter = use_state(|| 0);
-    // let up = {
-    //     let counter = counter.clone();
-    //     Callback::from(move |_: MouseEvent| {
-    //         counter.set(*counter + 1);
-    //     })
-    // };
-    // let dwn = {
-    //     let counter = counter.clone();
-    //     Callback::from(move |_: MouseEvent| {
-    //         counter.set(*counter - 1);
-    //     })
-    // };
-
-    // if let Ok(el) = props.cell.get_value() {
-    //     // if let Some(style) = props.cell.mx_style() {
-    //     //     el.set_attribute("style", style.as_str()).ok();
-    //     // }
-
-    //     // let ch = el.children();
-    //     // for i in 0..ch.length() {
-    //     //     if let Some(e) = ch.item(i) {
-    //     //         e.set_attribute("new-attr", "new value").ok();
-    //     //         log::info!("cell attributes: {:?}", e.get_attribute_names());
-    //     //     }
-    //     // }
-    // }
-
-    // let up = Callback::from(move |e: Event| {
-    //     // let target: EventTarget = e
-    //     //     .target()
-    //     //     .expect("Event should have a target when dispatched");
-    //     // // You must KNOW target is a HtmlInputElement, otherwise
-    //     // // the call to value would be Undefined Behaviour (UB).
-    //     // // Here we are sure that this is input element so we can convert it to the appropriate type without checking
-    //     // input_value_handle.set(target.unchecked_into::<HtmlInputElement>().value());
-    //     let counter = counter.clone();
-    //     let value = *counter + 1;
-    //     counter.set(value);
-    // });    
-
+    // === view items ====
     html! {
         <>
 <Global css={css!(r#"
@@ -157,5 +103,6 @@ pub fn render_cell(div: HtmlDivElement, cell: MxCell) {
     let mut cell_state = cell::CellState {cell: Some(cell), ..Default::default()};
     cell_state.set_meta_from_self().unwrap();
 
+    log::debug!("render_cell : {cell_state:?}");
     yew::Renderer::<CellComponent>::with_root_and_props(div.into(), Props {cell_state}).render();
 }

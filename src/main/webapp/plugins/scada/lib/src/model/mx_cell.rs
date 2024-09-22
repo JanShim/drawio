@@ -7,7 +7,7 @@ use quick_xml::{
 
 use crate::{errors::CellStateError, model::scada_diagram, schema_app::js_functions::get_pretty_xml};
 
-use super::cell_meta::CellMeta;
+use super::cell_meta::{CellMeta, CellMetaVariant};
 
 pub enum CellValue {
     Object(Element),
@@ -141,20 +141,13 @@ impl MxCell {
     }
 
     pub fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
-        let multystate = if let Some(multystate) = &meta.multystate {
-                    to_string(multystate)
-                        .map_err(|err| JsValue::from(err.to_string().as_str()))?
-                } else {
-                    String::default()
-                };
-        let widget = if let Some(widget) = &meta.widget {
-                to_string(widget)
-                    .map_err(|err| JsValue::from(err.to_string().as_str()))?
-            } else {
-                String::default()
-            };
-
-        Ok(format!("{widget}{multystate}"))
+        let inner_html = match &meta.data {
+            CellMetaVariant::Undefiend(undef) => to_string(undef),
+            CellMetaVariant::Value(value) => to_string(value),
+            CellMetaVariant::Multystate(multy) => to_string(multy),
+            CellMetaVariant::Widget(widget) => to_string(widget),
+        }.map_err(|err| JsValue::from(err.to_string().as_str()))?;
+        Ok(inner_html)
     }
 
 }

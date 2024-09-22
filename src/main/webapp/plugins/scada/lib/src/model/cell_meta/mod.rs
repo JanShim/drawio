@@ -3,10 +3,10 @@ use wasm_bindgen::JsValue;
 use web_sys::FormData;
 use yew::Reducible;
 use serde::{Deserialize, Serialize};
-use undefiend::{is_none_undefiend, UndefiendMeta};
-use multystate::{is_none_multystate, MultystateMeta};
-use value::{is_none_value, ValueMeta};
-use widget::{is_none_widget, WidgetMeta};
+use undefiend::UndefiendMeta;
+use multystate::MultystateMeta;
+use value::ValueMeta;
+use widget::WidgetMeta;
 
 use crate::errors::CellStateError;
 
@@ -61,23 +61,27 @@ impl From<FormData> for CellType {
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-#[serde(rename = "iiot")]
+pub enum CellMetaVariant {
+    #[serde(rename = "undefiend")]
+    Undefiend(UndefiendMeta),
+    #[serde(rename = "value")]
+    Value(ValueMeta),
+    #[serde(rename = "multystate")]
+    Multystate(MultystateMeta),
+    #[serde(rename = "widget")]
+    Widget(WidgetMeta),
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[serde(rename = "d-flow")]
 pub struct CellMeta {
     #[serde(rename = "@label")]
     pub label: IString,
 
-    #[serde(skip_serializing_if = "is_none_undefiend")]
-    pub undefiend: Option<UndefiendMeta>,
-
-    #[serde(skip_serializing_if = "is_none_value")]
-    pub value: Option<ValueMeta>,
-
-    #[serde(skip_serializing_if = "is_none_widget")]
-    pub widget: Option<WidgetMeta>,
-
-    #[serde(skip_serializing_if = "is_none_multystate")]
-    pub multystate: Option<MultystateMeta>,
+    #[serde(rename = "$value")]
+    pub data: CellMetaVariant,
 }
+
 
 impl CellMeta {
     pub fn set_label(&mut self, label: IString) {
@@ -85,37 +89,38 @@ impl CellMeta {
     }
 
     pub fn set_value_meta(&mut self, value: ValueMeta) {
-        self.value.replace(value);
+        if let CellMetaVariant::Value(_) = self.data {
+            self.data = CellMetaVariant::Value(value);
+        }
     }
 
     pub fn get_cell_type(&self) -> CellType {
-        if let Some(_) = self.widget  {
-            return CellType::WIDGET;
-        } else if let Some(_) = self.multystate {
-            return CellType::MULTYSTATE;
+        match self.data {
+            CellMetaVariant::Undefiend(_) => CellType::UNDEFIEND,
+            CellMetaVariant::Value(_) => CellType::VALUE,
+            CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
+            CellMetaVariant::Widget(_) => CellType::WIDGET,
         }
-        CellType::UNDEFIEND
     }
 
     pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateMeta, JsValue>{
-        if let Some(m) = self.multystate.as_mut() {
+        if let CellMetaVariant::Multystate(m) = &mut self.data {
             return Ok(m);
         }
         Err(CellStateError::NotMultystate.into())
     }
 
     pub fn get_multystate(&self) -> Result<&MultystateMeta, JsValue>{
-        if let Some(m) = self.multystate.as_ref() {
+        if let CellMetaVariant::Multystate(m) = &self.data {
             return Ok(m);
         }
         Err(CellStateError::NotMultystate.into())
     }    
 
-    pub fn create_state(&self) {
-        todo!();
-        // if let Some(mut multystate) = self.multystate.clone() {
-        //     multystate.as_mut().create_state();
-        // }
+    pub fn create_state(&mut self) {
+        if let CellMetaVariant::Multystate(multystate) = &mut self.data {
+            multystate.create_state();
+        }
     }
 }
 
@@ -123,10 +128,7 @@ impl Default for CellMeta {
     fn default() -> Self {
         Self { 
             label: Default::default(), 
-            undefiend: None,
-            widget: None, 
-            multystate: None, 
-            value: None,
+            data: CellMetaVariant::Undefiend(Default::default()),
         }
     }
 }
@@ -141,6 +143,7 @@ impl Reducible for CellMeta {
     type Action = Action;
     
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
+        todo!();
         // match action {
         //     // Action::SetStyle(style) => Self {
         //     //     // label: self.label.clone(),
@@ -149,7 +152,7 @@ impl Reducible for CellMeta {
         //     // }.into(),
         //     _ => self
         // }
-        self
+        // self
     }
 
 }
@@ -166,11 +169,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn xml_cell_meta_serde_all_none_works() {
-        let item = CellMeta {
-            label: "test".into(),
-            ..Default::default()
-        };
+    fn xml_cell_meta_serde_default_works() {
+        let item = CellMeta::default();
 
         let str = to_string(&item).unwrap();
         println!("{str}");
@@ -183,13 +183,14 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_widget_works() {
+        let widget = WidgetMeta {
+            uuid: "some-uuid".into(),
+            data_source: Default::default(),
+        };
+
         let item = CellMeta {
-            label: "test".into(),
-            widget: Some(WidgetMeta {
-                uuid: "some-uuid".into(),
-                data_source: todo!(),
-            }),
-            ..Default::default()
+            label: "widget".into(),
+            data: CellMetaVariant::Widget(widget),
         };
 
         let str = to_string(&item).unwrap();
@@ -203,17 +204,18 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_multystate_works() {
+        let multy = MultystateMeta {
+            range_type: Default::default(),
+            states: vec![
+                StateMeta { pk: 0, ..Default::default() },
+                StateMeta { pk: 1, ..Default::default() },
+            ],
+            data_source: Default::default(),
+        };
+
         let item = CellMeta {
-            label: "test".into(),
-            multystate: Some(MultystateMeta {
-                range_type: Default::default(),
-                states: vec![
-                    StateMeta { pk: 0, ..Default::default() },
-                    StateMeta { pk: 1, ..Default::default() },
-                ],
-                data_source: Default::default(),
-            }),
-            ..Default::default()
+            label: "multy".into(),
+            data: CellMetaVariant::Multystate(multy),
         };
 
         let str = to_string(&item).unwrap();
@@ -227,10 +229,11 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_value_works() {
+        let value = ValueMeta { tag: "some_tag".into(), ..Default::default() };
+
         let item = CellMeta {
-            label: "test".into(),
-            value: Some(ValueMeta { tag: "some_tag".into(), ..Default::default() }),
-            ..Default::default()
+            label: "value".into(),
+            data: CellMetaVariant::Value(value),
         };
 
         let str = to_string(&item).unwrap();
@@ -241,6 +244,7 @@ mod tests {
 
         assert_eq!(item, meta);
     }    
+   
 
     /* #region example serialize_tuple_variant*/
     enum E {

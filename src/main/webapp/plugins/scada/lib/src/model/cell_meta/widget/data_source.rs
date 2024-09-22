@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use yew::Reducible;
 use yewdux::Reducer;
 
-use crate::{errors::CellStateError, model::cell_meta::CellMeta, store::cell};
+use crate::{errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant}, store::cell};
+
+use super::WidgetMeta;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "ds")]
@@ -51,19 +53,20 @@ impl Reducible for DataSourceMeta {
 pub struct WidgetApplyDsAction(pub DataSourceMeta);
 impl Reducer<cell::CellState> for WidgetApplyDsAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        let mut widget = state.meta.widget.clone()
-            .expect(format!("{}", CellStateError::NotWidget).as_str());
+        if let CellMetaVariant::Widget(widget) = &state.meta.data {
+            return cell::CellState {
+                    cell: state.cell.clone(),
+                    meta: CellMeta { 
+                        label: state.meta.label.clone(), 
+                        data: CellMetaVariant::Widget(WidgetMeta {
+                            uuid: widget.uuid.clone(),
+                            data_source: self.0,
+                        }),
+                    }
+                }.into();
+        };
 
-        widget.data_source = self.0;
-
-        cell::CellState {
-            cell: state.cell.clone(),
-            meta: CellMeta { 
-                    widget: Some(widget),
-                    ..state.meta.clone() 
-                },
-            }
-            .into()            
+        state
     }
 }
 

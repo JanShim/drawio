@@ -1,5 +1,4 @@
 use std::rc::Rc;
-
 use data_source::DataSourceMeta;
 use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
@@ -8,16 +7,9 @@ use yewdux::Reducer;
 
 use crate::{errors::CellStateError, store::cell};
 
-use super::CellMeta;
+use super::{CellMeta, CellMetaVariant};
 
 pub mod data_source;
-
-pub fn is_none_widget(tst: &Option<WidgetMeta>) -> bool {
-    match tst {
-        Some(_) => false,
-        None => true,
-    }
-}
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename = "widget")]
@@ -26,6 +18,15 @@ pub struct WidgetMeta {
     pub uuid: IString,
     #[serde(rename="ds", default)]
     pub data_source: DataSourceMeta,
+}
+
+impl Default for WidgetMeta {
+    fn default() -> Self {
+        Self { 
+            uuid: Default::default(), 
+            data_source: Default::default() 
+        }
+    }
 }
 
 /// reducer's Action
@@ -51,19 +52,17 @@ impl Reducible for WidgetMeta {
 pub struct WidgetApplyAction(pub WidgetMeta);
 impl Reducer<cell::CellState> for WidgetApplyAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-        // let mut widget = state.meta.widget.clone()
-        //     .expect(format!("{}", CellStateError::NotWidget).as_str());
-
-        // widget.data_source = self.0;
-
-        cell::CellState {
-            cell: state.cell.clone(),
-            meta: CellMeta { 
-                    widget: Some(self.0),
-                    ..state.meta.clone() 
-                },
-            }
-            .into()            
+        if let CellMetaVariant::Widget(_) = &state.meta.data {
+            return cell::CellState {
+                cell: state.cell.clone(),
+                meta: CellMeta { 
+                        label: state.meta.label.clone(),
+                        data: CellMetaVariant::Widget(self.0),
+                    },
+                }
+                .into();        
+        }
+        state
     }
 }
 
@@ -81,7 +80,7 @@ mod tests {
     fn xml_widget_meta_serde_works() {
         let item = WidgetMeta {
             uuid: "some".into(),
-            data_source: todo!(),
+            data_source: Default::default(),
         };
 
         let str = to_string(&item).unwrap();
