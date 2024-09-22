@@ -14,21 +14,19 @@ use crate::{errors::CellStateError, model::{
 #[derive(Clone, PartialEq, Debug)]
 // #[store(storage = "local")]
 pub struct CellState {
-    pub cell: Option<MxCell>,
+    pub cell: MxCell,
     pub meta: CellMeta,
 }
 
 impl CellState {
-    pub fn set_meta_from_self(&mut self) -> Result<(), JsValue> {
-        if let Some(cell) = &self.cell {
-            if let Some(meta) = cell.get_meta().ok()
-            {
-                self.meta = meta;
-                return Ok(());
-            };
-        }
-        Err(CellStateError::NoMeta.into())
-    }
+    // pub fn set_meta_from_self(&mut self) -> Result<(), JsValue> {
+    //     if let Some(meta) = self.cell.get_meta().ok()
+    //     {
+    //         self.meta = meta;
+    //         return Ok(());
+    //     };
+    //     Err(CellStateError::NoMeta.into())
+    // }
 
     // pub fn apply_meta_to_cell(&self) {
     //     if let Some(cell) = &self.cell {
@@ -81,10 +79,8 @@ impl CellState {
     // } 
 
     pub fn get_cell_style(&self) -> Result<IString, JsValue> {
-        self.cell.clone()
-            .map(|cell| {
-                cell.get_style().unwrap().into()
-            })
+        self.cell.get_style()
+            .map(|o| o.into())
             .ok_or(JsValue::from("no cell"))
     }
 
@@ -110,7 +106,7 @@ impl CellState {
 impl Default for CellState {
     fn default() -> Self {
         Self { 
-            cell: None,
+            cell: Default::default(),
             meta: Default::default(),
         }
     }
@@ -125,8 +121,7 @@ impl Store for CellState {
     
     fn should_notify(&self, old: &Self) -> bool {
         log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
-
-        log::debug!("{:?}", self);
+        log::debug!("CellState  {:?}", self);
 
         self != old
         || self.cell != old.cell
@@ -148,32 +143,21 @@ impl Store for CellState {
 pub struct SetCellTypeAction(pub CellType);
 impl Reducer<CellState> for SetCellTypeAction {
     fn apply(self, state: Rc<CellState>) -> Rc<CellState> {
-        if let Some(cell) = &state.cell.clone() {
-            let meta = match self.0 {
-                CellType::MULTYSTATE => CellMeta {
-                    label: cell.get_label().into(),
-                    data: CellMetaVariant::Multystate(Default::default()),
-                },
-                CellType::VALUE => CellMeta {
-                    label: cell.get_label().into(),
-                    data: CellMetaVariant::Value(Default::default()),
-                },
-                _ => Default::default(),
-            };
-
-            log::debug!("{meta:?}");
-
-            cell.set_meta(&meta).unwrap();
-            
-            return CellState {
-                cell: Some(cell.clone()),
-                meta,
-            }.into();
+        let meta = match self.0 {
+            CellType::MULTYSTATE => CellMeta {
+                label: state.cell.get_label().into(),
+                data: CellMetaVariant::Multystate(Default::default()),
+            },
+            CellType::VALUE => CellMeta {
+                label: state.cell.get_label().into(),
+                data: CellMetaVariant::Value(Default::default()),
+            },
+            _ => Default::default(),
         };
-
+        
         CellState {
-            cell: None,
-            meta: Default::default(),
+            cell: state.cell.clone(),
+            meta,
         }.into()
     }
 }

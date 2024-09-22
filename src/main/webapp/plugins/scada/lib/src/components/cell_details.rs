@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
@@ -29,12 +27,9 @@ pub fn component() -> Html {
         let edit_mode = edit_mode.clone();
         let cell_meta = cell_meta.clone();
         Callback::from(move |_: MouseEvent| {
-            // log::debug!("cell_details_apply:: {:?}", *cell_meta);
-            if let Some(cell) = &cell_state.cell {
-                let meta = cell.set_meta(&cell_meta).ok();
-                log::debug!("NEW CELL META:: {:?}", meta);
-                edit_mode.set(false);
-            }
+            let meta = cell_state.cell.set_meta(&cell_meta).ok();
+            log::debug!("NEW CELL META:: {:?}", meta);
+            edit_mode.set(false);
         })
     };
 

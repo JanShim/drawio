@@ -1,31 +1,34 @@
 use yew::prelude::*;
-use yewdux::use_store;
-use stylist::yew::{styled_component, Global};
 use wasm_bindgen::prelude::*;
-use yew_hooks::use_effect_once;
+use yewdux::use_dispatch;
+use stylist::yew::{styled_component, Global};
 use web_sys::HtmlDivElement;
 
-use crate::{components::cell_details::CellDetailsComponent, model::mx_cell::MxCell, store::cell::{self, CellState}};
+use crate::{
+    components::cell_details::CellDetailsComponent, 
+    model::mx_cell::MxCell, 
+    store::cell
+};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub cell_state: CellState,
+    pub cell: MxCell,
 }
 
 #[styled_component(CellComponent)]
-pub fn app(Props {cell_state}: &Props) -> Html {
-    let (_, dispatch) = use_store::<cell::CellState>();
-    let cell_state = cell_state.clone();
-    use_effect_once(move || {
-        log::debug!("cell-component init: {cell_state:?}");
-        dispatch.set(cell_state);
-
-        // destructor
-        move || {
-            dispatch.set(cell::CellState {..Default::default()});
-            log::debug!("cell-component destruct");
-        }
-    });
+pub fn app(Props { cell }: &Props) -> Html {
+    let dispatch = use_dispatch::<cell::CellState>();
+    let cell = cell.clone();
+    let meta = cell.get_meta().unwrap_or_default();
+    // This runs only once, on the first render of the component.
+    use_effect_with(
+        (), // empty deps
+        move |_| {
+            log::debug!("CellComponent {meta:#?}");
+            dispatch.set( cell::CellState { cell, meta });
+            || {}
+        },
+    );    
 
 
     // === view items ====
@@ -90,9 +93,7 @@ div.svg-view {
 
 "#)} />
 
-        <div>
-            <CellDetailsComponent/>
-        </div>
+        <CellDetailsComponent/>
     </>        
     }    
 }
@@ -100,9 +101,5 @@ div.svg-view {
 
 #[wasm_bindgen(js_name=renderCell)]
 pub fn render_cell(div: HtmlDivElement, cell: MxCell) {
-    let mut cell_state = cell::CellState {cell: Some(cell), ..Default::default()};
-    cell_state.set_meta_from_self().unwrap();
-
-    log::debug!("render_cell : {cell_state:?}");
-    yew::Renderer::<CellComponent>::with_root_and_props(div.into(), Props {cell_state}).render();
+    yew::Renderer::<CellComponent>::with_root_and_props(div.into(), Props {cell}).render();
 }

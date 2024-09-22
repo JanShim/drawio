@@ -152,6 +152,12 @@ impl MxCell {
 
 }
 
+impl Default for MxCell {
+    fn default() -> Self {
+        Self { obj: JsValue::null() }
+    }
+}
+
 impl PartialEq for MxCell {
     fn eq(&self, other: &Self) -> bool {
         self.obj == other.obj
