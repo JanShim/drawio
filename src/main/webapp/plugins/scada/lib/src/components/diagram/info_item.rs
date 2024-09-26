@@ -8,16 +8,13 @@ use crate::model::scada_diagram::meta::Diagram;
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
-    // pub meta: Diagram,
-    pub item_type: String, 
+    pub uuid: String,
     pub name: String, 
-    pub uuid: String    
 }
 
 impl From<Diagram> for Props {
-    fn from(Diagram {item_type, name, uuid}: Diagram) -> Self {
+    fn from(Diagram {name, uuid}: Diagram) -> Self {
         Self {
-            item_type,
             name,
             uuid,
         }
@@ -25,10 +22,10 @@ impl From<Diagram> for Props {
 }
 
 #[function_component(Component)]
-pub fn scada_diagram_component(Props {item_type, name, uuid}: &Props) -> Html {
+pub fn scada_diagram_component(Props {name, uuid}: &Props) -> Html {
     html! {
         <div>
-            { format!("uuid: {}, name: {}, type: {}", uuid, name, item_type) } 
+            { format!("uuid: {}, name: {}", uuid, name) } 
         </div>
     }
 }

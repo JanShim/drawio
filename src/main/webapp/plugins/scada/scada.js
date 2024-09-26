@@ -39,11 +39,12 @@ function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
 
+
 /**
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, renderCell, renderSchema, SchemaOptions} = await import('./lib/pkg/scada_lib.js');
+	const {initSync, renderCell, renderSchema, openDialog, SchemaOptions} = await import('./lib/pkg/scada_lib.js');
 
 	async function initWasm() {
 		await fetch('plugins/scada/lib/pkg/scada_lib_bg.wasm')
@@ -53,6 +54,7 @@ Draw.loadPlugin(async function(ui) {
 			});				
 	}
 
+	//--------------------------------------------------------
 	let div = document.createElement('div');
 	div.setAttribute("id", "container");
 	div.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
@@ -144,7 +146,7 @@ Draw.loadPlugin(async function(ui) {
 			highlight.highlight(null);
 			// app.cell_clicked(null);
 			// renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
-			renderSchema(mxUtils, ui.editor, div, new SchemaOptions("http://localhost:8091/api/v1"));
+			// renderSchema(mxUtils, ui.editor, div, options);
 		}
 		else
 		{
@@ -309,6 +311,49 @@ Draw.loadPlugin(async function(ui) {
 	};
 
 	// ================ MENUS =================
+	// Adds menu
+	mxResources.parse('createDiagram=New Diagram');
+	mxResources.parse('createWidget=New Widget');
+	mxResources.parse('openItem=Open...');
+	
+    ui.actions.addAction('createDiagram', function()
+    {
+    	// window.open('https://github.com/jgraph/drawio/issues/579');
+    });
+
+    ui.actions.addAction('createWidget', function()
+    {
+    	// window.open('https://github.com/jgraph/drawio/issues/579');
+    });
+
+    ui.actions.addAction('openItem', function()
+    {
+		ui.showDialog(new DFlowItemsDialog(ui).container, 500, 400, true, false);
+    });	
+
+
+	ui.menus.put('dflow', new Menu(function(menu, parent)
+	{
+		ui.menus.addMenuItems(menu, ['createDiagram', 'createWidget', '-', 'openItem']);
+
+		//====
+		// this.put('openFrom', new Menu(function(menu, parent)
+		// {
+
+		// 	menu.addItem(mxResources.get('googleDrive') + '...', null, function()
+		// 	{
+		// 		editorUi.pickFile(App.MODE_GOOGLE);
+		// 	}, parent);
+		// }));
+	}));
+
+    if (ui.menubar != null)
+    {
+		var menu = ui.menubar.addMenu('DFlow', ui.menus.get('dflow').funct);
+		menu.parentNode.insertBefore(menu, menu.previousSibling.previousSibling.previousSibling);
+    }
+
+	// -----------------------------------------------------------------
 	let divScadaCellData = document.createElement('div');
 	divScadaCellData.setAttribute("id", "cell-container");
 	divScadaCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
@@ -326,7 +371,7 @@ Draw.loadPlugin(async function(ui) {
 	// cell window
 	function newCellWindow(div) {
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		let wnd = new mxWindow('IIoT-Hub data', div, iiw - 320, 60, 300, 450, true, true);
+		let wnd = new mxWindow('DFlow data', div, iiw - 320, 60, 300, 450, true, true);
 		wnd.destroyOnClose = false;
 		wnd.setMaximizable(true);
 		wnd.setResizable(true);
@@ -389,8 +434,8 @@ Draw.loadPlugin(async function(ui) {
 	}	
 
 	// Adds resources for actions
-	mxResources.parse('scadaData=IIot-Hub Data');
-	mxResources.parse('scadaItem=IIot-Hub item');
+	mxResources.parse('scadaData=DFlow Data');
+	mxResources.parse('scadaItem=DFlow item');
 
 	// Adds actions
 	ui.actions.addAction('scadaData', function()
@@ -460,10 +505,91 @@ Draw.loadPlugin(async function(ui) {
 	};
 	// =======================================
 
-
 	// ============== WASM ===================
 	// init rust wasm
 	await initWasm();
+	// здесь натройки пдагина
+	let getAppOptions = function() {return new SchemaOptions("http://localhost:8091/api/v1"); }		
+
+
+	let DFlowItemsDialog = function(editorUi, addFn, delFn, closeOnly) 
+	{
+		var div = document.createElement('div');
+		var inner = document.createElement('div');
+		
+		// inner.style.width = '600px';
+		inner.style.height = '300px';
+		inner.style.overflow = 'auto';
+	
+		var changed = false;
+						
+		// open schema items dialod
+		openDialog(mxUtils, editorUi, inner, getAppOptions());
+		
+		div.appendChild(inner);
+		changed = false;
+		
+		var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
+		{
+			editorUi.hideDialog();
+		});
+		
+		cancelBtn.className = 'geBtn';
+		
+		var openBtn = mxUtils.button(closeOnly? mxResources.get('close') : mxResources.get('open'), function()
+		{
+			if (changed)
+			{
+				editorUi.hideDialog();
+				editorUi.alert(mxResources.get('restartForChangeRequired'));
+			}
+			else
+			{
+				editorUi.hideDialog();
+			}	
+		});
+		
+		openBtn.className = 'geBtn gePrimaryBtn';
+	
+		var buttons = document.createElement('div');
+		buttons.style.marginTop = '14px';
+		buttons.style.textAlign = 'right';
+	
+		// var helpBtn = mxUtils.button(mxResources.get('help'), function()
+		// {
+		// 	editorUi.openLink('https://www.drawio.com/doc/faq/plugins');
+		// });
+	
+		// helpBtn.className = 'geBtn';
+		
+		// if (editorUi.isOffline() && !mxClient.IS_CHROMEAPP)
+		// {
+		// 	helpBtn.style.display = 'none';
+		// }
+		
+		// buttons.appendChild(helpBtn);
+		
+		if (editorUi.editor.cancelFirst)
+		{
+			if (!closeOnly)
+			{
+				buttons.appendChild(cancelBtn);
+			}
+	
+				buttons.appendChild(openBtn);
+		}
+		else
+		{
+			buttons.appendChild(openBtn);
+			if (!closeOnly)
+			{
+				buttons.appendChild(cancelBtn);
+			}
+		}
+	
+		div.appendChild(buttons);
+		this.container = div;
+	};	
 
 
 });

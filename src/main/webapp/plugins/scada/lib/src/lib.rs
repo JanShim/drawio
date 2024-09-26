@@ -6,6 +6,7 @@ mod errors;
 mod model;
 mod cell_app;
 mod schema_app;
+mod open_dialog_app;
 mod scada_object;
 mod components;
 mod store;

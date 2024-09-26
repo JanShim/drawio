@@ -10,6 +10,7 @@ use crate::{errors::CellStateError, model::cell_meta::{widget::{self, WidgetMeta
 
 pub mod data_source;
 pub mod svg_view;
+pub mod list_item;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {

@@ -5,9 +5,9 @@ use quick_xml::{
     se::to_string,
 };
 
-use crate::{errors::CellStateError, model::scada_diagram, schema_app::js_functions::get_pretty_xml};
+use crate::{errors::CellStateError, model::scada_diagram, utils::get_pretty_xml,};
 
-use super::cell_meta::{CellMeta, CellMetaVariant};
+use super::{cell_meta::{CellMeta, CellMetaVariant}, widget};
 
 pub enum CellValue {
     Object(Element),
@@ -77,6 +77,14 @@ impl MxCell {
             str if str.is_string() => Ok(Default::default()),
             elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
             _ => Err("can't create diagram meta".into()),           
+        }
+    }
+
+    pub fn get_widget_meta(&self) -> Result<widget::meta::WidgetMeta, JsValue> {
+        match self.mx_get_value() {
+            str if str.is_string() => Ok(Default::default()),
+            elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
+            _ => Err("can't create widget meta".into()),           
         }
     }
 

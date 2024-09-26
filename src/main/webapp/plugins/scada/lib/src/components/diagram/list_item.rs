@@ -3,17 +3,17 @@ use yew::{
     function_component, html, Callback, Html, MouseEvent, Properties
 };
 
-use crate::model::scada_diagram::ListItem;
+use crate::model::scada_diagram::DiagramListItem;
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
-    pub item: ListItem,
+    pub item: DiagramListItem,
     pub load: Callback<String>,
 }
 
-#[function_component(Component)]
-pub fn scada_diagram_component(Props {item, load}: &Props) -> Html {
-    let ListItem {uuid, name} = item;
+#[function_component(DiagramListItemComponent)]
+pub fn component(Props {item, load}: &Props) -> Html {
+    let DiagramListItem {uuid, name} = item;
 
     let on_load = {
             let pk = uuid.clone();
@@ -27,7 +27,7 @@ pub fn scada_diagram_component(Props {item, load}: &Props) -> Html {
     html! {
         <div>
             {format!("{} {}", uuid, name)} 
-            <button onclick={on_load}>{ "load" }</button>
+            // <button onclick={on_load}>{ "load" }</button>
         </div>
     }
 }

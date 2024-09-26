@@ -4,38 +4,20 @@ use std::rc::Rc;
 
 use web_sys::HtmlDivElement;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
-use js_functions::{get_cell0, load_scada_model};
 
 use crate::{
-    components::{
-        info_item::Component as InfoComponent, list_item::Component as ListItemComponents
+    components::diagram::{
+        info_item::Component as InfoComponent, 
+        list_item::DiagramListItemComponent as ListItemComponents
     }, 
     errors::FetchError, 
     model::{mx_editor::MxEditor, mx_utils::MxUtils, scada_diagram::{
         meta::DiagramMeta as DiagramMeta, 
-        ListItem, 
-        ScadaDiagramDto, NULL_UUID
+        DiagramListItem, 
+        ScadaDiagramDto
     }}, 
-    utils::{fetch, fetch_string, post} 
+    utils::{fetch, fetch_string, get_cell0, load_scada_model, post, SchemaOptions, NULL_UUID} 
 };
-
-pub mod js_functions;
-
-#[wasm_bindgen]
-pub struct SchemaOptions {
-    #[wasm_bindgen(skip)]
-    pub api_url: Option<String>,
-}
-
-#[wasm_bindgen]
-impl SchemaOptions {
-    #[wasm_bindgen(constructor)]
-    pub fn new(api_url: Option<String>) -> Self {
-        Self { 
-            api_url,
-        }
-    }
-}
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -56,7 +38,7 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
 
     let url = api_url.clone();
     let diagram_list = use_async_with_options(
-        async move { fetch::<Vec::<ListItem>>(format!("{url}/diagram/all")).await },
+        async move { fetch::<Vec::<DiagramListItem>>(format!("{url}/diagram/all")).await },
         UseAsyncOptions::enable_auto(),
     );
 

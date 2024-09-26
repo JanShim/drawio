@@ -1,9 +1,7 @@
 
-pub mod scada_diagram;
-pub mod list_item;
-pub mod info_item;
+pub mod diagram;
+pub mod widget;
 pub mod cell_details;
 pub mod multystate;
 pub mod value;
-pub mod widget;
 pub mod undefiend;
