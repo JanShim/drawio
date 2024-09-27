@@ -13,7 +13,7 @@ use crate::{
     model::{
         mx_editor::MxEditor, 
         mx_utils::MxUtils, 
-        scada_diagram::{
+        diagram::{
             DiagramListItem, 
             ScadaDiagramDto
         },

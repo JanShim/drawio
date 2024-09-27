@@ -5,9 +5,9 @@ use quick_xml::{
     se::to_string,
 };
 
-use crate::{errors::CellStateError, model::scada_diagram, utils::get_pretty_xml,};
+use crate::{errors::CellStateError, model::diagram, utils::get_pretty_xml,};
 
-use super::{cell_meta::{CellMeta, CellMetaVariant}, widget};
+use super::{cell_meta::{CellMeta, CellMetaVariant}, common, widget};
 
 pub enum CellValue {
     Object(Element),
@@ -72,7 +72,7 @@ impl MxCell {
         self.mx_get_style().as_string()
     }
 
-    pub fn get_diagram_meta(&self) -> Result<scada_diagram::meta::DiagramMeta, JsValue> {
+    pub fn get_diagram_meta(&self) -> Result<common::DiagramMeta, JsValue> {
         match self.mx_get_value() {
             str if str.is_string() => Ok(Default::default()),
             elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
@@ -80,7 +80,7 @@ impl MxCell {
         }
     }
 
-    pub fn get_widget_meta(&self) -> Result<widget::meta::WidgetMeta, JsValue> {
+    pub fn get_widget_meta(&self) -> Result<common::DiagramMeta, JsValue> {
         match self.mx_get_value() {
             str if str.is_string() => Ok(Default::default()),
             elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),

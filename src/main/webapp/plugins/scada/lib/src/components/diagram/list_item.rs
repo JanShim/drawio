@@ -3,7 +3,7 @@ use yew::{
     function_component, html, Callback, Html, MouseEvent, Properties
 };
 
-use crate::model::scada_diagram::DiagramListItem;
+use crate::model::diagram::DiagramListItem;
 
 #[derive(PartialEq, Properties)]
 pub struct Props {

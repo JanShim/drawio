@@ -1,5 +1,6 @@
 
-pub mod scada_diagram;
+pub mod common;
+pub mod diagram;
 pub mod widget;
 pub mod mx_cell;
 pub mod mx_editor;

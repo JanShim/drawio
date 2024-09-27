@@ -3,30 +3,48 @@ use yew::{
     function_component, html, Html, Properties
 };
 
-use crate::model::scada_diagram::meta::Diagram;
+use crate::components::widget;
+use crate::model::common::{DiagramMeta, GraphModel};
+use crate::utils::NULL_UUID;
 
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
-    pub uuid: String,
-    pub name: String, 
+    // pub uuid: String,
+    // pub name: String, 
+    model: GraphModel,
 }
 
-impl From<Diagram> for Props {
-    fn from(Diagram {name, uuid}: Diagram) -> Self {
-        Self {
-            name,
-            uuid,
+impl From<DiagramMeta> for Props {
+    fn from(DiagramMeta { label:_, model }: DiagramMeta) -> Self {
+        match model {
+            GraphModel::Diagram(diagram) => Self {
+                model: GraphModel::Diagram(diagram),
+            },
+            GraphModel::Widget(widget) => Self {
+                model: GraphModel::Widget(widget),
+            },
         }
     }
 }
 
 #[function_component(Component)]
-pub fn scada_diagram_component(Props {name, uuid}: &Props) -> Html {
-    html! {
-        <div>
-            { format!("uuid: {}, name: {}", uuid, name) } 
-        </div>
+pub fn scada_diagram_component(Props { model }: &Props) -> Html {
+    match model {
+        GraphModel::Diagram(d) => html! {
+            <div>
+                { format!("diagram: uuid: {}, name: {}", d.uuid, d.name) } 
+            </div>
+        },
+        GraphModel::Widget(w) =>     html! {
+            <div>
+                { format!("widget: uuid: {}, name: {}", w.uuid, w.name) } 
+            </div>
+        },
     }
+        
+    
+
+
 }
 

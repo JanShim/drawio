@@ -27,33 +27,33 @@ impl Default for Widget {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
-#[serde(rename = "object")]
-pub struct WidgetMeta {
-    #[serde(rename="@label")]    
-    pub label: String,
-    pub widget: Widget, 
-}
+// #[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
+// #[serde(rename = "object")]
+// pub struct WidgetMeta {
+//     #[serde(rename="@label")]    
+//     pub label: String,
+//     pub widget: Widget, 
+// }
 
 
-impl From<MxCell> for WidgetMeta {
-    fn from(cell: MxCell) -> Self {
-        if let Ok(meta) = cell.get_widget_meta() {
-            return meta;
-        }
-        Default::default()
-    }
-}
+// impl From<MxCell> for WidgetMeta {
+//     fn from(cell: MxCell) -> Self {
+//         if let Ok(meta) = cell.get_widget_meta() {
+//             return meta;
+//         }
+//         Default::default()
+//     }
+// }
 
-impl From<Element> for WidgetMeta {
-    fn from(e: Element) -> Self {
-        if let Ok(meta) = from_str::<WidgetMeta>(e.outer_html().as_str()) {
-            return meta;
-        }  
-        log::error!("can't create widget meta form: {}", e.outer_html());
-        Default::default()
-    }
-}
+// impl From<Element> for WidgetMeta {
+//     fn from(e: Element) -> Self {
+//         if let Ok(meta) = from_str::<WidgetMeta>(e.outer_html().as_str()) {
+//             return meta;
+//         }  
+//         log::error!("can't create widget meta form: {}", e.outer_html());
+//         Default::default()
+//     }
+// }
 
 
 // ==========================================================
@@ -61,43 +61,6 @@ impl From<Element> for WidgetMeta {
 mod tests {
     use super::*;
     
-    #[test]
-    fn xml_widget_meta_deser_works() {
-        let xml = r#"<object label="" id="0">
-      <widget uuid="aaaaaaaaaa" name="test" group="задвижки"/>
-    </object>"#;
-
-        let widget = from_str::<WidgetMeta>(xml);    
-        match widget {
-            Ok(item) => {
-                println!("{item:#?}");
-                assert_eq!(item.widget.uuid, "aaaaaaaaaa");
-                assert_eq!(item.widget.group, "задвижки");
-
-            },
-            Err(err) => panic!("err: {}", err),
-        }
-    }
-
-    #[test]
-    fn xml_widget_meta_ser_works() {
-        let item = WidgetMeta {
-            label: "".to_owned(),
-            widget: Widget {
-                uuid: "aaaaaaaaaa".to_owned(),
-                name: "test".to_owned(),
-                ..Default::default()
-            }
-        };
-
-        let str = to_string(&item).unwrap();
-        println!("{str}");        
-
-        let widget = from_str::<WidgetMeta>(&str).unwrap();    
-
-        assert_eq!(item, widget);
-    }
-
     #[test]
     fn xml_widget_deser_works() {
         let xml = r#"<widget uuid="aaaaaaaaaa" name="test" group="group"/>"#;

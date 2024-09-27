@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::js_sys::JsString;
 
 
-use crate::model::scada_diagram;
+use crate::model::diagram;
 
 use super::mx_graph_model::MxGraphModel;
 

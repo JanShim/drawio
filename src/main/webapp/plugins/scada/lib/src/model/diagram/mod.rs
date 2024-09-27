@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::NULL_UUID;
 
-
 pub mod meta;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]

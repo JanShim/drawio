@@ -6,16 +6,9 @@ use web_sys::HtmlDivElement;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
 
 use crate::{
-    components::diagram::{
-        info_item::Component as InfoComponent, 
-        list_item::DiagramListItemComponent as ListItemComponents
-    }, 
-    errors::FetchError, 
-    model::{mx_editor::MxEditor, mx_utils::MxUtils, scada_diagram::{
-        meta::DiagramMeta as DiagramMeta, 
-        DiagramListItem, 
-        ScadaDiagramDto
-    }}, 
+    components::diagram::info_item::Component as InfoComponent, 
+    // errors::FetchError, 
+    model::{common::DiagramMeta, diagram::ScadaDiagramDto, mx_editor::MxEditor, mx_utils::MxUtils}, 
     utils::{fetch, fetch_string, get_cell0, load_scada_model, post, SchemaOptions, NULL_UUID} 
 };
 
@@ -36,11 +29,11 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
         cell_meta
     });
 
-    let url = api_url.clone();
-    let diagram_list = use_async_with_options(
-        async move { fetch::<Vec::<DiagramListItem>>(format!("{url}/diagram/all")).await },
-        UseAsyncOptions::enable_auto(),
-    );
+    // let url = api_url.clone();
+    // let diagram_list = use_async_with_options(
+    //     async move { fetch::<Vec::<DiagramListItem>>(format!("{url}/diagram/all")).await },
+    //     UseAsyncOptions::enable_auto(),
+    // );
 
     // let model = use_state(|| "Not loaded".to_owned());
     // let get_model = {
@@ -125,22 +118,22 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
     // };
 
 
-    // ---------------
-    // load model from db
-    let on_load_model =  {
-        let editor = mx_editor.clone();
-        let url = api_url.clone();
-        Callback::from(move |pk: String|  {
-            let editor = editor.clone();
-            let url = url.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                fetch_string(format!("{url}/diagram/{pk}/model")).await  
-                .map(|model| {
-                    load_scada_model(&editor, model.as_str());
-                }).unwrap();
-            });
-        })
-    };
+    // // ---------------
+    // // load model from db
+    // let on_load_model =  {
+    //     let editor = mx_editor.clone();
+    //     let url = api_url.clone();
+    //     Callback::from(move |pk: String|  {
+    //         let editor = editor.clone();
+    //         let url = url.clone();
+    //         wasm_bindgen_futures::spawn_local(async move {
+    //             fetch_string(format!("{url}/diagram/{pk}/model")).await  
+    //             .map(|model| {
+    //                 load_scada_model(&editor, model.as_str());
+    //             }).unwrap();
+    //         });
+    //     })
+    // };
 
 
     // ---------------
@@ -204,91 +197,10 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
 
     html! {
         <>
-            <p>{val}</p>
-            <p>{api_url}</p>
-             <pre>{
-                if diagram_list.loading {
-                    html! { "Loading, wait a sec..." }
-                } else  {
-                    diagram_list.data.as_ref().map_or_else(
-                        || html! {},        // default
-                        |repo| html! { 
-                            for repo.iter().map(|item| 
-                                html!{ <ListItemComponents item={item.clone()} load={on_load_model.clone()}/> }
-                            )
-                    })      
-                }    
-            }
-            </pre>            
-            <p>{
-                diagram_list.error.as_ref().map_or_else(|| html! {}, |error| match error {
-                    FetchError::SerdeError(err) => html! { err },
-                    FetchError::RequestError(err) => html! { err },
-                    FetchError::InsertModelError(err) => html!{ err },
-                    FetchError::ParseXmlError(err) => html!{ err },
-                })
-            }</p>
             <div>
-                <button onclick={on_create_model} disabled={(*meta).clone().diagram.uuid.ne(NULL_UUID)}>{ "insert" }</button >
+                <button onclick={on_create_model} disabled={(*meta).clone().get_uuid().ne(NULL_UUID)}>{ "insert" }</button >
             </div>
-            <InfoComponent ..(*meta).clone().diagram.into() /> 
-            <div>
-                // <button onclick={get_model}>{ "Get" }</button>
-                // <button onclick={on_load_model} disabled={model_load.loading}>{ "Load" }</button>
-                // <pre> { &*id  } </pre>
-                // <div>
-                // {
-                //     if model_load_handle.loading {
-                //         html! { "Loading" }
-                //     } else {
-                //         html! {}
-                //     }
-                // }
-                // // {
-                // //     if let Some(data) = &model_load_handle.data {
-                // //         html! { data }
-                // //     } else {
-                // //         html! {}
-                // //     }
-                // // }
-                // {
-                //     if let Some(error) = &model_load_handle.error {
-                //         html! { error }
-                //     } else {
-                //         html! {}
-                //     }
-                // }                
-                // </div>
-                // <div>
-                // {
-                //     if model_create.loading {
-                //         html! { "Creating..." }
-                //     } else {
-                //         html! {}
-                //     }
-                // }
-                // // {
-                // //     if let Some(data) = &model_create.data {
-                // //         // model.set(serde_json::to_string(&data).unwrap());
-                // //         html! { 
-                // //             // model.as_str()
-                // //             serde_json::to_string(&data).unwrap()
-                // //             // data
-                // //         }
-                // //     } else {
-                // //         html! {}
-                // //     }
-                // // }
-                // {
-                //     if let Some(error) = &model_create.error {
-                //         html! { error }
-                //     } else {
-                //         html! {}
-                //     }
-                // }                
-                // </div>
-            </div>
-
+            <InfoComponent ..(*meta).clone().into() /> 
         </>
     }    
 }

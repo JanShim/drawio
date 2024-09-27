@@ -53,6 +53,9 @@ Draw.loadPlugin(async function(ui) {
 				initSync(o);
 			});				
 	}
+	// ============= windows ==================
+	let diagramDataWindow = null;
+	let cellDataWindow = null;
 
 	//--------------------------------------------------------
 	let div = document.createElement('div');
@@ -75,31 +78,13 @@ Draw.loadPlugin(async function(ui) {
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		
 		// main window
-		let dataWindow = new mxWindow('DFlow diagram data', div, iiw - 320, 60, 300, 500, true, true);
-		dataWindow.destroyOnClose = false;
-		dataWindow.setMaximizable(true);
-		dataWindow.setResizable(true);
-		dataWindow.setScrollable(true);
-		dataWindow.setClosable(true);
-		dataWindow.contentWrapper.style.overflowY = 'scroll';
-
-		// Adds resource for action
-		mxResources.parse('dflow=DFlow');
-
-		// Adds action
-		ui.actions.addAction('dflow', function()
-		{
-			dataWindow.setVisible(!dataWindow.isVisible());
-		});
-		
-		let menu = ui.menus.get('extras');
-		let oldFunct = menu.funct;
-		
-		menu.funct = function(menu, parent)
-		{
-			oldFunct.apply(this, arguments);
-			ui.menus.addMenuItems(menu, ['-', 'dflow'], parent);
-		};
+		diagramDataWindow = new mxWindow('DFlow diagram data', div, iiw - 320, 60, 300, 500, true, true);
+		diagramDataWindow.destroyOnClose = false;
+		diagramDataWindow.setMaximizable(true);
+		diagramDataWindow.setResizable(true);
+		diagramDataWindow.setScrollable(true);
+		diagramDataWindow.setClosable(true);
+		diagramDataWindow.contentWrapper.style.overflowY = 'scroll';
 	}
 	else
 	{
@@ -146,7 +131,7 @@ Draw.loadPlugin(async function(ui) {
 			highlight.highlight(null);
 			// app.cell_clicked(null);
 			// renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
-			// renderSchema(mxUtils, ui.editor, div, options);
+			renderSchema(mxUtils, ui.editor, div, getAppOptions());
 		}
 		else
 		{
@@ -310,20 +295,24 @@ Draw.loadPlugin(async function(ui) {
 		addPalette();
 	};
 
+
 	// ================ MENUS =================
 	// Adds menu
 	mxResources.parse('createDiagram=New Diagram');
 	mxResources.parse('createWidget=New Widget');
 	mxResources.parse('openItem=Open...');
+	mxResources.parse('dflow=DFlow');
+	mxResources.parse('scadaData=DFlow Data');
+
 	
     ui.actions.addAction('createDiagram', function()
     {
-    	// window.open('https://github.com/jgraph/drawio/issues/579');
+		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram  uuid="00000000-0000-0000-0000-000000000000"  name=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
     });
 
     ui.actions.addAction('createWidget', function()
     {
-    	// window.open('https://github.com/jgraph/drawio/issues/579');
+		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget  uuid="00000000-0000-0000-0000-000000000000"  name="" group=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
     });
 
     ui.actions.addAction('openItem', function()
@@ -331,20 +320,19 @@ Draw.loadPlugin(async function(ui) {
 		ui.showDialog(new DFlowItemsDialog(ui).container, 500, 400, true, false);
     });	
 
+	ui.actions.addAction('dflow', function()
+	{
+		diagramDataWindow.setVisible(!diagramDataWindow.isVisible());
+	});
+
+	ui.actions.addAction('scadaData', function()
+	{
+		cellDataWindow.setVisible(!cellDataWindow.isVisible());
+	});	
 
 	ui.menus.put('dflow', new Menu(function(menu, parent)
 	{
-		ui.menus.addMenuItems(menu, ['createDiagram', 'createWidget', '-', 'openItem']);
-
-		//====
-		// this.put('openFrom', new Menu(function(menu, parent)
-		// {
-
-		// 	menu.addItem(mxResources.get('googleDrive') + '...', null, function()
-		// 	{
-		// 		editorUi.pickFile(App.MODE_GOOGLE);
-		// 	}, parent);
-		// }));
+		ui.menus.addMenuItems(menu, ['createDiagram', 'createWidget', '-', 'openItem', '-', 'dflow', 'scadaData']);
 	}));
 
     if (ui.menubar != null)
@@ -359,8 +347,6 @@ Draw.loadPlugin(async function(ui) {
 	divScadaCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
 	divScadaCellData.style.border = '1px solid gray';
 	divScadaCellData.style.opacity = '0.8';
-	// divScadaCellData.style.padding = '10px';
-	// divScadaCellData.style.paddingTop = '0px';
 	divScadaCellData.style.width = '20%';
 
 	divScadaCellData.style.boxSizing = 'border-box';
@@ -380,8 +366,6 @@ Draw.loadPlugin(async function(ui) {
 		wnd.contentWrapper.style.overflowY = 'scroll';
 		return wnd;	
 	}
-
-	let cellDataWindow = null;
 
 	function isScadaCell(cell)
 	{
@@ -434,32 +418,9 @@ Draw.loadPlugin(async function(ui) {
 	}	
 
 	// Adds resources for actions
-	mxResources.parse('scadaData=DFlow Data');
 	mxResources.parse('scadaItem=DFlow item');
 
 	// Adds actions
-	ui.actions.addAction('scadaData', function()
-	{
-		cellDataWindow.setVisible(!cellDataWindow.isVisible());
-
-		// if (graph.isEnabled() && graph.getSelectionCount() == 1)
-		// {
-		// 	let cell = graph.getSelectionCell();
-		// 	let sib = graph.getOutgoingEdges(cell);
-			
-		// 	if (sib != null)
-		// 	{
-		// 		let tmp = [];
-				
-		// 		for (let i = 0; i < sib.length; i++)
-		// 		{
-		// 			tmp.push(graph.model.getTerminal(sib[i], false));
-		// 		}
-				
-		// 		graph.setSelectionCells(tmp);
-		// 	}
-		// }
-	}, null, null, 'Alt+Shift+Q');
 	ui.actions.addAction('scadaItem', function()
 	{
 		if (graph.isEnabled() && graph.getSelectionCount() == 1)
