@@ -112,38 +112,3 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
     }
 }
 
-
-/*
-
-/// reducer's Action
-enum CounterAction {
-    Double,
-    Square,
-}
-
-/// reducer's State
-struct CounterState {
-    counter: i32,
-}
-
-impl Default for CounterState {
-    fn default() -> Self {
-        Self { counter: 1 }
-    }
-}
-
-impl Reducible for CounterState {
-    /// Reducer Action Type
-    type Action = CounterAction;
-
-    /// Reducer Function
-    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
-        let next_ctr = match action {
-            CounterAction::Double => self.counter * 2,
-            CounterAction::Square => self.counter.pow(2),
-        };
-
-        Self { counter: next_ctr }.into()
-    }
-}
-*/

@@ -1,9 +1,11 @@
 use std::rc::Rc;
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use yewdux::{store::{self, Store}, Reducer};
+use yewdux::{store::Store, Reducer};
 
-use crate::{errors::CellStateError, model::{
+use crate::{
+    //errors::CellStateError, 
+    model::{
     cell_meta::{
         // multystate::{state::StateMeta, MultystateMeta}, 
         CellMeta, CellMetaVariant, CellType

@@ -1,27 +1,48 @@
+use implicit_clone::unsync::IString;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
+use yewdux::use_dispatch;
 use std::rc::Rc;
 
 use web_sys::HtmlDivElement;
-use yew_hooks::{use_async_with_options, UseAsyncOptions};
 
 use crate::{
-    components::diagram::info_item::Component as InfoComponent, 
     // errors::FetchError, 
-    model::{common::DiagramMeta, diagram::ScadaDiagramDto, mx_editor::MxEditor, mx_utils::MxUtils}, 
-    utils::{fetch, fetch_string, get_cell0, load_scada_model, post, SchemaOptions, NULL_UUID} 
+    components::{get_global_css, InfoComponent}, model::{
+        common::{DiagramMeta, GraphModel}, 
+        diagram::ScadaDiagramDto, 
+        mx_editor::MxEditor, 
+        mx_utils::MxUtils, widget::WidgetDto
+    }, store::diagram, utils::{fetch_string, get_cell0, load_scada_model, post, SchemaOptions} 
 };
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub val: String,
-    pub api_url: String,
+    pub api_url: IString,
     pub mx_utils: Rc<MxUtils>,
     pub mx_editor: Rc<MxEditor>,
 }
 
 #[function_component(App)]
-pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
+pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
+    let dispatch = use_dispatch::<diagram::State>();
+
+    let url = api_url.clone();
+    let utils = mx_utils.clone();
+    let editor = mx_editor.clone();
+    // This runs only once, on the first render of the component.
+    use_effect_with(
+        (), // empty deps
+        move |_| {
+            dispatch.set( diagram::State { 
+                api_url: url.to_string(), 
+                mx_utils: Some(utils),
+                mx_editor: Some(editor),
+            });
+            || {}
+        },
+    );  
+
     let editor = mx_editor.clone();
     let meta = use_state(|| {
         let cell_meta: DiagramMeta = get_cell0(&editor).into();
@@ -117,7 +138,6 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
     //     })
     // };
 
-
     // // ---------------
     // // load model from db
     // let on_load_model =  {
@@ -136,70 +156,62 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
     // };
 
 
-    // ---------------
-    // insert model to db
-    let on_create_model =  {
-        let editor = mx_editor.clone();
-        let utils = mx_utils.clone();
-        let url = api_url.clone();
-        Callback::from(move |_: MouseEvent|  {
-            let editor = editor.clone();
-            let utils = utils.clone();
-            let url = url.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                if let Ok(node) = editor.get_graph_xml() {
-                    if let Ok(Some(model_str)) = utils.get_xml(node) {
-                        let item = ScadaDiagramDto::new("insert proba".to_owned(), model_str);
-                        post(format!("{url}/diagram"), item).await
-                            .and_then(|o| Ok(o.uuid))
-                            .map(|pk| {
-                                wasm_bindgen_futures::spawn_local(async move {
-                                    fetch_string(format!("{url}/diagram/{pk}/model")).await
-                                        .map(|model| {
-                                            load_scada_model(&editor, model.as_str());
-                                        }).unwrap();
-                                })
-                            })
-                            .unwrap();
-                    } 
-                } 
-            });
-        })
-    };
+    // // ---------------
+    // // insert model to db
+    // let on_create_model =  {
+    //     let editor = mx_editor.clone();
+    //     let utils = mx_utils.clone();
+    //     let url = api_url.clone();
+    //     let meta = meta.clone();
+    //     Callback::from(move |_: MouseEvent|  {
+    //         let editor = editor.clone();
+    //         let utils = utils.clone();
+    //         let url = url.clone();
+    //         let meta = meta.clone();
+    //         wasm_bindgen_futures::spawn_local(async move {
+    //             if let Ok(node) = editor.get_graph_xml() {
+    //                 if let Ok(Some(model_str)) = utils.get_xml(node) {
+    //                     match meta.model {
+    //                         GraphModel::Diagram(_) => {
+    //                             let item = ScadaDiagramDto::new("insert proba".to_owned(), model_str);
+    //                             post(format!("{url}/diagram"), item).await
+    //                                 .and_then(|o| Ok(o.uuid))
+    //                                 .map(|pk| {
+    //                                     wasm_bindgen_futures::spawn_local(async move {
+    //                                         fetch_string(format!("{url}/diagram/{pk}/model")).await
+    //                                             .map(|model| {
+    //                                                 load_scada_model(&editor, model.as_str());
+    //                                             }).unwrap();
+    //                                     })
+    //                                 })
+    //                                 .unwrap();
+    //                         },
+    //                         GraphModel::Widget(_) => {
+    //                             let item = WidgetDto::new("insert proba".to_owned(), model_str);
+    //                             post(format!("{url}/widget"), item).await
+    //                                 .and_then(|o| Ok(o.uuid))
+    //                                 .map(|pk| {
+    //                                     wasm_bindgen_futures::spawn_local(async move {
+    //                                         fetch_string(format!("{url}/widget/{pk}/model")).await
+    //                                             .map(|model| {
+    //                                                 load_scada_model(&editor, model.as_str());
+    //                                             }).unwrap();
+    //                                     })
+    //                                 })
+    //                                 .unwrap();
 
-    // // let model = model.clone();
-    // // let id_clone = id.clone();
-    // let editor = props.mx_editor.clone();
-    // let utils = props.mx_utils.clone();    
-    // let model_create = use_async(
-    //     async move {
-    //         if let Ok(node) = editor.get_graph_xml() {
-    //             if let Ok(Some(curr_model)) = utils.get_pretty_xml(node) {
-    //                 let item = ScadaDiagramDto::new("insert proba".to_owned(), curr_model.clone());
-    //                 return post(format!("{url}/diagram"), item).await
-    //                     .and_then(|o| {
-    //                         log::debug!("new {}", o.uuid);
-    //                         // id_clone.set(o.uuid);
-    //                         Ok(())
-    //                     });
+    //                         },
+    //                     }};
+    //                 } 
     //             }
-    //         }
+    //         ) 
+    //     })
+    // };
 
-    //         Err(FetchError::InsertModelError("can't insert model".to_owned()))
-    //     }
-    // );
-    // let on_create_model = {
-    //     let handle = model_create.clone();
-    //     Callback::from(move |_: MouseEvent| {
-    //         handle.run();
-    //     })        
-    //  };
-
+    // =================== view ====================
     html! {
         <>
-            <div>
-                <button onclick={on_create_model} disabled={(*meta).clone().get_uuid().ne(NULL_UUID)}>{ "insert" }</button >
-            </div>
+            { get_global_css() }        
             <InfoComponent ..(*meta).clone().into() /> 
         </>
     }    
@@ -209,8 +221,7 @@ pub fn app(Props {val, api_url, mx_utils, mx_editor}: &Props) -> Html {
 #[wasm_bindgen(js_name=renderSchema)]
 pub fn render_schema(mx_utils: MxUtils, mx_editor: MxEditor, div: HtmlDivElement, options: SchemaOptions) {
     let props  = Props {
-        val: "SCHEMA".to_owned(),
-        api_url: options.api_url.unwrap_or("undefiend".to_owned()),
+        api_url: options.api_url.unwrap_or("undefiend".to_owned()).into(),
         mx_utils: Rc::new(mx_utils),
         mx_editor: Rc::new(mx_editor),
     };

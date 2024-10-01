@@ -8,6 +8,7 @@ use svg_view::SvgViewComponent;
 
 use crate::{errors::CellStateError, model::cell_meta::{widget::{self, WidgetMeta}, CellMetaVariant}, store::cell};
 
+pub mod info_item;
 pub mod data_source;
 pub mod svg_view;
 pub mod list_item;

@@ -1,23 +1,20 @@
+use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
-use quick_xml::{de::from_str, se::to_string};
-use web_sys::Element;
-
-use crate::model::mx_cell::MxCell;
 
 use super::NULL_UUID;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Diagram {
     #[serde(rename="@uuid")]    
-    pub uuid: String,
+    pub uuid: IString,
     #[serde(rename="@name")]    
-    pub name: String,
+    pub name: IString,
 }
 
 impl Default for Diagram {
     fn default() -> Self {
         Self { 
-            uuid: NULL_UUID.to_owned(),
+            uuid: NULL_UUID.into(),
             name: Default::default(),
         }
     }
@@ -26,6 +23,8 @@ impl Default for Diagram {
 // ==========================================================
 #[cfg(test)]
 mod tests {
+    use quick_xml::de::from_str;
+
     use super::*;
 
     #[test]

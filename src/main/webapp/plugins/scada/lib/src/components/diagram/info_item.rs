@@ -1,50 +1,49 @@
 
-use yew::{
-    function_component, html, Html, Properties
-};
+use yew::prelude::*;
 
-use crate::components::widget;
-use crate::model::common::{DiagramMeta, GraphModel};
-use crate::utils::NULL_UUID;
+use crate::model::{common::{DiagramMeta, GraphModel}, diagram::meta::Diagram};
 
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
-    // pub uuid: String,
-    // pub name: String, 
-    model: GraphModel,
+    pub diagram: Diagram,
 }
 
-impl From<DiagramMeta> for Props {
-    fn from(DiagramMeta { label:_, model }: DiagramMeta) -> Self {
-        match model {
-            GraphModel::Diagram(diagram) => Self {
-                model: GraphModel::Diagram(diagram),
-            },
-            GraphModel::Widget(widget) => Self {
-                model: GraphModel::Widget(widget),
-            },
-        }
-    }
-}
-
-#[function_component(Component)]
-pub fn scada_diagram_component(Props { model }: &Props) -> Html {
-    match model {
-        GraphModel::Diagram(d) => html! {
-            <div>
-                { format!("diagram: uuid: {}, name: {}", d.uuid, d.name) } 
-            </div>
-        },
-        GraphModel::Widget(w) =>     html! {
-            <div>
-                { format!("widget: uuid: {}, name: {}", w.uuid, w.name) } 
-            </div>
-        },
-    }
-        
+#[function_component(DiagramInfoComponent)]
+pub fn scada_diagram_component(Props { diagram }: &Props) -> Html {
+    let edit_mode = use_state(|| false);
     
 
+    let edit_mode_toggle = {
+        let edit_mode = edit_mode.clone();
+        Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
+    };    
 
+    let cell_details_apply: Callback<MouseEvent> = {
+        let edit_mode = edit_mode.clone();
+        Callback::from(move |_: MouseEvent| {
+            // log::debug!("NEW CELL META:: {:?}", meta);
+            edit_mode.set(false);
+        })
+    }; 
+
+    let header = html!{
+        <div class="flex-box-2 delim-label" >
+        if *edit_mode {
+            <button onclick={cell_details_apply}><img src="images/checkmark.gif" width="16" height="16"/></button>
+        } else {
+            <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
+        }
+        </div>           
+    };
+
+    html! {
+        <>
+        {header}
+        <div>
+            { format!("diagram: uuid: {}, name: {}", diagram.uuid, diagram.name) } 
+        </div>
+        </>
+    }
 }
 
