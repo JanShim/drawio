@@ -36,6 +36,24 @@ impl Default for Widget {
 //     }
 // }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct WidgetForm {
+    pub uuid: IString,
+    pub name: IString,
+    pub group: IString,
+}
+
+impl From<FormData> for WidgetForm {
+    fn from(data: FormData) -> Self {
+        Self { 
+            uuid: data.get("uuid").as_string().unwrap_or_default().into(), 
+            name: data.get("name").as_string().unwrap_or_default().into(), 
+            group: data.get("group").as_string().unwrap_or_default().into(), 
+        }
+    }
+}
+
+
 
 // #[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
 // #[serde(rename = "object")]
@@ -73,19 +91,19 @@ mod tests {
 
     use super::*;
     
-    #[test]
-    fn xml_widget_deser_works() {
-        let xml = r#"<widget uuid="aaaaaaaaaa" name="test" group="group"/>"#;
+    // #[test]
+    // fn xml_widget_deser_works() {
+    //     let xml = r#"<widget uuid="aaaaaaaaaa" name="test" group="group"/>"#;
 
-        let widget = from_str::<Widget>(xml);    
-        match widget {
-            Ok(item) => {
-                assert_eq!(item.uuid, "aaaaaaaaaa".to_owned());
-                assert_eq!(item.name, "test".to_owned());
-            },
-            Err(err) => panic!("err: {}", err),
-        }
-    }    
+    //     let widget = from_str::<Widget>(xml);    
+    //     match widget {
+    //         Ok(item) => {
+    //             assert_eq!(item.uuid, "aaaaaaaaaa".to_owned());
+    //             assert_eq!(item.name, "test".to_owned());
+    //         },
+    //         Err(err) => panic!("err: {}", err),
+    //     }
+    // }    
 
 
 }

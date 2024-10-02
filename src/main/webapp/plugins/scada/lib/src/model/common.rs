@@ -15,12 +15,12 @@ pub enum GraphModel {
 }
 
 impl GraphModel {
-    pub fn get_uuid(&self) -> String {
-        match self {
-            GraphModel::Diagram(diagram) => diagram.uuid.to_string(),
-            GraphModel::Widget(widget) => widget.uuid.to_string(),
-        }
-    }
+    // pub fn get_uuid(&self) -> String {
+    //     match self {
+    //         GraphModel::Diagram(diagram) => diagram.uuid.to_string(),
+    //         GraphModel::Widget(widget) => widget.uuid.to_string(),
+    //     }
+    // }
 }
 
 impl Default for GraphModel {

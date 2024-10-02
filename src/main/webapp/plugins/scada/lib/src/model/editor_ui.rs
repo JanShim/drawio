@@ -7,22 +7,16 @@ extern "C" {
 
     pub type EditorUi;
 
-    // /**
-    //  * Returns the current page and XML for the given page.
-    //  */
-    // // EditorUi.prototype.getDiagramSnapshot = function()
-    // // {
-    // // 	return {node: this.editor.getGraphXml()};
-    // // };    
-    // #[wasm_bindgen(method, js_name=getDiagramSnapshot)]
-    // pub fn get_diagram_snapshot(this: &EditorUi) -> JsValue;
+
+    /**
+     * Displays a print dialog.
+     */
+    // EditorUi.prototype.hideDialog = function(cancel, isEsc, matchContainer)    
+    #[wasm_bindgen(method, js_name=hideDialog)]
+    pub fn hide_dialog(this: &EditorUi);
+
 }
 
-impl EditorUi {
-
-
-    
-}
 
 impl PartialEq for EditorUi {
     fn eq(&self, other: &Self) -> bool {

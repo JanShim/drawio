@@ -5,7 +5,7 @@ use yew::{
 };
 use yewdux::{use_selector, use_store};
 
-use crate::{model::widget::{meta::Widget, WidgetDto}, store::diagram, utils::{fetch_string, load_scada_model, post}};
+use crate::{model::widget::{meta::{Widget, WidgetForm}, WidgetDto}, store::diagram, utils::{fetch_string, load_scada_model, post}};
 
 
 #[derive(PartialEq, Properties)]
@@ -46,7 +46,7 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
                 .and_then(|t| t.dyn_into::<HtmlFormElement>().ok());
 
             if let Some(form) = form {
-                if let Some(widget) = FormData::new_with_form(&form).ok().map(|data| Into::<Widget>::into(data)) {
+                if let Some(widget) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
                     // lets create widget in db
                     let editor = editor.clone();
                     let utils = utils.clone();
@@ -97,13 +97,13 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
             {header}
             if *edit_mode {
             <form onsubmit={on_apply}>
-                <input type="hidden" name="uuid" value={ format!("{}", widget.uuid) }/>
-                <label for="uuid">{ "uuid: " }</label>
-                <input name="uuid-0" value={ format!("{}", widget.uuid) } disabled={true} class="input-100"/><br/>
-                <label for="name">{ "name: " }</label>
-                <input name="name" value={ format!("{}", widget.name) } class="input-100"/><br/>
-                <label for="group">{ "group: " }</label>
-                <input name="group" value={ format!("{}", widget.group) } class="input-100"/><br/>
+                // <input type="hidden" name="uuid" value={ format!("{}", widget.uuid) }/>
+                // <label for="uuid">{ "uuid: " }</label>
+                // <input name="uuid-0" value={ format!("{}", widget.uuid) } disabled={true} class="input-100"/><br/>
+                // <label for="name">{ "name: " }</label>
+                // <input name="name" value={ format!("{}", widget.name) } class="input-100"/><br/>
+                // <label for="group">{ "group: " }</label>
+                // <input name="group" value={ format!("{}", widget.group) } class="input-100"/><br/>
 
                 <div class="flex-box-2" >
                     <button type="button" onclick={on_cancel}>{"Cancel"}</button>
@@ -111,14 +111,14 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
                 </div>
             </form>
             } else {
-            <div>
-                { "uuid: " }<br/>
-                { format!("{}", widget.uuid) }<br/>
-                { "name: " }<br/>
-                { format!("{}", widget.name) }<br/>
-                { "group: " }<br/>
-                { format!("{}", widget.group) }<br/>                
-            </div>    
+            // <div>
+            //     { "uuid: " }<br/>
+            //     { format!("{}", widget.uuid) }<br/>
+            //     { "name: " }<br/>
+            //     { format!("{}", widget.name) }<br/>
+            //     { "group: " }<br/>
+            //     { format!("{}", widget.group) }<br/>                
+            // </div>    
             }
         </>
     }

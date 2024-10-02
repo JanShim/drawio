@@ -4,7 +4,6 @@ use web_sys::Node;
 #[wasm_bindgen]
 extern "C" {
     pub fn name() -> String;
-
     pub type MxEditor;
 
     /**
@@ -18,7 +17,6 @@ extern "C" {
      */
     #[wasm_bindgen(method, js_name=setGraphXml)]
     pub fn set_graph_xml(this: &MxEditor, node: Node);
-
 }
 
 impl MxEditor {

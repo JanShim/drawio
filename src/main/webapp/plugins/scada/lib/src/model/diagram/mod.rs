@@ -1,3 +1,4 @@
+use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
 
 use crate::utils::NULL_UUID;
@@ -25,6 +26,6 @@ impl ScadaDiagramDto {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 // #[serde(rename_all = "camelCase")]
 pub struct DiagramListItem {
-    pub uuid: String,
-    pub name: String,
+    pub uuid: IString,
+    pub name: IString,
 }

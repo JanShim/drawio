@@ -473,82 +473,69 @@ Draw.loadPlugin(async function(ui) {
 	let getAppOptions = function() {return new SchemaOptions("http://localhost:8091/api/v1"); }		
 
 
-	let DFlowItemsDialog = function(editorUi, addFn, delFn, closeOnly) 
+	let DFlowItemsDialog = function(editorUi) 
 	{
 		var div = document.createElement('div');
-		var inner = document.createElement('div');
+		// var inner = document.createElement('div');
 		
-		// inner.style.width = '600px';
-		inner.style.height = '300px';
-		inner.style.overflow = 'auto';
+		// // inner.style.width = '600px';
+		// inner.style.height = '300px';
+		// inner.style.overflow = 'auto';
 	
-		var changed = false;
+		// var changed = false;
 						
 		// open schema items dialod
-		openDialog(mxUtils, editorUi, inner, getAppOptions());
+		openDialog(mxUtils, editorUi, editorUi.editor, div, getAppOptions());
 		
-		div.appendChild(inner);
-		changed = false;
+		// // div.appendChild(inner);
+		// changed = false;
 		
-		var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
-		{
-			editorUi.hideDialog();
-		});
-		
-		cancelBtn.className = 'geBtn';
-		
-		var openBtn = mxUtils.button(closeOnly? mxResources.get('close') : mxResources.get('open'), function()
-		{
-			if (changed)
-			{
-				editorUi.hideDialog();
-				editorUi.alert(mxResources.get('restartForChangeRequired'));
-			}
-			else
-			{
-				editorUi.hideDialog();
-			}	
-		});
-		
-		openBtn.className = 'geBtn gePrimaryBtn';
-	
-		var buttons = document.createElement('div');
-		buttons.style.marginTop = '14px';
-		buttons.style.textAlign = 'right';
-	
-		// var helpBtn = mxUtils.button(mxResources.get('help'), function()
+		// var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
 		// {
-		// 	editorUi.openLink('https://www.drawio.com/doc/faq/plugins');
+		// 	editorUi.hideDialog();
 		// });
-	
-		// helpBtn.className = 'geBtn';
 		
-		// if (editorUi.isOffline() && !mxClient.IS_CHROMEAPP)
+		// cancelBtn.className = 'geBtn';
+		
+		// var openBtn = mxUtils.button(closeOnly? mxResources.get('close') : mxResources.get('open'), function()
 		// {
-		// 	helpBtn.style.display = 'none';
+		// 	if (changed)
+		// 	{
+		// 		editorUi.hideDialog();
+		// 		editorUi.alert(mxResources.get('restartForChangeRequired'));
+		// 	}
+		// 	else
+		// 	{
+		// 		editorUi.hideDialog();
+		// 	}	
+		// });
+		
+		// openBtn.className = 'geBtn gePrimaryBtn';
+	
+		// var buttons = document.createElement('div');
+		// buttons.style.marginTop = '14px';
+		// buttons.style.textAlign = 'right';
+	
+		
+		// if (editorUi.editor.cancelFirst)
+		// {
+		// 	if (!closeOnly)
+		// 	{
+		// 		buttons.appendChild(cancelBtn);
+		// 	}
+	
+		// 		buttons.appendChild(openBtn);
 		// }
-		
-		// buttons.appendChild(helpBtn);
-		
-		if (editorUi.editor.cancelFirst)
-		{
-			if (!closeOnly)
-			{
-				buttons.appendChild(cancelBtn);
-			}
+		// else
+		// {
+		// 	buttons.appendChild(openBtn);
+		// 	if (!closeOnly)
+		// 	{
+		// 		buttons.appendChild(cancelBtn);
+		// 	}
+		// }
 	
-				buttons.appendChild(openBtn);
-		}
-		else
-		{
-			buttons.appendChild(openBtn);
-			if (!closeOnly)
-			{
-				buttons.appendChild(cancelBtn);
-			}
-		}
-	
-		div.appendChild(buttons);
+		// div.appendChild(buttons);
 		this.container = div;
 	};	
 

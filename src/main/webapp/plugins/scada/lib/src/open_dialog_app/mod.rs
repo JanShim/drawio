@@ -1,3 +1,5 @@
+use implicit_clone::unsync::IString;
+use serde::de::value::IsizeDeserializer;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 use std::rc::Rc;
@@ -7,22 +9,12 @@ use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use stylist::yew::{styled_component, Global};
 
 use crate::{
-    errors::FetchError, 
-    components::diagram::list_item::DiagramListItemComponent, 
-    components::widget::list_item::WidgetListItemComponent, 
-    model::{
-        mx_editor::MxEditor, 
-        mx_utils::MxUtils, 
+    components::{diagram::list_item::DiagramListItemComponent, widget::list_item::WidgetListItemComponent}, errors::FetchError, model::{
         diagram::{
             DiagramListItem, 
             ScadaDiagramDto
-        },
-        widget::{
-            WidgetListItem, 
-            // ScadaDiagramDto
-        }         
-    }, 
-    utils::{fetch, fetch_string, load_scada_model, post, SchemaOptions} 
+        }, editor_ui::EditorUi, mx_editor::MxEditor, mx_utils::MxUtils, widget::WidgetListItem         
+    }, utils::{fetch, fetch_string, load_scada_model, post, SchemaOptions} 
 };
 
 #[derive(Properties, PartialEq)]
@@ -30,14 +22,14 @@ pub struct Props {
     pub api_url: String,
     pub mx_utils: Rc<MxUtils>,
     pub mx_editor: Rc<MxEditor>,
+    pub editor_ui: Rc<EditorUi>,
 }
 
 #[styled_component(App)]
-pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
-    let editor = mx_editor.clone();
+pub fn app(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
+    // let editor = mx_editor.clone();
 
     let tab_tag = use_state(|| "diagram".to_owned());
-
 
     let url = api_url.clone();
     let diagram_list = use_async_with_options(
@@ -50,20 +42,25 @@ pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
         async move { fetch::<Vec::<WidgetListItem>>(format!("{url}/widget/all")).await },
         UseAsyncOptions::enable_auto(),
     );
+
+    let selected = use_state(|| IString::from("undefiend"));
+
     // ---------------
     // load model from db
-    let on_load_model =  {
-        let editor = mx_editor.clone();
-        let url = api_url.clone();
-        Callback::from(move |pk: String|  {
-            let editor = editor.clone();
-            let url = url.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                fetch_string(format!("{url}/diagram/{pk}/model")).await  
-                .map(|model| {
-                    load_scada_model(&editor, model.as_str());
-                }).unwrap();
-            });
+    let on_select =  {
+        let selected = selected.clone();
+        Callback::from(move |pk: IString|  {
+            log::debug!("selected: {pk:?}");
+            selected.set(pk);
+
+            // let editor = editor.clone();
+            // let url = url.clone();
+            // wasm_bindgen_futures::spawn_local(async move {
+            //     fetch_string(format!("{url}/diagram/{pk}/model")).await  
+            //     .map(|model| {
+            //         load_scada_model(&editor, model.as_str());
+            //     }).unwrap();
+            // });
         })
     };
 
@@ -79,35 +76,64 @@ pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
     };
 
 
-    // ---------------
-    // insert model to db
-    let on_create_model =  {
+    // // ---------------
+    // // insert model to db
+    // let on_create_model =  {
+    //     let editor = mx_editor.clone();
+    //     let utils = mx_utils.clone();
+    //     let url = api_url.clone();
+    //     Callback::from(move |_: MouseEvent|  {
+    //         let editor = editor.clone();
+    //         let utils = utils.clone();
+    //         let url = url.clone();
+    //         wasm_bindgen_futures::spawn_local(async move {
+    //             if let Ok(node) = editor.get_graph_xml() {
+    //                 if let Ok(Some(model_str)) = utils.get_xml(node) {
+    //                     let item = ScadaDiagramDto::new("insert proba".to_owned(), model_str);
+    //                     post(format!("{url}/diagram"), item).await
+    //                         .and_then(|o| Ok(o.uuid))
+    //                         .map(|pk| {
+    //                             wasm_bindgen_futures::spawn_local(async move {
+    //                                 fetch_string(format!("{url}/diagram/{pk}/model")).await
+    //                                     .map(|model| {
+    //                                         load_scada_model(&editor, model.as_str());
+    //                                     }).unwrap();
+    //                             })
+    //                         })
+    //                         .unwrap();
+    //                 } 
+    //             } 
+    //         });
+    //     })
+    // };
+
+    let on_cancel = {
+        let editor_ui = editor_ui.clone();
+        Callback::from(move |_: MouseEvent| {
+            editor_ui.hide_dialog();
+        })        
+    };
+    
+    let on_open = {
         let editor = mx_editor.clone();
-        let utils = mx_utils.clone();
         let url = api_url.clone();
-        Callback::from(move |_: MouseEvent|  {
+        let tab_tag = tab_tag.clone();
+        let selected = selected.clone();
+        let editor_ui = editor_ui.clone();
+        Callback::from(move |_: MouseEvent| {
             let editor = editor.clone();
-            let utils = utils.clone();
             let url = url.clone();
+            let tab_tag = tab_tag.clone();
+            let selected = selected.clone();
+            let editor_ui = editor_ui.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                if let Ok(node) = editor.get_graph_xml() {
-                    if let Ok(Some(model_str)) = utils.get_xml(node) {
-                        let item = ScadaDiagramDto::new("insert proba".to_owned(), model_str);
-                        post(format!("{url}/diagram"), item).await
-                            .and_then(|o| Ok(o.uuid))
-                            .map(|pk| {
-                                wasm_bindgen_futures::spawn_local(async move {
-                                    fetch_string(format!("{url}/diagram/{pk}/model")).await
-                                        .map(|model| {
-                                            load_scada_model(&editor, model.as_str());
-                                        }).unwrap();
-                                })
-                            })
-                            .unwrap();
-                    } 
-                } 
+                fetch_string(format!("{url}/{}/{}/model", *tab_tag, *selected)).await
+                    .map(|model| {
+                        load_scada_model(&editor, model.as_str());
+                        editor_ui.hide_dialog();
+                    }).unwrap();
             });
-        })
+        })   
     };
 
 
@@ -120,7 +146,11 @@ pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
                 || html! {},        // default
                 |repo| html! { 
                     for repo.iter().map(|item| 
-                        html!{ <DiagramListItemComponent item={item.clone()} load={on_load_model.clone()}/> }
+                        html!{ <DiagramListItemComponent 
+                            item={item.clone()} 
+                            select={on_select.clone()} 
+                            selected={(*selected).clone()}/> 
+                        }
                     )
             })      
         }    
@@ -134,15 +164,20 @@ pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
                 || html! {},        // default
                 |repo| html! { 
                     for repo.iter().map(|item| 
-                        html!{ <WidgetListItemComponent item={item.clone()} load={on_load_model.clone()}/> }
+                        html!{ <WidgetListItemComponent 
+                            item={item.clone()} 
+                            select={on_select.clone()}
+                            selected={(*selected).clone()} /> 
+                        }
                     )
             })      
         }   
     };
 
     let tab_content_view = {
+        let tab_tag = tab_tag.clone();
         match tab_tag {
-            val if *val == "widgets" => widgets_view,
+            val if *val == "widget" => widgets_view,
             _ => diagrams_view,
         }
     };
@@ -184,31 +219,46 @@ pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
   border: 1px solid #ccc;
   border-top: none;
 }  
+
+div.selectable {
+    cursor: pointer;
+}
+
+div.selected {
+    background-color: #4d90fe;
+    color: white;
+}
         
         "#)} />
-
-        <div class="tab">
-          <button tag="diagrams" class="tablinks active" onclick={on_tab_select.clone()}>{"Diagrams"}</button>
-          <button tag="widgets" class="tablinks" onclick={on_tab_select.clone()}>{"Widgets"}</button>
+        <div style="height: 340px; overflow: auto;">
+            <div class="tab">
+            <button tag="diagram" 
+                class={classes!("tablinks", (*tab_tag == "diagram").then(||Some("active")))} 
+                onclick={on_tab_select.clone()}>{"Diagrams"}</button>
+            <button tag="widget" 
+                class={classes!("tablinks", (*tab_tag == "widget").then(||Some("active")))} 
+                onclick={on_tab_select.clone()}>{"Widgets"}</button>
+            </div>
+            
+            <div class="tabcontent">
+                { tab_content_view }
+            </div>
         </div>
-        
-        <div class="tabcontent">
-            { tab_content_view }
-        </div>
-        
-<hr/>
-            // <p>{api_url}</p>
 
-           
-                   
-            <p>{
-                diagram_list.error.as_ref().map_or_else(|| html! {}, |error| match error {
-                    FetchError::SerdeError(err) => html! { err },
-                    FetchError::RequestError(err) => html! { err },
-                    FetchError::InsertModelError(err) => html!{ err },
-                    FetchError::ParseXmlError(err) => html!{ err },
-                })
-            }</p>
+        
+        <hr/>
+        // <p>{
+        //     diagram_list.error.as_ref().map_or_else(|| html! {}, |error| match error {
+        //         FetchError::SerdeError(err) => html! { err },
+        //         FetchError::RequestError(err) => html! { err },
+        //         FetchError::InsertModelError(err) => html!{ err },
+        //         FetchError::ParseXmlError(err) => html!{ err },
+        //     })
+        // }</p>
+        <div style="margin-top: 14px; text-align: right;">
+            <button class="geBtn" onclick={on_cancel}>{"Cancel"}</button>
+            <button class="geBtn gePrimaryBtn" onclick={on_open}>{"Open"}</button>
+        </div>
 
         </>
     }    
@@ -216,11 +266,12 @@ pub fn app(Props {api_url, mx_utils, mx_editor}: &Props) -> Html {
 
 
 #[wasm_bindgen(js_name=openDialog)]
-pub fn open_dialog(mx_utils: MxUtils, mx_editor: MxEditor, div: HtmlDivElement, options: SchemaOptions) {
+pub fn open_dialog(mx_utils: MxUtils, editor_ui: EditorUi, mx_editor: MxEditor, div: HtmlDivElement, options: SchemaOptions) {
     let props  = Props {
         api_url: options.api_url.unwrap_or("undefiend".to_owned()),
         mx_utils: Rc::new(mx_utils),
         mx_editor: Rc::new(mx_editor),
+        editor_ui: Rc::new(editor_ui),
     };
     yew::Renderer::<App>::with_root_and_props(div.into(), props).render();
     log::info!("schema loaded");

@@ -1,6 +1,7 @@
 
+use implicit_clone::unsync::IString;
 use yew::{
-    function_component, html, Callback, Html, MouseEvent, Properties
+    classes, function_component, html, Callback, Html, MouseEvent, Properties
 };
 
 use crate::model::widget::WidgetListItem;
@@ -8,26 +9,25 @@ use crate::model::widget::WidgetListItem;
 #[derive(PartialEq, Properties)]
 pub struct Props {
     pub item: WidgetListItem,
-    pub load: Callback<String>,
+    pub select: Callback<IString>,
+    pub selected: IString,
 }
 
 #[function_component(WidgetListItemComponent)]
-pub fn component(Props {item, load}: &Props) -> Html {
-    let WidgetListItem {uuid,name, group } = item;
+pub fn component(Props {item, select, selected }: &Props) -> Html {
+    let WidgetListItem {uuid, name, group } = item;
 
-    let on_load = {
+    let on_select = {
             let pk = uuid.clone();
-            let load = load.clone();
+            let select = select.clone();
             Callback::from(move |_: MouseEvent| {
-                let pk = pk.clone();
-                load.emit(pk);
+                select.emit(pk.clone());
             })
         };
 
     html! {
-        <div>
+        <div onclick={on_select} class={classes!( "selectable", (selected == uuid).then_some("selected") )}>
             {format!("{} {} {}", uuid, group, name)} 
-            // <button onclick={on_load}>{ "load" }</button>
         </div>
     }
 }
