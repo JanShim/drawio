@@ -1,24 +1,32 @@
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
 use yew::{
-    function_component, html, use_state, Callback, Html, MouseEvent, Properties, SubmitEvent
+    function_component, html, use_state, Callback, Html, MouseEvent, SubmitEvent
 };
 use yewdux::{use_selector, use_store};
 
-use crate::{model::widget::{meta::{Widget, WidgetForm}, WidgetDto}, store::diagram, utils::{fetch_string, load_scada_model, post}};
-
-
-#[derive(PartialEq, Properties)]
-pub struct Props {
-    pub widget: Widget,
-}
+use crate::{
+    model::{
+        common::ModelForm, 
+        widget::{meta::WidgetForm, WidgetDto}
+    }, 
+    store::diagram, 
+    utils::{post, put}
+};
 
 #[function_component(WidgetInfoComponent)]
-pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
-    let (diagram_state, _) = use_store::<diagram::State>();
-    let api_url = use_selector(|state: &diagram::State| { state.api_url.clone() });
-    let mx_utils = use_selector(|state: &diagram::State| { state.mx_utils.clone().unwrap() });
-    let mx_editor = use_selector(|state: &diagram::State| { state.mx_editor.clone().unwrap() });
+pub fn scada_diagram_component() -> Html {
+    let (state, dispatch) = use_store::<diagram::State>();
+    let model_meta = use_selector(|state: &diagram::State| {
+        log::debug!("selector: {:?}", state.model_meta);
+        match &state.model_meta {
+            ModelForm::Widget(form) => form.clone(),
+            _ => {
+                log::info!("this is not widget item");
+                Default::default()
+            },
+        }
+    });    
 
     let edit_mode = use_state(|| false);
 
@@ -36,9 +44,7 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
 
     let on_apply = {
         let edit_mode = edit_mode.clone();
-        let editor = mx_editor.clone();
-        let utils = mx_utils.clone();
-        let url = api_url.clone();        
+        let state = state.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
 
@@ -46,33 +52,61 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
                 .and_then(|t| t.dyn_into::<HtmlFormElement>().ok());
 
             if let Some(form) = form {
-                if let Some(widget) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
-                    // lets create widget in db
-                    let editor = editor.clone();
-                    let utils = utils.clone();
-                    let url = url.clone();        
+                if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
+                    let state = state.clone();       
+
+                    // appy to store
+                    dispatch.reduce_mut(|state| {
+                        state.model_meta = ModelForm::Widget(form.clone());
+                    });
+
+                    // send to db
+                    let dispatch = dispatch.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        if let Ok(node) = editor.get_graph_xml() {
-                            if let Ok(Some(model_str)) = utils.get_xml(node) {
-                                let item = WidgetDto::new(
-                                    widget.group.to_string(), 
-                                    widget.name.to_string(),
-                                    model_str,
-                                    vec![]
-                                ); 
-                                post(format!("{url}/widget"), item).await
-                                    .and_then(|o| Ok(o.uuid))
-                                    .map(|pk| {
-                                        wasm_bindgen_futures::spawn_local(async move {
-                                            fetch_string(format!("{url}/widget/{pk}/model")).await
-                                                .map(|model| {
+                        if let Ok(node) = state.get_graph_xml() {
+                            if let Ok(Some(model_str)) = state.get_xml(node) {
+                                if form.is_new_item() {
+                                    let item = WidgetDto::new(
+                                        form.group.to_string(), 
+                                        form.name.to_string(),
+                                        model_str,
+                                        vec![]
+                                    ); 
+
+                                    log::debug!("post: {item:?}");
+
+                                    let created = post(format!("{}/widget", state.api_url), item).await
+                                        .and_then(|dto| {
+                                            log::debug!("created: {dto:?}");
+                                            Ok(dto)
+                                        }).unwrap();
 
 
-                                                    load_scada_model(&editor, model.as_str());
-                                                }).unwrap();
-                                        })
-                                    })
-                                    .unwrap();
+                                    // set model meta
+                                    dispatch.reduce_mut(|state| {
+                                        state.model_meta = ModelForm::Widget(WidgetForm { 
+                                            uuid: created.uuid.into(), 
+                                            name: created.name.into(),  
+                                            group: created.group.into(),  
+                                        });
+                                    });
+
+                                } else {
+                                    let item = WidgetDto {
+                                        uuid: form.uuid.to_string(),
+                                        group: form.group.to_string(),
+                                        name: form.name.to_string(), 
+                                        model: model_str, 
+                                        types: vec!["ZDV2".to_owned()],  
+                                    };
+
+                                    put(format!("{}/widget/{}", state.api_url, form.uuid), item).await
+                                        .and_then(|dto| {
+                                            log::debug!("saved:  {dto:?}");
+                                            Ok(dto)
+                                        }).unwrap();
+
+                                }
                             };
                         } 
                     }
@@ -97,13 +131,14 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
             {header}
             if *edit_mode {
             <form onsubmit={on_apply}>
-                // <input type="hidden" name="uuid" value={ format!("{}", widget.uuid) }/>
-                // <label for="uuid">{ "uuid: " }</label>
-                // <input name="uuid-0" value={ format!("{}", widget.uuid) } disabled={true} class="input-100"/><br/>
-                // <label for="name">{ "name: " }</label>
-                // <input name="name" value={ format!("{}", widget.name) } class="input-100"/><br/>
-                // <label for="group">{ "group: " }</label>
-                // <input name="group" value={ format!("{}", widget.group) } class="input-100"/><br/>
+                <input type="hidden" name="uuid" value={ format!("{}", model_meta.uuid) }/>
+
+                <div class="label"><label for="uuid">{ "uuid: " }</label></div>
+                <input name="uuid-0" value={ format!("{}", model_meta.uuid) } disabled={true} class="input-100"/><br/>
+                <div class="label"><label for="name">{ "name: " }</label></div>
+                <input name="name" value={ format!("{}", model_meta.name) } class="input-100"/><br/>
+                <div class="label"><label for="group">{ "group: " }</label></div>
+                <input name="group" value={ format!("{}", model_meta.group) } class="input-100"/><br/>
 
                 <div class="flex-box-2" >
                     <button type="button" onclick={on_cancel}>{"Cancel"}</button>
@@ -111,14 +146,14 @@ pub fn scada_diagram_component(Props { widget }: &Props) -> Html {
                 </div>
             </form>
             } else {
-            // <div>
-            //     { "uuid: " }<br/>
-            //     { format!("{}", widget.uuid) }<br/>
-            //     { "name: " }<br/>
-            //     { format!("{}", widget.name) }<br/>
-            //     { "group: " }<br/>
-            //     { format!("{}", widget.group) }<br/>                
-            // </div>    
+            <div>
+                <div class="label">{ "uuid: " }</div>
+                <div class="value">{ format!("{}", model_meta.uuid) }</div>
+                <div class="label">{ "name: " }</div>
+                <div class="value">{ format!("{}", model_meta.name) }</div>
+                <div class="label">{ "group: " }</div>
+                <div class="value">{ format!("{}", model_meta.group) }</div>
+            </div>    
             }
         </>
     }

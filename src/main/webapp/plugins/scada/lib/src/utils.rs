@@ -80,6 +80,23 @@ where
         .map_err(|err| FetchError::SerdeError(err.to_string()));
 }
 
+pub async fn put<T>(url: String, data: T) -> Result<T, FetchError>
+where 
+    T: Serialize,
+    T: DeserializeOwned,
+{
+    let json = serde_json::to_string(&data)
+        .map_err(|err| FetchError::SerdeError(err.to_string()))?;
+    
+    return Request::put(&url)
+        .header("Content-Type", "application/json")
+        .body(json)
+        .send().await
+        .map_err(|err| FetchError::RequestError(err.to_string()))?
+        .json::<T>().await
+        .map_err(|err| FetchError::SerdeError(err.to_string()));
+}
+
 
 pub fn string_to_map<'a>(s: &'a str) -> HashMap<&'a str, &'a str> {
     s.split(';')

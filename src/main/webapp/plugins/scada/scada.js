@@ -44,7 +44,7 @@ function getPrettyXml(element) {
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, renderCell, renderSchema, openDialog, SchemaOptions} = await import('./lib/pkg/scada_lib.js');
+	const {initSync, renderCell, renderSchema, recreateModelMeta, openDialog, SchemaOptions} = await import('./lib/pkg/scada_lib.js');
 
 	async function initWasm() {
 		await fetch('plugins/scada/lib/pkg/scada_lib_bg.wasm')
@@ -123,6 +123,7 @@ Draw.loadPlugin(async function(ui) {
 	/**
 	 * Updates the properties panel
 	 */
+	let isRendered = false;
 	function cellClicked(cell, modelChanged)
 	{
 		// Gets the selection cell
@@ -131,7 +132,12 @@ Draw.loadPlugin(async function(ui) {
 			highlight.highlight(null);
 			// app.cell_clicked(null);
 			// renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
-			renderSchema(mxUtils, ui.editor, div, getAppOptions());
+
+			if (!isRendered) {
+				console.log("CALL renderSchema");
+				renderSchema(mxUtils, ui.editor, div, getAppOptions());
+				isRendered = true;
+			}
 		}
 		else
 		{
@@ -307,12 +313,16 @@ Draw.loadPlugin(async function(ui) {
 	
     ui.actions.addAction('createDiagram', function()
     {
-		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram  uuid="00000000-0000-0000-0000-000000000000"  name=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
+		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
+		recreateModelMeta("diagram");
+		diagramDataWindow.setVisible(true);
     });
 
     ui.actions.addAction('createWidget', function()
     {
-		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget  uuid="00000000-0000-0000-0000-000000000000"  name="" group=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
+		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget object-type=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
+		recreateModelMeta("widget");
+		diagramDataWindow.setVisible(true);
     });
 
     ui.actions.addAction('openItem', function()

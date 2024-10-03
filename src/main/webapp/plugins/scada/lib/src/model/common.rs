@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use quick_xml::{de::from_str, se::to_string};
 use web_sys::Element;
 
-use super::{diagram::meta::Diagram, mx_cell::MxCell, widget::meta::Widget};
+use super::{diagram::meta::{Diagram, DiagramForm}, mx_cell::MxCell, widget::meta::{Widget, WidgetForm}};
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
@@ -71,6 +71,17 @@ impl From<Element> for DiagramMeta {
     }
 }
 
+#[derive(PartialEq, Debug, Clone, ImplicitClone)]
+pub enum ModelForm {
+    Diagram(DiagramForm),
+    Widget(WidgetForm),
+}
+
+impl Default for ModelForm {
+    fn default() -> Self {
+        ModelForm::Diagram(Default::default())
+    }
+}
 
 // ==========================================================
 #[cfg(test)]

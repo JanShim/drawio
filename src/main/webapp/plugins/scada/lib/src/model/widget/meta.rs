@@ -14,6 +14,9 @@ pub struct Widget {
     // pub name: IString,
     // #[serde(rename="@group")]    
     // pub group: IString,
+    #[serde(rename="@object-type")]    
+    pub object_type: IString,
+
 }
 
 impl Default for Widget {
@@ -22,6 +25,7 @@ impl Default for Widget {
             // uuid: NULL_UUID.into(),
             // name: Default::default(),
             // group: Default::default(),
+            object_type: Default::default(),
         }
     }
 }
@@ -41,6 +45,22 @@ pub struct WidgetForm {
     pub uuid: IString,
     pub name: IString,
     pub group: IString,
+}
+
+impl WidgetForm {
+    pub fn is_new_item(&self) -> bool {
+        self.uuid == NULL_UUID
+    }
+}
+
+impl Default for WidgetForm {
+    fn default() -> Self {
+        Self { 
+            uuid: NULL_UUID.into(), 
+            name: Default::default(),
+            group: Default::default(),
+        }
+    }
 }
 
 impl From<FormData> for WidgetForm {
@@ -91,19 +111,18 @@ mod tests {
 
     use super::*;
     
-    // #[test]
-    // fn xml_widget_deser_works() {
-    //     let xml = r#"<widget uuid="aaaaaaaaaa" name="test" group="group"/>"#;
+    #[test]
+    fn xml_widget_deser_works() {
+        let xml = r#"<widget object-type="ZDV2"/>"#;
 
-    //     let widget = from_str::<Widget>(xml);    
-    //     match widget {
-    //         Ok(item) => {
-    //             assert_eq!(item.uuid, "aaaaaaaaaa".to_owned());
-    //             assert_eq!(item.name, "test".to_owned());
-    //         },
-    //         Err(err) => panic!("err: {}", err),
-    //     }
-    // }    
+        let widget = from_str::<Widget>(xml);    
+        match widget {
+            Ok(item) => {
+                assert_eq!(item.object_type, "ZDV2".to_owned());
+            },
+            Err(err) => panic!("err: {}", err),
+        }
+    }    
 
 
 }

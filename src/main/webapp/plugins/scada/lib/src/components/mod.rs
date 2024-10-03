@@ -2,8 +2,10 @@ use yew::{prelude::*, virtual_dom::VNode};
 use diagram::info_item::DiagramInfoComponent;
 use widget::info_item::WidgetInfoComponent;
 use stylist::{css, yew::Global};
+use yewdux::use_selector;
 
-use crate::model::common::{DiagramMeta, GraphModel};
+use crate::model::common::ModelForm;
+use crate::store;
 
 pub mod diagram;
 pub mod widget;
@@ -75,51 +77,27 @@ pub fn get_global_css() -> VNode {
         .input-100 {
             width: 100%;
         }
+
+        div.label {
+            font-weight: bold;
+        }
+
+        div.value {
+            padding: 2px;
+        }
         
         "#)} />
     }
 }
 
-
-#[derive(PartialEq, Properties)]
-pub struct Props {
-    pub model: GraphModel,
-//     pub apply: Callback<GraphModel>,
-}
-
-impl From<DiagramMeta> for Props {
-    fn from(DiagramMeta { label:_, model }: DiagramMeta) -> Self {
-        match model {
-            GraphModel::Diagram(diagram) => Self {
-                model: GraphModel::Diagram(diagram),
-            },
-            GraphModel::Widget(widget) => Self {
-                model: GraphModel::Widget(widget),
-            },
-        }
-    }
-}
-
 #[function_component(InfoComponent)]
-pub fn diagram_info_component(Props { model }: &Props) -> Html {
-    match model {
-        GraphModel::Diagram(d) => {
+pub fn diagram_info_component() -> Html {
+    let model_meta = use_selector(|state: &store::diagram::State| {
+        state.model_meta.clone()
+    });
 
-
-
-            let props = yew::props! (diagram::info_item::Props {diagram: d.clone()});
-            html!{ <DiagramInfoComponent ..props/> }
-        },
-        GraphModel::Widget(w) => {
-
-
-
-            let props = yew::props! (widget::info_item::Props {widget: w.clone()});
-            html! {  <WidgetInfoComponent ..props/>  }
-        },
+    match *model_meta {
+        ModelForm::Diagram(_) => html! { <DiagramInfoComponent/> },
+        ModelForm::Widget(_) =>  html! { <WidgetInfoComponent/>  },
     }
-        
-    
-
-
 }

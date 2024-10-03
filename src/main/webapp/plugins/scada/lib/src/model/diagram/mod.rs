@@ -6,15 +6,15 @@ use crate::utils::NULL_UUID;
 pub mod meta;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct ScadaDiagramDto {
+pub struct DiagramDto {
     pub uuid: String,
     pub name: String,
     pub model: String,
 }
 
-impl ScadaDiagramDto {
+impl DiagramDto {
     pub fn new(name: String, model: String) -> Self {
-        ScadaDiagramDto {
+        DiagramDto {
             uuid: NULL_UUID.to_owned(),
             name,
             model,

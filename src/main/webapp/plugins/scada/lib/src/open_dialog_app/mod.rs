@@ -1,7 +1,7 @@
-use implicit_clone::unsync::IString;
-use serde::de::value::IsizeDeserializer;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
+use yewdux::use_store;
+use implicit_clone::unsync::IString;
 use std::rc::Rc;
 
 use web_sys::{HtmlDivElement, HtmlElement};
@@ -9,12 +9,21 @@ use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use stylist::yew::{styled_component, Global};
 
 use crate::{
-    components::{diagram::list_item::DiagramListItemComponent, widget::list_item::WidgetListItemComponent}, errors::FetchError, model::{
-        diagram::{
-            DiagramListItem, 
-            ScadaDiagramDto
-        }, editor_ui::EditorUi, mx_editor::MxEditor, mx_utils::MxUtils, widget::WidgetListItem         
-    }, utils::{fetch, fetch_string, load_scada_model, post, SchemaOptions} 
+    components::{
+        diagram::list_item::DiagramListItemComponent, 
+        widget::list_item::WidgetListItemComponent
+    }, 
+    // errors::FetchError, 
+    model::{
+        common::ModelForm, 
+        diagram::{meta::DiagramForm, DiagramListItem}, 
+        widget::{meta::WidgetForm, WidgetListItem},   
+        editor_ui::EditorUi, 
+        mx_editor::MxEditor, 
+        mx_utils::MxUtils, 
+    }, 
+    store::diagram, 
+    utils::{fetch, fetch_string, load_scada_model, post, SchemaOptions} 
 };
 
 #[derive(Properties, PartialEq)]
@@ -28,6 +37,7 @@ pub struct Props {
 #[styled_component(App)]
 pub fn app(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     // let editor = mx_editor.clone();
+    let (diagram_state, diagram_dispatch) = use_store::<diagram::State>();
 
     let tab_tag = use_state(|| "diagram".to_owned());
 
@@ -120,11 +130,33 @@ pub fn app(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
         let tab_tag = tab_tag.clone();
         let selected = selected.clone();
         let editor_ui = editor_ui.clone();
+        let dispatch = diagram_dispatch.clone();
         Callback::from(move |_: MouseEvent| {
-            let editor = editor.clone();
             let url = url.clone();
             let tab_tag = tab_tag.clone();
             let selected = selected.clone();
+            let dispatch = dispatch.clone();
+
+            // fill meta storage
+            let meta_req = format!("{url}/{}/{}", *tab_tag, *selected);
+            if *tab_tag == "widget" {
+                wasm_bindgen_futures::spawn_local(async move {
+                    let WidgetListItem { uuid, group, name } = fetch::<WidgetListItem>(meta_req).await.unwrap();
+                    dispatch.reduce_mut(move |state| {
+                        state.model_meta = ModelForm::Widget(WidgetForm { uuid, name, group });
+                    });
+                });            
+            } else {
+                wasm_bindgen_futures::spawn_local(async move {
+                    let DiagramListItem { uuid, name } = fetch::<DiagramListItem>(meta_req).await.unwrap();
+                    dispatch.reduce_mut(move |state| {
+                        state.model_meta = ModelForm::Diagram(DiagramForm {uuid, name});
+                    });
+                });            
+            }
+
+            // fill graph model
+            let editor = editor.clone();
             let editor_ui = editor_ui.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 fetch_string(format!("{url}/{}/{}/model", *tab_tag, *selected)).await
@@ -244,8 +276,6 @@ div.selected {
                 { tab_content_view }
             </div>
         </div>
-
-        
         <hr/>
         // <p>{
         //     diagram_list.error.as_ref().map_or_else(|| html! {}, |error| match error {
