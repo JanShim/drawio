@@ -15,6 +15,7 @@ use crate::{
 pub mod data_source;
 pub mod state;
 pub mod state_edit;
+pub mod state_rect;
 
 // struct ApplyMultyStateMeta(MultystateMeta);
 // impl Reducer<cell::CellState> for ApplyMultyStateMeta {

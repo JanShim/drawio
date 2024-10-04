@@ -1,11 +1,9 @@
-use yew::{html, function_component, use_effect_with, use_reducer, Html, Properties};
+use implicit_clone::sync::IString;
+use yew::{function_component, html, use_effect_with, use_memo, use_reducer, AttrValue, Html, Properties};
 
 use crate::{
-    model::cell_meta::{
-        // CellMeta,
-        multystate::state::{StateAction, StateMeta}, 
-    }, 
-    // store::cell,
+    components::multystate::state_rect::{self, StateSampleRect}, 
+    model::cell_meta::multystate::state::{StateAction, StateMeta}, utils::{map_to_svg_style, mx_style_to_map, string_to_map} 
 };
 
 #[derive(Properties, PartialEq, Debug)]
@@ -25,6 +23,11 @@ pub fn component(Props {
         });
     }
 
+    let style_string = use_memo(my_state.style.clone(), |style| {
+        let map = mx_style_to_map(style);       
+        AttrValue::from(map_to_svg_style(map))
+    });
+
 
     // --- view items
     let view_mode = html! {
@@ -33,9 +36,7 @@ pub fn component(Props {
             <td width="200">{ my_state.name.as_str() }</td>
             <td>{"знач: "}</td>
             <td width="35">{ my_state.range.to_string() }</td>
-            <td width="50">
-                <svg viewBox="0 0 40 20" width="40" height="20" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100%" height="100%"></rect></svg>
-            </td>
+            <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
         </tr>
         </table>    
     };

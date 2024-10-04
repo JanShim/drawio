@@ -136,23 +136,19 @@ impl Default for CellMeta {
 
 /// reducer's Action
 pub enum Action {
-    // SetStyle(IString),
+    SetWidgetMeta(WidgetMeta),
 }
 
 impl Reducible for CellMeta {
     type Action = Action;
     
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
-        todo!();
-        // match action {
-        //     // Action::SetStyle(style) => Self {
-        //     //     // label: self.label.clone(),
-        //     //     // widget: self.widget.clone(),
-        //     //     // multystate: self.multystate.clone(),
-        //     // }.into(),
-        //     _ => self
-        // }
-        // self
+        match action {
+            Action::SetWidgetMeta(meta) => Self {
+                label: self.label.clone(),
+                data: CellMetaVariant::Widget(meta),
+            }.into(),
+        }
     }
 
 }

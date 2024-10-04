@@ -14,7 +14,6 @@ use crate::{
 }};
 
 #[derive(Clone, PartialEq, Debug)]
-// #[store(storage = "local")]
 pub struct CellState {
     pub cell: MxCell,
     pub meta: CellMeta,

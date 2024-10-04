@@ -1,10 +1,12 @@
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::{function_component, html, use_effect_with, use_reducer, use_state, Callback, Html, MouseEvent, Properties, SubmitEvent};
+use yew::{function_component, html, use_effect_with, use_memo, use_reducer, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
 use yewdux::use_store;
 
 use crate::{
-    model::cell_meta::multystate::{state::{MultystateApplyStateAction, StateAction, StateMeta}, state_range::RangeType}, store::cell 
+    components::multystate::state_rect::StateSampleRect, model::cell_meta::multystate::{
+        state::{MultystateApplyStateAction, StateAction, StateMeta}, 
+        state_range::RangeType}, store, utils::{map_to_svg_style, mx_style_to_map} 
 };
 
 
@@ -22,7 +24,7 @@ pub fn component(Props {
     selected
 }: &Props) -> Html {
     // cell meta storage
-    let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
+    let (cell_state, cell_state_dispatch) = use_store::<store::cell::CellState>();
     let range_type = use_state(|| Into::<RangeType>::into(value.range.clone()));
 
     let my_state = use_reducer(|| value.clone());
@@ -39,21 +41,6 @@ pub fn component(Props {
         Callback::from(move |_: MouseEvent| { select.emit(Some((*my_state).clone())) })
     };      
 
-    // let toggle_apply = {
-    //     let cell_state_dispatch = cell_state_dispatch.clone();
-    //     let cell_state = cell_state.clone();
-    //     let my_state = my_state.clone();
-    //     let select = select.clone();
-    //     Callback::from(move |_: MouseEvent| { 
-    //         if let Some(style) = cell_state.get_cell_style().ok() {
-    //             let state = StateMeta { style, ..(*my_state).clone() };
-    //             cell_state_dispatch.apply(MultystateApplyStateAction(state));
-    //         }
-
-    //         select.emit(None);  // remove selection
-    //     })
-    // };   
-
     let toggle_close = {
         let select = select.clone();
         Callback::from(move |_: MouseEvent| { 
@@ -61,38 +48,10 @@ pub fn component(Props {
         })
     };   
 
-
-
-    // {   // effect он toggle_apply
-    //     let my_state = my_state.clone();
-    //     let apply = apply.clone();
-    //     use_effect_with((*my_state).clone(), move |v| {
-    //         apply.emit((*v).clone());
-    //     })
-    // }
-
-    // // tag name input
-    // let on_name_input = {
-    //     let my_state = my_state.clone();
-    //     Callback::from(move |e:InputEvent| {
-    //         e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
-    //             .map(|input| {
-    //                 my_state.dispatch(StateAction::SetName(input.value().into()))
-    //             });
-    //     })
-    // };    
-
-    // // range input
-    // let on_range_input = {
-    //     let my_state = my_state.clone();
-    //     Callback::from(move |e:InputEvent| {
-    //         e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
-    //             .map(|input| {
-    //                 let val = input.value().parse::<u32>().unwrap();
-    //                 my_state.dispatch(StateAction::SetDiscretRange(val))
-    //             });
-    //     })
-    // };    
+    let style_string = use_memo(my_state.style.clone(), |style| {
+        let map = mx_style_to_map(style);       
+        AttrValue::from(map_to_svg_style(map))
+    });
 
 
     let form_onsubmit = {
@@ -127,15 +86,9 @@ pub fn component(Props {
             <td width="200">{ my_state.name.as_str() }</td>
             <td>{"знач: "}</td>
             <td width="35">{ my_state.range.to_string() }</td>
-            <td width="50">
-                <svg viewBox="0 0 40 20" width="40" height="20" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100%" height="100%"></rect></svg>
-            </td>
+            <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
         </tr>
         </table>
-    };
-
-    let rect_sample = html! {
-        <svg viewBox="0 0 40 20" width="40" height="20" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100%" height="100%"></rect></svg>
     };
 
     let edit_mode_edit = {
@@ -160,7 +113,7 @@ pub fn component(Props {
                     <td width="35">
                         <input type="number" id="value" name="value" value={init_value.clone()} min={format!("{init_value}")} step="1" />
                     </td>
-                    <td width="50">{ rect_sample }</td>
+                    <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
                     <td width="20">
                         <button type="submit"><img src="images/checkmark.gif" class="img-16"/></button>
                     </td>

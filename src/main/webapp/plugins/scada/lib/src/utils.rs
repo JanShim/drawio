@@ -122,6 +122,42 @@ pub fn map_to_string<'a>(m: HashMap<&'a str, &'a str>) -> String {
         .join(";")
 }
 
+pub fn mx_style_to_map<'a>(s: &'a str) -> HashMap<&'a str, &'a str> {
+    s.split(';')
+        .map(|o| o.trim())
+        .map(|o| {
+            o.split('=')
+                .map(|p| p.trim())
+                .filter(|s| s.len() > 0)
+                .collect::<Vec<_>>()
+        })
+        .filter(|v| v.len() == 2)
+        .map(|kv| (kv[0], kv[1]))
+        .fold(HashMap::new(), |mut acc, i| {
+            acc.insert(i.0, i.1);
+            acc
+        })
+}
+
+pub fn map_to_mx_style<'a>(m: HashMap<&'a str, &'a str>) -> String {
+    m.iter()
+        .map(|o| format!("{}={}", o.0, o.1))
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
+pub fn map_to_svg_style<'a>(m: HashMap<&'a str, &'a str>) -> String {
+    let fill = m.get(&"fillColor").unwrap_or(&"black");
+    let stroke = m.get(&"strokeColor").unwrap_or(&"black");
+
+    let stroke_width = m.get(&"strokeWidth")
+        .map(|w| format!("stroke-width:{w}"))
+        .unwrap_or("".to_owned());
+
+    format!("fill:{fill};stroke:{stroke};{stroke_width}")
+}
+
+
 // ==========================================================
 #[cfg(test)]
 mod tests {
@@ -129,7 +165,7 @@ mod tests {
 
     #[test]
     fn string_to_map_works() {
-        let str = "aaa: bbb; ccc:ddd;";
+        let str = " aaa: bbb; ccc:ddd;";
 
         let map = string_to_map(str);
         println!("{map:#?}");

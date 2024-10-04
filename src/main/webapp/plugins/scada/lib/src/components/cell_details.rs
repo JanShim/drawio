@@ -4,7 +4,7 @@ use yewdux::{use_selector, use_store};
 use crate::{components::{
         multystate::{self, MultystateComponent}, undefiend::{self, UndefiendComponent}, value::{self, ValueComponent}, widget::{self, WidgetComponent}
     }, 
-    model::cell_meta::{value::{ApplyValueMetaAction, ValueMeta}, CellMetaVariant, CellType}, 
+    model::cell_meta::{self, value::{ApplyValueMetaAction, ValueMeta}, widget::WidgetMeta, CellMetaVariant, CellType}, 
     store::cell::{self, SetCellTypeAction}
 };
 
@@ -39,6 +39,14 @@ pub fn component() -> Html {
             cell_state_dispatch.apply(SetCellTypeAction(cell_type));
         })
     };
+
+    let widget_apply = {
+        let cell_meta = cell_meta.clone();
+        Callback::from(move |widget_meta: WidgetMeta| {
+            log::debug!("widget_apply {widget_meta:?}");
+            cell_meta.clone().reduce(cell_meta::Action::SetWidgetMeta(widget_meta));
+        })
+    };    
 
     // component views
     let header = html!{
@@ -86,7 +94,10 @@ pub fn component() -> Html {
             },
             CellMetaVariant::Widget(_) => {
                 log::debug!("cell as widget: {cell_meta:?}");
-                let props = yew::props! { widget::Props { edit_mode: *edit_mode} };
+                let props = yew::props! { widget::Props { 
+                    edit_mode: *edit_mode,
+                    apply: widget_apply,
+                }};
                 html!{
                     <>
                     { header }
