@@ -6,7 +6,7 @@ use yewdux::{use_selector, use_store};
 use implicit_clone::unsync::IString;
 use svg_view::SvgViewComponent;
 
-use crate::{errors::CellStateError, model::cell_meta::{widget::{self, WidgetMeta}, CellMetaVariant}, store::cell};
+use crate::{errors::CellStateError, model::cell_meta::{widget::{self, WidgetMeta, WidgetUuidApplyAction}, CellMetaVariant}, store::cell, utils::NULL_UUID};
 
 pub mod info_item;
 pub mod data_source;
@@ -16,12 +16,12 @@ pub mod list_item;
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
-	pub apply: Callback<WidgetMeta>,
+	// pub apply: Callback<WidgetMeta>,
 }
 
 #[function_component(WidgetComponent)]
-pub fn component(Props { edit_mode, apply }: &Props) -> Html {
-    // let (_, cell_store_dispatch) = use_store::<cell::CellState>();
+pub fn component(Props { edit_mode }: &Props) -> Html {
+    let (_, cell_store_dispatch) = use_store::<cell::CellState>();
     let widget = use_selector(|cell_state: &cell::CellState| {
 		if let CellMetaVariant::Widget(widget) = cell_state.meta.data.clone() {
 			return widget;
@@ -38,34 +38,32 @@ pub fn component(Props { edit_mode, apply }: &Props) -> Html {
 		})
     };  
 
-
-    let widget_state = use_reducer(|| (*widget).clone());
-
     let inner_svg = use_state(|| IString::from("<span>???</span>"));
+	let widget_uuid = use_state(|| IString::from(NULL_UUID));
 
     let on_item_select = {
-        let widget_state = widget_state.clone();
         let inner_svg = inner_svg.clone();
 		let type_edit_mode = type_edit_mode.clone();
+		let widget_uuid = widget_uuid.clone();
         Callback::from(move |e: MouseEvent| {
             e.target().and_then(|t| t.dyn_into::<HtmlAnchorElement>().ok())
-                    .map(|elem| {
-						if *type_edit_mode {
-							if let Some(id) = elem.get_attribute("id") {
-								widget_state.dispatch(widget::Action::SetUuid(id.clone().into()));
-							}
-							inner_svg.set(elem.inner_html().into());							
+				.map(|elem| {
+					if *type_edit_mode {
+						if let Some(id) = elem.get_attribute("id") {
+							widget_uuid.set(id.into());
 						}
-                    });
+						inner_svg.set(elem.inner_html().into());							
+					}
+				});
         })
     };
 
 	let on_type_apply = {
 		let type_edit_mode = type_edit_mode.clone();
-		let widget_state = widget_state.clone();
-		let apply = apply.clone();
+		let widget_uuid = widget_uuid.clone();
+		let cell_store_dispatch = cell_store_dispatch.clone();
 		Callback::from(move |_: MouseEvent| {
-			apply.emit((*widget_state).clone());
+			cell_store_dispatch.apply(WidgetUuidApplyAction((*widget_uuid).clone())); 
 			type_edit_mode.set(false);     // togle type_edit_mode
 		})
 	};

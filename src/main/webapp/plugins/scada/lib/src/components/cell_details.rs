@@ -13,6 +13,9 @@ use crate::{components::{
 pub fn component() -> Html {
     let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
     let cell_meta = use_selector(|cell_state: &cell::CellState| cell_state.meta.clone());
+    use_effect_with(cell_meta.clone(), |meta| {
+        log::debug!("use_effect_with: cell_meta {meta:?}");
+    });
 
     let edit_mode = use_state(|| false);
 
@@ -25,10 +28,11 @@ pub fn component() -> Html {
 
     let cell_details_apply: Callback<MouseEvent> = {
         let edit_mode = edit_mode.clone();
+        let cell_state = cell_state.clone();
         let cell_meta = cell_meta.clone();
         Callback::from(move |_: MouseEvent| {
-            let meta = cell_state.cell.set_meta(&cell_meta).ok();
-            log::debug!("NEW CELL META:: {:?}", meta);
+            log::debug!("CURR CELL META:: {:?}", cell_meta);
+            let _meta = cell_state.cell.set_meta(&cell_meta).ok();
             edit_mode.set(false);
         })
     };
@@ -40,34 +44,26 @@ pub fn component() -> Html {
         })
     };
 
-    let widget_apply = {
-        let cell_meta = cell_meta.clone();
-        Callback::from(move |widget_meta: WidgetMeta| {
-            log::debug!("widget_apply {widget_meta:?}");
-            cell_meta.clone().reduce(cell_meta::Action::SetWidgetMeta(widget_meta));
-        })
-    };    
+    // let widget_apply = {
+    //     let cell_meta = cell_meta.clone();
+    //     Callback::from(move |widget_meta: WidgetMeta| {
+    //         log::debug!("widget_apply {widget_meta:?}");
+    //         cell_meta.clone().reduce(cell_meta::Action::SetWidgetMeta(widget_meta));
+    //     })
+    // };    
 
-    // component views
-    let header = html!{
-        <div class="flex-box-2 delim-label" >
-        if *edit_mode {
-            <button onclick={cell_details_apply}><img src="images/checkmark.gif" width="16" height="16"/></button>
-        } else {
-            <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
-        }
-        </div>           
-    };
-
+    // ============= views ================
     let details_vew = {
-        let header = header.clone();
         let edit_mode = edit_mode.clone();
+        let header_props = yew::props! { CellDetailsHeaderProps {
+            edit_mode: *edit_mode,
+            cell_details_apply,
+            edit_mode_toggle,
+        } };            
         match &cell_meta.data {
             CellMetaVariant::Undefiend(_) => {
                 log::debug!("cell as undefiend: {cell_meta:?}");
-                let props = yew::props! { undefiend::Props {
-                    apply: cell_type_apply,
-                }};
+                let props = yew::props! { undefiend::Props { apply: cell_type_apply, }};
                 html!{
                     <UndefiendComponent ..props/>
                 }
@@ -77,30 +73,27 @@ pub fn component() -> Html {
                 let props = yew::props! { value::Props {value: value.clone(), apply: value_apply} };
                 html!{ 
                     <>
-                    { header }
+                    <CellDetailsHeader ..header_props />
                     <ValueComponent ..props/> 
                     </>
                 }                    
             },
             CellMetaVariant::Multystate(_) => {
-                log::debug!("cell as multystae: {cell_meta:?}");
+                log::debug!("cell as multystate: {cell_meta:?}");
                 let props = yew::props! { multystate::Props {edit_mode: *edit_mode} };
                 html!{ 
                     <>
-                    { header }
+                    <CellDetailsHeader ..header_props />
                     <MultystateComponent ..props/> 
                     </>
                 }    
             },
             CellMetaVariant::Widget(_) => {
                 log::debug!("cell as widget: {cell_meta:?}");
-                let props = yew::props! { widget::Props { 
-                    edit_mode: *edit_mode,
-                    apply: widget_apply,
-                }};
+                let props = yew::props! { widget::Props { edit_mode: *edit_mode }};
                 html!{
                     <>
-                    { header }
+                    <CellDetailsHeader ..header_props />
                     <WidgetComponent ..props/> 
                     </>
                 }                    
@@ -114,4 +107,25 @@ pub fn component() -> Html {
         </div>
     }
 
+}
+
+#[derive(Properties, PartialEq, Debug)]
+pub struct CellDetailsHeaderProps {
+    pub edit_mode: bool,
+    pub cell_details_apply: Callback<MouseEvent>,
+    pub edit_mode_toggle: Callback<MouseEvent>,
+}
+
+
+#[function_component(CellDetailsHeader)]
+pub fn cell_details_header(CellDetailsHeaderProps { edit_mode, cell_details_apply, edit_mode_toggle }: &CellDetailsHeaderProps) -> Html {
+    html!{
+        <div class="flex-box-2 delim-label" >
+        if *edit_mode {
+            <button onclick={cell_details_apply}><img src="images/checkmark.gif" width="16" height="16"/></button>
+        } else {
+            <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
+        }
+        </div>           
+    }    
 }

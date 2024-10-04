@@ -29,28 +29,51 @@ impl Default for WidgetMeta {
     }
 }
 
-/// reducer's Action
-pub enum Action {
-    SetUuid(IString),
-}
+// /// reducer's Action
+// pub enum Action {
+//     SetUuid(IString),
+// }
 
 /// Reducible
-impl Reducible for WidgetMeta {
-    /// Reducer Action Type
-    type Action = Action;
+// impl Reducible for WidgetMeta {
+//     /// Reducer Action Type
+//     type Action = Action;
 
-    /// Reducer Function
-    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
-        let curr = (*self).clone();
-        match action {
-            Action::SetUuid(uuid) => Self { uuid, ..curr }.into(),
+//     /// Reducer Function
+//     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+//         let curr = (*self).clone();
+//         match action {
+//             Action::SetUuid(uuid) => {
+//                 let tst = Self { uuid, ..curr };
+//                 log::debug!("Action::SetUuid {tst:?}");
+//                 tst.into()
+//             },
+//         }
+//     }
+// }
+
+pub struct WidgetUuidApplyAction(pub IString);
+impl Reducer<cell::CellState> for WidgetUuidApplyAction {
+    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+        if let CellMetaVariant::Widget(meta) = &state.meta.data {
+            return cell::CellState {
+                cell: state.cell.clone(),
+                meta: CellMeta { 
+                        label: state.meta.label.clone(),
+                        data: CellMetaVariant::Widget(WidgetMeta { 
+                            uuid: self.0, 
+                            data_source: meta.data_source.clone(), 
+                        }),
+                    },
+                }
+                .into();        
         }
+        state
     }
 }
 
-
-pub struct WidgetApplyAction(pub WidgetMeta);
-impl Reducer<cell::CellState> for WidgetApplyAction {
+pub struct WidgetMetaApplyAction(pub WidgetMeta);
+impl Reducer<cell::CellState> for WidgetMetaApplyAction {
     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
         if let CellMetaVariant::Widget(_) = &state.meta.data {
             return cell::CellState {
