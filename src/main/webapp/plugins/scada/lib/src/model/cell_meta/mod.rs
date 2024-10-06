@@ -181,7 +181,7 @@ mod tests {
     fn xml_cell_meta_serde_widget_works() {
         let widget = WidgetMeta {
             uuid: "some-uuid".into(),
-            data_source: Default::default(),
+            ..Default::default()
         };
 
         let item = CellMeta {

@@ -2,10 +2,9 @@ use std::rc::Rc;
 use data_source::DataSourceMeta;
 use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
-use yew::Reducible;
 use yewdux::Reducer;
 
-use crate::{errors::CellStateError, store::cell};
+use crate::store::cell;
 
 use super::{CellMeta, CellMetaVariant};
 
@@ -16,6 +15,8 @@ pub mod data_source;
 pub struct WidgetMeta {
     #[serde(rename="@uuid")]
     pub uuid: IString,
+    #[serde(rename="@group", default)]
+    pub group: IString,
     #[serde(rename="ds", default)]
     pub data_source: DataSourceMeta,
 }
@@ -24,7 +25,8 @@ impl Default for WidgetMeta {
     fn default() -> Self {
         Self { 
             uuid: Default::default(), 
-            data_source: Default::default() 
+            data_source: Default::default(),
+            group: Default::default(),
         }
     }
 }
@@ -53,18 +55,18 @@ impl Default for WidgetMeta {
 // }
 
 pub struct WidgetUuidApplyAction(pub IString);
-impl Reducer<cell::CellState> for WidgetUuidApplyAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for WidgetUuidApplyAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Widget(meta) = &state.meta.data {
-            return cell::CellState {
-                cell: state.cell.clone(),
-                meta: CellMeta { 
+            return cell::State {
+                    meta: CellMeta { 
                         label: state.meta.label.clone(),
                         data: CellMetaVariant::Widget(WidgetMeta { 
                             uuid: self.0, 
-                            data_source: meta.data_source.clone(), 
+                           ..meta.clone() 
                         }),
                     },
+                    ..(*state).clone()
                 }
                 .into();        
         }
@@ -73,15 +75,15 @@ impl Reducer<cell::CellState> for WidgetUuidApplyAction {
 }
 
 pub struct WidgetMetaApplyAction(pub WidgetMeta);
-impl Reducer<cell::CellState> for WidgetMetaApplyAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for WidgetMetaApplyAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Widget(_) = &state.meta.data {
-            return cell::CellState {
-                cell: state.cell.clone(),
-                meta: CellMeta { 
+            return cell::State {
+                    meta: CellMeta { 
                         label: state.meta.label.clone(),
                         data: CellMetaVariant::Widget(self.0),
                     },
+                    ..(*state).clone()
                 }
                 .into();        
         }
@@ -104,6 +106,7 @@ mod tests {
         let item = WidgetMeta {
             uuid: "some".into(),
             data_source: Default::default(),
+            ..Default::default()
         };
 
         let str = to_string(&item).unwrap();

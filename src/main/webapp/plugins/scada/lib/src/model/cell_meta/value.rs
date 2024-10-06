@@ -51,15 +51,15 @@ impl Reducible for ValueMeta {
 }
 
 pub struct ApplyValueMetaAction(pub ValueMeta);
-impl Reducer<cell::CellState> for ApplyValueMetaAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for ApplyValueMetaAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Value(_) = state.meta.data {
-            return cell::CellState {
+            return cell::State {
                 meta: CellMeta {
                     data: CellMetaVariant::Value(self.0),
                     ..state.meta.clone()
                 }, 
-                cell: state.cell.clone(),
+                ..(*state).clone()
             }.into();
                 
         }

@@ -39,6 +39,13 @@ function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
 
+function setWidgetModel(cell, modelStr) {
+	let model = mxUtils.parseXml(modelStr);
+	console.log("setWidgetModel", cell, model);
+
+}
+
+
 
 /**
  * Sample plugin.
@@ -257,11 +264,11 @@ Draw.loadPlugin(async function(ui) {
 		{
 			(function()
 			{
-				let cell = new mxCell('Valve', new mxGeometry(0, 0, 100, 40),
-					'rectangle;whiteSpace=wrap;html=1;align=center;collapsible=0;container=1;recursiveResize=0;');
+				let cell = new mxCell('', new mxGeometry(0, 0, 112, 73),
+					'shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDExMiA3MyIgaGVpZ2h0PSI3M3B4IiB3aWR0aD0iMTEycHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0yIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4MS4zOSwwKXNjYWxlKC0xLDEpdHJhbnNsYXRlKC04MS4zOSwwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZT0iIzAwMDAwMCIgZmlsbD0iIzk5OTk5OSIgZD0iTSA1NC43OSAyIEwgMTA4IDM2IEwgNTQuNzkgNzAgWiIvPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0zIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjMDAwMDAwIiBmaWxsPSIjODA4MDgwIiBkPSJNIDEuNTggMiBMIDU0Ljc5IDM2IEwgMS41OCA3MCBaIi8+PC9nPjwvZz48L2c+PC9nPjwvZz48L3N2Zz4=;');
 				cell.vertex = true;
 
-				let value = mxUtils.parseXml("<d-flow><widget uuid='00000000-0000-0000-0000-000000000000'/></d-flow>").documentElement;
+				let value = mxUtils.parseXml("<d-flow><widget uuid='00000000-0000-0000-0000-000000000000' group='valves'/></d-flow>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
 
@@ -405,7 +412,7 @@ Draw.loadPlugin(async function(ui) {
 			cellDataWindow = newCellWindow(divScadaCellData);
 			cellDataWindow.setVisible(true);
 
-			renderCell(divScadaCellData, cell);
+			renderCell(mxUtils, cell, divScadaCellData, getAppOptions());
 		} 
 		else {
 			highlight.highlight(null);

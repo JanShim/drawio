@@ -140,51 +140,26 @@ impl Reducible for StateMeta {
 }
 
 pub struct MultystateApplyStateAction(pub StateMeta);
-impl Reducer<cell::CellState> for MultystateApplyStateAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for MultystateApplyStateAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
             let new_state = self.0;            
             let index = new_state.get_index();
             let states = &mut multystate.states;
             states[index] = StateMeta { ..new_state };
 
-            return  cell::CellState {
-                cell: state.cell.clone(),
-                meta: CellMeta { 
+            return  cell::State {
+                    meta: CellMeta { 
                         data: CellMetaVariant::Multystate(multystate.clone()), 
                         ..state.meta.clone() 
                     },
+                    ..(*state).clone()
                 }
                 .into();
         }
         state
     }
 }
-
-
-// pub struct MultystateApplyStateAction(StateMeta);
-// impl Reducer<cell::CellState> for MultystateApplyStateAction {
-//     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-//         let mut multystate = state.meta.multystate.clone()
-//             .expect(format!("{}", CellStateError::NotMultystate).as_str());
-
-//         let new_state = self.0;            
-//         let index = new_state.get_index();
-//         let states = &mut multystate.states;
-//         states[index] = StateMeta { ..new_state };
-
-//         log::debug!("states: {states:?}");
-
-//         cell::CellState {
-//             cell: state.cell.clone(),
-//             meta: CellMeta { 
-//                     multystate: Some(multystate), 
-//                     ..state.meta.clone() 
-//                 },
-//             }
-//             .into()            
-//     }
-// }
 
 
 // ==========================================================

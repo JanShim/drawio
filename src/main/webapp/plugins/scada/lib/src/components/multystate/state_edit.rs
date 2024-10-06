@@ -24,7 +24,7 @@ pub fn component(Props {
     selected
 }: &Props) -> Html {
     // cell meta storage
-    let (cell_state, cell_state_dispatch) = use_store::<store::cell::CellState>();
+    let (cell_state, cell_state_dispatch) = use_store::<store::cell::State>();
     let range_type = use_state(|| Into::<RangeType>::into(value.range.clone()));
 
     let my_state = use_reducer(|| value.clone());

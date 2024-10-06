@@ -1,25 +1,28 @@
 use std::rc::Rc;
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
+use web_sys::{EventTarget, Node};
+use yew::AttrValue;
 use yewdux::{store::Store, Reducer};
 
-use crate::{
-    //errors::CellStateError, 
-    model::{
+use crate::model::{
     cell_meta::{
         // multystate::{state::StateMeta, MultystateMeta}, 
         CellMeta, CellMetaVariant, CellType
     }, 
-    mx_cell::MxCell
-}};
+    mx_cell::MxCell, mx_utils::MxUtils
+};
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct CellState {
+pub struct State {
+    pub api_url: AttrValue,
     pub cell: MxCell,
     pub meta: CellMeta,
+    pub mx_utils: MxUtils,
+    pub model_node: IString,
 }
 
-impl CellState {
+impl State {
     // pub fn set_meta_from_self(&mut self) -> Result<(), JsValue> {
     //     if let Some(meta) = self.cell.get_meta().ok()
     //     {
@@ -104,16 +107,19 @@ impl CellState {
 
 }
 
-impl Default for CellState {
+impl Default for State {
     fn default() -> Self {
         Self { 
+            api_url: Default::default(),
             cell: Default::default(),
             meta: Default::default(),
+            mx_utils: Default::default(),
+            model_node: Default::default(),
         }
     }
 }
 
-impl Store for CellState {
+impl Store for State {
     fn new(_cx: &yewdux::Context) -> Self {
         Self {
             ..Default::default()
@@ -130,20 +136,10 @@ impl Store for CellState {
     }
 }
 
-// pub struct SetStyleAction(pub IString);
-// impl Reducer<CellState> for SetStyleAction {
-//     fn apply(self, state: Rc<CellState>) -> Rc<CellState> {
-//         log::debug!("{}", self.0);
-//         CellState {
-//             cell: state.cell.clone(),
-//             meta: state.meta.clone(),
-//         }.into()
-//     }
-// }
 
 pub struct SetCellTypeAction(pub CellType);
-impl Reducer<CellState> for SetCellTypeAction {
-    fn apply(self, state: Rc<CellState>) -> Rc<CellState> {
+impl Reducer<State> for SetCellTypeAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
         let meta = match self.0 {
             CellType::MULTYSTATE => CellMeta {
                 label: state.cell.get_label().into(),
@@ -156,30 +152,24 @@ impl Reducer<CellState> for SetCellTypeAction {
             _ => Default::default(),
         };
         
-        CellState {
-            cell: state.cell.clone(),
+        State {
             meta,
+            ..(*state).clone()
         }.into()
     }
 }
 
+pub struct SetCellModelAction(pub IString);
+impl Reducer<State> for SetCellModelAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        // let model = state.mx_utils.parse_xml(self.0.to_string()).unwrap();
+        log::debug!("SetCellModelAction model: {:?}", self.0);
 
-///// reducer's Action
-// pub enum Action {
-//     SetStyle(IString),
-// }
+        State {
+            model_node: self.0,
+            ..(*state).clone()
+        }.into()        
+    }
+}
 
-// impl Reducible for CellState {
-//     type Action = Action;
-    
-//     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
-//         match action {
-//             Action::SetStyle(style) => Self {
-//                 cell: self.cell.clone(),     
-//                 meta: self.meta.clone(),           
-//             }.into(),
-//             _ => self
-//         }
-//     }
 
-// }

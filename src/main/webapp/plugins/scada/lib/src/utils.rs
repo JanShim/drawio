@@ -41,6 +41,10 @@ extern "C" {
     #[wasm_bindgen(js_name=getPrettyXml)]
     pub fn get_pretty_xml(el: Element) -> JsString;
 
+    
+    #[wasm_bindgen(js_name=setWidgetModel)]
+    pub fn set_widget_model(cell: MxCell, model_str: String);
+
 }
 
 //------------------------------------------------------------------

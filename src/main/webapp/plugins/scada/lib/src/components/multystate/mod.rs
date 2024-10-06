@@ -34,9 +34,9 @@ pub struct Props {
 
 #[function_component(MultystateComponent)]
 pub fn component(Props { edit_mode }: &Props) -> Html {
-    let (_, cell_store_dispatch) = use_store::<cell::CellState>();
+    let (_, cell_store_dispatch) = use_store::<cell::State>();
 
-    let multy_state = use_selector(|cell_state: &cell::CellState| {
+    let multy_state = use_selector(|cell_state: &cell::State| {
         if let CellMetaVariant::Multystate(multystate) = cell_state.meta.data.clone() {
 			return multystate;
 		};

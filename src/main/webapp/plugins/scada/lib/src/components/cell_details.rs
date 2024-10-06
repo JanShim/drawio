@@ -1,18 +1,24 @@
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
-use crate::{components::{
-        multystate::{self, MultystateComponent}, undefiend::{self, UndefiendComponent}, value::{self, ValueComponent}, widget::{self, WidgetComponent}
-    }, 
-    model::cell_meta::{self, value::{ApplyValueMetaAction, ValueMeta}, widget::WidgetMeta, CellMetaVariant, CellType}, 
-    store::cell::{self, SetCellTypeAction}
+use crate::{
+    components::{
+        multystate::{self, MultystateComponent}, 
+        undefiend::{self, UndefiendComponent}, 
+        value::{self, ValueComponent}, 
+        widget::{self, WidgetComponent}
+    }, model::cell_meta::{
+        value::{ApplyValueMetaAction, ValueMeta}, 
+        CellMetaVariant, 
+        CellType
+    }, store::cell::{self, SetCellTypeAction}, utils::set_widget_model 
 };
 
 
 #[function_component(CellDetailsComponent)]
 pub fn component() -> Html {
-    let (cell_state, cell_state_dispatch) = use_store::<cell::CellState>();
-    let cell_meta = use_selector(|cell_state: &cell::CellState| cell_state.meta.clone());
+    let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
+    let cell_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone());
     use_effect_with(cell_meta.clone(), |meta| {
         log::debug!("use_effect_with: cell_meta {meta:?}");
     });
@@ -32,6 +38,7 @@ pub fn component() -> Html {
         let cell_meta = cell_meta.clone();
         Callback::from(move |_: MouseEvent| {
             log::debug!("CURR CELL META:: {:?}", cell_meta);
+            set_widget_model(cell_state.cell.clone(), cell_state.model_node.to_string());
             let _meta = cell_state.cell.set_meta(&cell_meta).ok();
             edit_mode.set(false);
         })

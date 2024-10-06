@@ -5,9 +5,9 @@ use quick_xml::{
     se::to_string,
 };
 
-use crate::{errors::CellStateError, model::diagram, utils::get_pretty_xml,};
+use crate::{errors::CellStateError, utils::get_pretty_xml,};
 
-use super::{cell_meta::{CellMeta, CellMetaVariant}, common, widget};
+use super::{cell_meta::{CellMeta, CellMetaVariant}, common,};
 
 pub enum CellValue {
     Object(Element),

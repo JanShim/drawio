@@ -13,11 +13,10 @@ use crate::{
 
 
 pub struct MultystateApplyDsAction(pub DataSourceMeta);
-impl Reducer<cell::CellState> for MultystateApplyDsAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for MultystateApplyDsAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Multystate(multy) = &state.meta.data  {
-            return cell::CellState {
-                cell: state.cell.clone(),
+            return cell::State {
                 meta: CellMeta { 
                     data: CellMetaVariant::Multystate(
                         MultystateMeta {
@@ -27,7 +26,8 @@ impl Reducer<cell::CellState> for MultystateApplyDsAction {
                     ),
                     ..state.meta.clone()
                 },
-                }.into()            
+                ..(*state).clone()
+            }.into()            
         }
 
         // multystate.data_source = self.0;
@@ -44,7 +44,7 @@ pub struct Props {
 
 #[function_component(DataSourceComponent)]
 pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
-    let (_, cell_store_dispatch) = use_store::<cell::CellState>();
+    let (_, cell_store_dispatch) = use_store::<cell::State>();
 
     let data_source_state = use_reducer(|| ds.clone());
 

@@ -154,8 +154,8 @@ impl Reducible for MultystateMeta {
 }
 
 pub struct MultystateAddStateAction;
-impl Reducer<cell::CellState> for MultystateAddStateAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for MultystateAddStateAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone() {
             match multystate.range_type {
                 RangeType::DISCRET => {
@@ -184,12 +184,12 @@ impl Reducer<cell::CellState> for MultystateAddStateAction {
                 },            
             };
     
-            return cell::CellState {
-               cell: state.cell.clone(),
+            return cell::State {
                meta: CellMeta { 
                     data: CellMetaVariant::Multystate(multystate.clone()),
                     ..state.meta.clone() 
                 },
+                ..(*state).clone()
             }
             .into()
         }

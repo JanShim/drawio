@@ -17,7 +17,7 @@ pub struct Props {
 
 #[function_component(DataSourceComponent)]
 pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
-    let (_, cell_store_dispatch) = use_store::<cell::CellState>();
+    let (_, cell_store_dispatch) = use_store::<cell::State>();
 
     let data_source_state = use_reducer(|| ds.clone());
 

@@ -1,28 +1,40 @@
 use yew::prelude::*;
-use wasm_bindgen::JsCast;
-use web_sys::HtmlAnchorElement;
 use data_source::DataSourceComponent;
+use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use yewdux::{use_selector, use_store};
 use implicit_clone::unsync::IString;
 use svg_view::SvgViewComponent;
+use glyph::{WidgetGlyph, Props as GlyphProps};
 
-use crate::{errors::CellStateError, model::cell_meta::{widget::{self, WidgetMeta, WidgetUuidApplyAction}, CellMetaVariant}, store::cell, utils::NULL_UUID};
+use crate::{
+	errors::CellStateError, 
+	model::{cell_meta::{
+			widget::{WidgetMeta, WidgetUuidApplyAction}, 
+			CellMetaVariant
+		}, 
+		widget::WidgetGlyphItem
+	}, 
+	store::cell::{self, SetCellModelAction}, 
+	utils::{fetch, fetch_string, NULL_UUID},
+};
 
 pub mod info_item;
 pub mod data_source;
 pub mod svg_view;
 pub mod list_item;
+pub mod glyph;
+pub mod glyph_svg;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
-	// pub apply: Callback<WidgetMeta>,
 }
 
 #[function_component(WidgetComponent)]
 pub fn component(Props { edit_mode }: &Props) -> Html {
-    let (_, cell_store_dispatch) = use_store::<cell::CellState>();
-    let widget = use_selector(|cell_state: &cell::CellState| {
+    let (_, cell_store_dispatch) = use_store::<cell::State>();
+	let api_url = use_selector(|state: &cell::State| state.api_url.clone());
+    let widget = use_selector(|cell_state: &cell::State| {
 		if let CellMetaVariant::Widget(widget) = cell_state.meta.data.clone() {
 			return widget;
 		};
@@ -38,23 +50,32 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 		})
     };  
 
-    let inner_svg = use_state(|| IString::from("<span>???</span>"));
+    let glyph_svg = use_state(|| IString::from("<span>???</span>"));
 	let widget_uuid = use_state(|| IString::from(NULL_UUID));
+	{
+		let url = api_url.clone();
+		let cell_store_dispatch = cell_store_dispatch.clone();
+		use_effect_with((*widget_uuid).clone(), |uuid| {
+			let uuid = uuid.clone();
+			wasm_bindgen_futures::spawn_local(
+				async move { 
+					let model = fetch_string(format!("{url}/widget/{uuid}/model")).await.unwrap();
+					cell_store_dispatch.apply(SetCellModelAction(model.into()));
+				 }
+			);
+		}
+	)};
 
     let on_item_select = {
-        let inner_svg = inner_svg.clone();
+        let glyph_svg = glyph_svg.clone();
 		let type_edit_mode = type_edit_mode.clone();
 		let widget_uuid = widget_uuid.clone();
-        Callback::from(move |e: MouseEvent| {
-            e.target().and_then(|t| t.dyn_into::<HtmlAnchorElement>().ok())
-				.map(|elem| {
-					if *type_edit_mode {
-						if let Some(id) = elem.get_attribute("id") {
-							widget_uuid.set(id.into());
-						}
-						inner_svg.set(elem.inner_html().into());							
-					}
-				});
+        Callback::from(move |pk_glyph: (IString, IString)| {
+			let (pk, plyph) = pk_glyph;
+			if *type_edit_mode {
+				widget_uuid.set(pk);
+				glyph_svg.set(plyph);							
+			}			
         })
     };
 
@@ -68,6 +89,14 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 		})
 	};
 
+    let widget_list = {
+		let url = api_url.clone();
+		let group = (*widget).group.clone();
+		use_async_with_options(
+			async move { fetch::<Vec::<WidgetGlyphItem>>(format!("{url}/widget/{group}/glyphs")).await },
+			UseAsyncOptions::enable_auto(),
+    )};
+
     // ------------ View Items
     let data_source_view = {
         let props = yew::props!(data_source::Props {
@@ -78,10 +107,8 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
     };    
 
     let svg_view = {
-        let inner_svg = inner_svg.clone();
-        let props = yew::props!(svg_view::Props {
-            html: (*inner_svg).clone(),
-        });
+        let inner_svg = glyph_svg.clone();
+        let props = yew::props!(svg_view::Props { html: (*inner_svg).clone(), });
         html! {<SvgViewComponent ..props/>}
     };
 
@@ -98,6 +125,26 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
             html! { <span/> }
         }
     };    	
+
+    let widgets_view = {
+		let on_item_select = on_item_select.clone();
+        if widget_list.loading {
+            html! { "Loading, wait a sec..." }
+        } else  {
+            widget_list.data.as_ref().map_or_else(
+                || html! {},        // default
+                |repo| html! { 
+                    for repo.iter().map(|item: &WidgetGlyphItem| {
+						let props = yew::props! {GlyphProps {
+							pk: item.uuid.to_string(),
+							on_select: on_item_select.clone(),
+							glyph: item.glyph.clone(),
+						}};
+                        html!{ <WidgetGlyph ..props /> }
+					})
+            })      
+        }   
+    };	
 
     html! {
         <>
@@ -128,24 +175,28 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 
         <div style="display: block;">
 	<div class="geSidebar" style="touch-action: none; display: block; transform-origin: left top;">
-		<a id="07c41b9b-75f9-460f-97f0-f0f0e7e93f9a" onclick={on_item_select.clone()} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
-			<svg style="left: 1px; top: 1px; width: 32px; height: 30px; display: block; position: relative; overflow: hidden; pointer-events: none;">
-				<g style="pointer-events: none;">
-					<g style="pointer-events: none;">
-					</g>
-					<g style="pointer-events: none;">
-						<g transform="translate(0.5,0.5)" style="visibility: visible; pointer-events: none;">
-							<path d="M 1.5 6.3 L 16 15 L 1.5 23.7 Z M 30.5 6.3 L 16 15 L 30.5 23.7 Z" fill="rgb(241, 243, 244)" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
-							</path>
-						</g>
-					</g>
-					<g style="pointer-events: none;">
-					</g>
-					<g style="pointer-events: none;">
-					</g>
-				</g>
-			</svg>
-		</a>
+		{ widgets_view }
+
+
+		// <a id="07c41b9b-75f9-460f-97f0-f0f0e7e93f9a" onclick={on_item_select.clone()} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
+		// 	<svg style="left: 1px; top: 1px; width: 32px; height: 30px; display: block; position: relative; overflow: hidden; pointer-events: none;">
+		// 		<g style="pointer-events: none;">
+		// 			<g style="pointer-events: none;">
+		// 			</g>
+		// 			<g style="pointer-events: none;">
+		// 				<g transform="translate(0.5,0.5)" style="visibility: visible; pointer-events: none;">
+		// 					<path d="M 1.5 6.3 L 16 15 L 1.5 23.7 Z M 30.5 6.3 L 16 15 L 30.5 23.7 Z" fill="rgb(241, 243, 244)" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
+		// 					</path>
+		// 				</g>
+		// 			</g>
+		// 			<g style="pointer-events: none;">
+		// 			</g>
+		// 			<g style="pointer-events: none;">
+		// 			</g>
+		// 		</g>
+		// 	</svg>
+		// </a>
+
 		// <a id="00000000-0000-0000-0000-000000000001" onclick={on_item_select.clone()} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
 		// 	<svg style="left: 1px; top: 1px; width: 32px; height: 30px; display: block; position: relative; overflow: hidden; pointer-events: none;">
 		// 		<g style="pointer-events: none;">
@@ -344,28 +395,31 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 		// 		</g>
 		// 	</svg>
 		// </a>
-		<a id="07c41b9b-75f9-460f-97f0-f0f0e7e93f9a" onclick={on_item_select.clone()} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
-			<svg style="left: 1px; top: 1px; width: 32px; height: 30px; display: block; position: relative; overflow: hidden; pointer-events: none;">
-				<g style="pointer-events: none;">
-					<g style="pointer-events: none;">
-					</g>
-					<g style="pointer-events: none;">
-						<g transform="translate(0.5,0.5)" style="visibility: visible; pointer-events: none;">
-							<path d="M 9.25 5.55 L 22.75 5.55 M 16 5.55 L 16 20.4" fill="none" stroke="white" stroke-width="9.3" stroke-linejoin="round" stroke-miterlimit="10" visibility="hidden" style="pointer-events: none;">
-							</path>
-							<path d="M 9.25 5.55 L 22.75 5.55 M 16 5.55 L 16 20.4" fill="none" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
-							</path>
-							<path d="M 2.5 12.3 L 16 20.4 L 2.5 28.5 Z M 29.5 12.3 L 16 20.4 L 29.5 28.5 Z" fill="rgb(241, 243, 244)" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
-							</path>
-						</g>
-					</g>
-					<g style="pointer-events: none;">
-					</g>
-					<g style="pointer-events: none;">
-					</g>
-				</g>
-			</svg>
-		</a>
+		
+		// <a id="07c41b9b-75f9-460f-97f0-f0f0e7e93f9a" onclick={on_item_select.clone()} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
+		// 	<svg style="left: 1px; top: 1px; width: 32px; height: 30px; display: block; position: relative; overflow: hidden; pointer-events: none;">
+		// 		<g style="pointer-events: none;">
+		// 			<g style="pointer-events: none;">
+		// 			</g>
+		// 			<g style="pointer-events: none;">
+		// 				<g transform="translate(0.5,0.5)" style="visibility: visible; pointer-events: none;">
+		// 					<path d="M 9.25 5.55 L 22.75 5.55 M 16 5.55 L 16 20.4" fill="none" stroke="white" stroke-width="9.3" stroke-linejoin="round" stroke-miterlimit="10" visibility="hidden" style="pointer-events: none;">
+		// 					</path>
+		// 					<path d="M 9.25 5.55 L 22.75 5.55 M 16 5.55 L 16 20.4" fill="none" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
+		// 					</path>
+		// 					<path d="M 2.5 12.3 L 16 20.4 L 2.5 28.5 Z M 29.5 12.3 L 16 20.4 L 29.5 28.5 Z" fill="rgb(241, 243, 244)" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
+		// 					</path>
+		// 				</g>
+		// 			</g>
+		// 			<g style="pointer-events: none;">
+		// 			</g>
+		// 			<g style="pointer-events: none;">
+		// 			</g>
+		// 		</g>
+		// 	</svg>
+		// </a>
+
+
 		// <a id="00000000-0000-0000-0000-000000000001" class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
 		// 	<svg style="left: 1px; top: 1px; width: 32px; height: 30px; display: block; position: relative; overflow: hidden; pointer-events: none;">
 		// 		<g style="pointer-events: none;">

@@ -51,18 +51,18 @@ impl Reducible for DataSourceMeta {
 }
 
 pub struct WidgetApplyDsAction(pub DataSourceMeta);
-impl Reducer<cell::CellState> for WidgetApplyDsAction {
-    fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
+impl Reducer<cell::State> for WidgetApplyDsAction {
+    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Widget(widget) = &state.meta.data {
-            return cell::CellState {
-                    cell: state.cell.clone(),
+            return cell::State {
                     meta: CellMeta { 
                         label: state.meta.label.clone(), 
                         data: CellMetaVariant::Widget(WidgetMeta {
-                            uuid: widget.uuid.clone(),
                             data_source: self.0,
+                            ..widget.clone()
                         }),
-                    }
+                    },
+                    ..(*state).clone()
                 }.into();
         };
 

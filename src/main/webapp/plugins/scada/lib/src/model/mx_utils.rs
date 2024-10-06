@@ -51,6 +51,18 @@ impl MxUtils {
     }
 }
 
+impl Default for MxUtils {
+    fn default() -> Self {
+        Self { obj: JsValue::null() }
+    }
+}
+
+impl Clone for MxUtils {
+    fn clone(&self) -> Self {
+        Self { obj: self.obj.clone() }
+    }
+}
+
 impl PartialEq for MxUtils {
     fn eq(&self, other: &Self) -> bool {
         self.obj == other.obj
