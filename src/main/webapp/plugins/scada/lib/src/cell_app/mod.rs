@@ -8,7 +8,7 @@ use web_sys::HtmlDivElement;
 
 use crate::{
     components::{cell_details::CellDetailsComponent, get_global_css}, 
-    model::{mx_cell::MxCell, mx_utils::MxUtils}, 
+    model::{mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils}, 
     store, 
     utils::SchemaOptions
 };
@@ -28,13 +28,14 @@ pub fn app() -> Html {
 
 
 #[wasm_bindgen(js_name=renderCell)]
-pub fn render_cell(mx_utils: MxUtils, cell: MxCell, div: HtmlDivElement, options: SchemaOptions) {
+pub fn render_cell(mx_editor: MxEditor, mx_utils: MxUtils, cell: MxCell, div: HtmlDivElement, options: SchemaOptions) {
     let meta = cell.get_meta().unwrap_or_default();
 
     Dispatch::<store::cell::State>::global().set(store::cell::State {
         api_url:options.api_url.unwrap_or("undefiend".to_owned()).into(), 
         cell, 
         meta,
+        mx_editor,
         mx_utils,
         ..Default::default()
     });

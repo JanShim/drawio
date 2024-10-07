@@ -29,6 +29,18 @@ impl MxEditor {
     }
 }
 
+impl Default for MxEditor {
+    fn default() -> Self {
+        Self { obj: JsValue::null() }
+    }
+}
+
+impl Clone for MxEditor {
+    fn clone(&self) -> Self {
+        Self { obj: self.obj.clone() }
+    }
+}
+
 impl PartialEq for MxEditor {
     fn eq(&self, other: &Self) -> bool {
         self.obj == other.obj

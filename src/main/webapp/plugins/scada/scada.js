@@ -1,4 +1,3 @@
-// import { initSync, renderCell, renderSchema, SchemaOptions } from './lib/pkg/scada_lib.js';
 
 function setCellAttribute(cell, name, value) {
 	//cell.value = new NamedNodeMap();
@@ -39,10 +38,66 @@ function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
 
-function setWidgetModel(cell, modelStr) {
-	let model = mxUtils.parseXml(modelStr);
-	console.log("setWidgetModel", cell, model);
+function setWidgetModel(editor, cellP, modelStr) {
+	let node = mxUtils.parseXml(modelStr).documentElement;
+	if (!!node && node.nodeName === 'mxGraphModel') {
+		console.log("setWidgetModel", cellP, node);
 
+		let container = document.createElement("div");
+		let graph = new mxGraph(container);
+		let codec = new mxCodec(node);
+
+		let widgetCells = [];
+		graph.model.beginUpdate();
+		try
+		{
+			graph.model.clear();
+			graph.view.scale = 0.5;
+			codec.decode(node, graph.getModel());
+		}
+		finally
+		{
+			graph.model.endUpdate();
+			let cells = graph.model.cells;
+			delete cells["0"];
+			delete cells["1"];
+			// console.log(cells);
+			
+			widgetCells = Object.entries(cells).map(( [k, v] ) => v);
+
+			let box = graph.getBoundingBox(widgetCells);
+			let pgeom = cellP.getGeometry();
+			pgeom.width = box.width;
+			pgeom.height = box.height;
+
+			let x = box.x;
+			let y = box.y;
+			widgetCells.forEach(c => {
+				let geom = c.getGeometry();
+				geom.x -= x;
+				geom.y -= y;
+			});
+
+		}
+
+		editor.graph.model.beginUpdate();
+		try {
+			widgetCells.forEach(o => {
+				cellP.insert(o);
+			});
+			// editor.graph.addCells(widgetCells);	
+			console.log(cellP);
+		}
+		finally {
+			editor.graph.model.endUpdate();
+			editor.fireEvent(new mxEventObject('resetGraphView'));
+		}
+
+		// let box = editor.graph.getBoundingBox(widgetCells);
+		// console.log("box", box);
+		
+		
+	}
 }
 
 
@@ -264,36 +319,19 @@ Draw.loadPlugin(async function(ui) {
 		{
 			(function()
 			{
-				let cell = new mxCell('', new mxGeometry(0, 0, 112, 73),
-					'shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDExMiA3MyIgaGVpZ2h0PSI3M3B4IiB3aWR0aD0iMTEycHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0yIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4MS4zOSwwKXNjYWxlKC0xLDEpdHJhbnNsYXRlKC04MS4zOSwwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZT0iIzAwMDAwMCIgZmlsbD0iIzk5OTk5OSIgZD0iTSA1NC43OSAyIEwgMTA4IDM2IEwgNTQuNzkgNzAgWiIvPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0zIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjMDAwMDAwIiBmaWxsPSIjODA4MDgwIiBkPSJNIDEuNTggMiBMIDU0Ljc5IDM2IEwgMS41OCA3MCBaIi8+PC9nPjwvZz48L2c+PC9nPjwvZz48L3N2Zz4=;');
-				cell.vertex = true;
+				let cotainer = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;');
+				cotainer.vertex = true;
 
 				let value = mxUtils.parseXml("<d-flow><widget uuid='00000000-0000-0000-0000-000000000000' group='valves'/></d-flow>").documentElement;
-				value.setAttribute('label', cell.value || '');
-				cell.setValue(value);
+				value.setAttribute('label', cotainer.value || '');
+				cotainer.setValue(value);				
 
-
-
-				// let value = null;
-				// if (cell.value != null && typeof(cell.value) == 'object')
-				// {
-				// 	value = cell.value.cloneNode(true);
-				// }
-				// else
-				// {
-				// }
+				let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
+					'shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDExMiA3MyIgaGVpZ2h0PSI3M3B4IiB3aWR0aD0iMTEycHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0yIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4MS4zOSwwKXNjYWxlKC0xLDEpdHJhbnNsYXRlKC04MS4zOSwwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZT0iIzAwMDAwMCIgZmlsbD0iIzk5OTk5OSIgZD0iTSA1NC43OSAyIEwgMTA4IDM2IEwgNTQuNzkgNzAgWiIvPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0zIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjMDAwMDAwIiBmaWxsPSIjODA4MDgwIiBkPSJNIDEuNTggMiBMIDU0Ljc5IDM2IEwgMS41OCA3MCBaIi8+PC9nPjwvZz48L2c+PC9nPjwvZz48L3N2Zz4=;');
+				glyph.vertex = true;
+				glyph.setParent(cotainer);
 				
-				// if (attributeValue != null)
-				// {
-				// 	value.setAttribute(attributeName, attributeValue);
-				// }
-				// else
-				// {
-				// 	value.removeAttribute(attributeName);
-				// }
-
-				
-				content.appendChild(sb.createVertexTemplateFromCells([cell], 100, 40, 'Valve'));
+				content.appendChild(sb.createVertexTemplateFromCells([cotainer], 100, 40, 'Valve'));
 			})();
 
 		});
@@ -412,7 +450,7 @@ Draw.loadPlugin(async function(ui) {
 			cellDataWindow = newCellWindow(divScadaCellData);
 			cellDataWindow.setVisible(true);
 
-			renderCell(mxUtils, cell, divScadaCellData, getAppOptions());
+			renderCell(ui.editor, mxUtils, cell, divScadaCellData, getAppOptions());
 		} 
 		else {
 			highlight.highlight(null);

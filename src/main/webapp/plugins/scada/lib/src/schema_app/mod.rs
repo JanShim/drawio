@@ -33,8 +33,8 @@ pub fn app() -> Html {
 pub fn render_schema(mx_utils: MxUtils, mx_editor: MxEditor, div: HtmlDivElement, options: SchemaOptions) {
     Dispatch::<store::diagram::State>::global().set(store::diagram::State { 
         api_url: options.api_url.unwrap_or("undefiend".to_owned()).into(), 
-        mx_utils: Some(Rc::new(mx_utils)), 
-        mx_editor: Some(Rc::new(mx_editor)), 
+        mx_utils, 
+        mx_editor, 
         model_meta: Default::default(), 
     });
 

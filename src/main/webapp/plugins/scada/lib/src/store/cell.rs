@@ -9,8 +9,7 @@ use crate::model::{
     cell_meta::{
         // multystate::{state::StateMeta, MultystateMeta}, 
         CellMeta, CellMetaVariant, CellType
-    }, 
-    mx_cell::MxCell, mx_utils::MxUtils
+    }, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
 };
 
 #[derive(Clone, PartialEq, Debug)]
@@ -19,6 +18,7 @@ pub struct State {
     pub cell: MxCell,
     pub meta: CellMeta,
     pub mx_utils: MxUtils,
+    pub mx_editor: MxEditor,    
     pub model_node: IString,
 }
 
@@ -114,6 +114,7 @@ impl Default for State {
             cell: Default::default(),
             meta: Default::default(),
             mx_utils: Default::default(),
+            mx_editor: Default::default(),
             model_node: Default::default(),
         }
     }

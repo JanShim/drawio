@@ -38,7 +38,7 @@ pub fn component() -> Html {
         let cell_meta = cell_meta.clone();
         Callback::from(move |_: MouseEvent| {
             log::debug!("CURR CELL META:: {:?}", cell_meta);
-            set_widget_model(cell_state.cell.clone(), cell_state.model_node.to_string());
+            set_widget_model(cell_state.mx_editor.clone(), cell_state.cell.clone(), cell_state.model_node.to_string());
             let _meta = cell_state.cell.set_meta(&cell_meta).ok();
             edit_mode.set(false);
         })

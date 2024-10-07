@@ -43,7 +43,7 @@ extern "C" {
 
     
     #[wasm_bindgen(js_name=setWidgetModel)]
-    pub fn set_widget_model(cell: MxCell, model_str: String);
+    pub fn set_widget_model(editor: MxEditor, cell: MxCell, model_str: String);
 
 }
 
