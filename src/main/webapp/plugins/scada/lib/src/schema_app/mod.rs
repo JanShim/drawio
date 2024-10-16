@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 use yewdux::Dispatch;
-use std::rc::Rc;
 
 use web_sys::{js_sys::JsString, HtmlDivElement};
 

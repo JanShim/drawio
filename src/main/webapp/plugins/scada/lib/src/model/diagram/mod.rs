@@ -10,14 +10,16 @@ pub struct DiagramDto {
     pub uuid: String,
     pub name: String,
     pub model: String,
+    pub svg: Option<String>,
 }
 
 impl DiagramDto {
-    pub fn new(name: String, model: String) -> Self {
+    pub fn new(name: String, model: String, svg: Option<String>) -> Self {
         DiagramDto {
             uuid: NULL_UUID.to_owned(),
             name,
             model,
+            svg,
         }
     }
 }

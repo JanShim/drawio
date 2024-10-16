@@ -40,10 +40,15 @@ extern "C" {
 
     #[wasm_bindgen(js_name=getPrettyXml)]
     pub fn get_pretty_xml(el: Element) -> JsString;
-
+    
+    #[wasm_bindgen(js_name=getGraphSvg)]
+    pub fn get_graph_svg(editor: &MxEditor) -> JsString;    
     
     #[wasm_bindgen(js_name=setWidgetModel)]
     pub fn set_widget_model(editor: MxEditor, cell: MxCell, model_str: String);
+
+    #[wasm_bindgen(js_name=clipedModelBox)]
+    pub fn cliped_model_box(model_str: String) -> JsString;
 
 }
 

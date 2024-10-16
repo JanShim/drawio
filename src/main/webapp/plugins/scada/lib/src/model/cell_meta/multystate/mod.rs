@@ -30,14 +30,15 @@ where
 }
 
 
-#[derive(Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "multystate")]
 pub struct MultystateMeta {
     #[serde(rename="@range-type", default)]
     pub range_type: RangeType,
     #[serde(rename="ds", default)]
     pub data_source: DataSourceMeta,
-    #[serde(deserialize_with = "unwrap_states", default)]
+    // #[serde(deserialize_with = "unwrap_states", default)]
+    #[serde(rename="state", default)]
     pub states: Vec<StateMeta>,
 }
 
@@ -71,36 +72,36 @@ impl Default for MultystateMeta {
     }
 }
 
-impl Serialize for MultystateMeta {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        #[derive(Serialize)]
-        #[serde(rename = "multystate")]
-        struct Root<'a> {
-            #[serde(rename="@range-type", default)]
-            range_type: &'a RangeType,
-            #[serde(rename="ds", default)]
-            pub data_source: &'a DataSourceMeta,
-            states: List<'a>,
-        }
+// impl Serialize for MultystateMeta {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         #[derive(Serialize)]
+//         #[serde(rename = "multystate")]
+//         struct Root<'a> {
+//             #[serde(rename="@range-type", default)]
+//             range_type: &'a RangeType,
+//             #[serde(rename="ds", default)]
+//             pub data_source: &'a DataSourceMeta,
+//             states: List<'a>,
+//         }
 
-        #[derive(Serialize)]
-        struct List<'a> {
-            state: &'a Vec<StateMeta>,
-        }
+//         #[derive(Serialize)]
+//         struct List<'a> {
+//             state: &'a Vec<StateMeta>,
+//         }
 
-        let helper = Root {
-            range_type: &self.range_type,
-            data_source: &self.data_source,
-            states: List {
-                state: &self.states,
-            },
-        };
-        helper.serialize(serializer)
-    }
-}
+//         let helper = Root {
+//             range_type: &self.range_type,
+//             data_source: &self.data_source,
+//             states: List {
+//                 state: &self.states,
+//             },
+//         };
+//         helper.serialize(serializer)
+//     }
+// }
 
 pub struct SetDataSource(pub DataSourceMeta);
 impl Reducer<MultystateMeta> for SetDataSource {

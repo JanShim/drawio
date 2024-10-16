@@ -38,69 +38,144 @@ function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
 
-function setWidgetModel(editor, cellP, modelStr) {
+// двигает модель в (0,0) угол
+function clipedModelBox(modelStr) {
 	let node = mxUtils.parseXml(modelStr).documentElement;
 	if (!!node && node.nodeName === 'mxGraphModel') {
-		console.log("setWidgetModel", cellP, node);
-
 		let container = document.createElement("div");
-		let graph = new mxGraph(container);
+		let graph2 = new mxGraph(container);
 		let codec = new mxCodec(node);
 
-		let widgetCells = [];
-		graph.model.beginUpdate();
+		graph2.model.beginUpdate();
 		try
 		{
-			graph.model.clear();
-			graph.view.scale = 0.5;
-			codec.decode(node, graph.getModel());
+			graph2.model.clear();
+			codec.decode(node, graph2.getModel());
 		}
 		finally
 		{
-			graph.model.endUpdate();
-			let cells = graph.model.cells;
-			delete cells["0"];
-			delete cells["1"];
-			// console.log(cells);
-			
+			graph2.model.endUpdate();
+		}
+
+		graph2.model.beginUpdate();
+		try {
+			let cells = graph2.model.cells;
+			let widgetCells = Object.entries(cells).map(( [k, v] ) => v);
+
+			let box = graph2.getBoundingBox(widgetCells);
+			let x = box.x;
+			let y = box.y;
+			widgetCells.forEach(c => {
+				let geom = c.getGeometry();
+				if (!!geom) {
+					geom.x -= x;
+					geom.y -= y;
+				}
+			});	
+		}
+		finally {
+			graph2.model.endUpdate();
+		}
+		
+		let encoder = new mxCodec();
+		let result = encoder.encode(graph2.model);
+		let res =  mxUtils.getXml(result, '');
+		container.remove();
+		return res;
+	}
+
+	return modelStr;
+}
+
+function setWidgetModel(editor, cellP, modelStr) {
+	let node = mxUtils.parseXml(modelStr).documentElement;
+	if (!!node && node.nodeName === 'mxGraphModel') {
+		// console.log("setWidgetModel", cellP, node);
+
+		let container = document.createElement("div");
+		let graph2 = new mxGraph(container);
+		let codec = new mxCodec(node);
+
+		let widgetCells = [];
+		graph2.model.beginUpdate();
+		try
+		{
+			graph2.model.clear();
+			// graph2.view.scale = 0.5;
+			codec.decode(node, graph2.getModel());
+		}
+		finally
+		{
+			graph2.model.endUpdate();
+		}
+
+		graph2.model.beginUpdate();
+		try {
+			let cells = graph2.model.cells;
 			widgetCells = Object.entries(cells).map(( [k, v] ) => v);
 
-			let box = graph.getBoundingBox(widgetCells);
+			let box = graph2.getBoundingBox(widgetCells);
 			let pgeom = cellP.getGeometry();
 			pgeom.width = box.width;
 			pgeom.height = box.height;
 
 			let x = box.x;
 			let y = box.y;
+			let idp = cellP.getId();
 			widgetCells.forEach(c => {
 				let geom = c.getGeometry();
-				geom.x -= x;
-				geom.y -= y;
-			});
-
+				if (!!geom) {
+					geom.x -= x;
+					geom.y -= y;
+				}
+				let newId =idp + '#' + c.getId();
+				c.setId(newId);
+			});	
+		}
+		finally {
+			graph2.model.endUpdate();
 		}
 
+		// merge into cellP
 		editor.graph.model.beginUpdate();
 		try {
-			widgetCells.forEach(o => {
-				cellP.insert(o);
-			});
-			// editor.graph.addCells(widgetCells);	
-			console.log(cellP);
+			let cells = graph2.model.cells;
+			editor.graph.model.mergeChildren(cells["1"], cellP, false);
 		}
 		finally {
 			editor.graph.model.endUpdate();
-			editor.fireEvent(new mxEventObject('resetGraphView'));
+			container.remove();
 		}
 
-		// let box = editor.graph.getBoundingBox(widgetCells);
-		// console.log("box", box);
-		
-		
+		editor.fireEvent(new mxEventObject('resetGraphView'));
 	}
 }
 
+function getGraphSvg(editor) {
+		/*
+		Graph.prototype.getSvg = function(
+		background,  --optional collor
+		scale, 	--optional
+		border,  --optional
+		nocrop,  --optional
+		crisp, --optional
+		ignoreSelection, --optional bool
+		showText, --optional bool
+		imgExport,  --null
+		linkTarget, 
+		hasShadow, 
+		incExtFonts,
+		theme, 
+		exportType, 
+		cells, 
+		noCssClass, 
+		disableLinks --true
+		)
+		*/
 
+		let svg = editor.graph.getSvg();
+		return mxUtils.getXml(svg, '');
+}
 
 /**
  * Sample plugin.
@@ -159,7 +234,7 @@ Draw.loadPlugin(async function(ui) {
 	}
 	
 	// Highlights current cell
-	const highlight = new mxCellHighlight(graph, '#00ff00', 8);
+	const highlight = new mxCellHighlight(graph, '#00ff00', 2);
 	// const ignored = ['label', 'tooltip', 'placeholders'];
 
 	// register_conteiner(ui.editor, div);	// for wasm app
@@ -319,7 +394,7 @@ Draw.loadPlugin(async function(ui) {
 		{
 			(function()
 			{
-				let cotainer = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;');
+				let cotainer = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
 				cotainer.vertex = true;
 
 				let value = mxUtils.parseXml("<d-flow><widget uuid='00000000-0000-0000-0000-000000000000' group='valves'/></d-flow>").documentElement;
@@ -424,7 +499,7 @@ Draw.loadPlugin(async function(ui) {
 
 	function isScadaCell(cell)
 	{
-		if (cell != null && cell.value !== null && typeof cell.value !== 'string')
+		if (!!cell && !!cell.value && typeof cell.value !== 'string')
 		{
 			return cell.value.tagName === "d-flow";
 		}

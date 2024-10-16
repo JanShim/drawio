@@ -62,10 +62,13 @@ pub fn scada_diagram_component() -> Html {
                     wasm_bindgen_futures::spawn_local(async move {
                         if let Ok(node) = state.get_graph_xml() {
                             if let Ok(Some(model_str)) = state.get_xml(node) {
+                                let svg = state.get_graph_svg();
+
                                 if form.is_new_item() {
                                     let item = DiagramDto::new(
                                         form.name.to_string(),
                                         model_str,
+                                        Some(svg),
                                     ); 
 
                                     let created = post(format!("{}/diagram", state.api_url), item).await
@@ -87,6 +90,7 @@ pub fn scada_diagram_component() -> Html {
                                         uuid: form.uuid.to_string(),
                                         name: form.name.to_string(), 
                                         model: model_str, 
+                                        svg: Some(svg),
                                     };
 
                                     put(format!("{}/diagram/{}", state.api_url, form.uuid), item).await

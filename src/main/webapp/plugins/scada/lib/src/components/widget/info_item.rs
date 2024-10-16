@@ -11,7 +11,7 @@ use crate::{
         widget::{meta::WidgetForm, WidgetDto}
     }, 
     store::diagram, 
-    utils::{post, put}
+    utils::{cliped_model_box, post, put}
 };
 
 #[function_component(WidgetInfoComponent)]
@@ -69,7 +69,7 @@ pub fn scada_diagram_component() -> Html {
                                     let item = WidgetDto::new(
                                         form.group.to_string(), 
                                         form.name.to_string(),
-                                        model_str,
+                                        cliped_model_box(model_str).into(), 
                                         vec![]
                                     ); 
 
@@ -96,7 +96,7 @@ pub fn scada_diagram_component() -> Html {
                                         uuid: form.uuid.to_string(),
                                         group: form.group.to_string(),
                                         name: form.name.to_string(), 
-                                        model: model_str, 
+                                        model: cliped_model_box(model_str).into(), 
                                         types: vec!["ZDV2".to_owned()],  
                                     };
 
