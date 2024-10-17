@@ -4,6 +4,16 @@ use implicit_clone::{unsync::IString, ImplicitClone};
 use serde::{Deserialize, Serialize};
 use yew::Reducible;
 
+
+// ------- DataSourceMeta ------------------
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
+#[serde(rename = "ds")]
+pub struct DataSourceJson {
+    pub tag: String,
+    pub path: String,
+}
+
+// ------- DataSourceMeta ------------------
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "ds")]
 pub struct DataSourceMeta {
@@ -22,7 +32,16 @@ impl Default for DataSourceMeta {
     }
 }
 
-/// reducer's Action
+impl From<DataSourceJson> for DataSourceMeta {
+    fn from( DataSourceJson { tag, path }: DataSourceJson) -> Self {
+        Self { 
+            tag: tag.into(),
+            path: path.into(),
+        }
+    }
+}
+
+// ------------------- reducer's Action
 pub enum DataSourceAction {
     SetTag(IString),
     SetPath(IString),
@@ -72,6 +91,24 @@ mod tests {
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
-    }    
+    }   
+
+    #[test]
+    fn from_json_works() {
+        let item = DataSourceJson {
+            tag: "tag".into(),
+           ..Default::default()
+        };
+
+        let item: DataSourceMeta = item.into();
+
+        let str = to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = from_str::<DataSourceMeta>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }   
 
 }

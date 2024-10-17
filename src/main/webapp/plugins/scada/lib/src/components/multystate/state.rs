@@ -35,7 +35,7 @@ pub fn component(Props {
         <tr>
             <td width="200">{ my_state.name.as_str() }</td>
             <td>{"знач: "}</td>
-            <td width="35">{ my_state.range.to_string() }</td>
+            <td width="35">{ my_state.value.to_string() }</td>
             <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
         </tr>
         </table>    

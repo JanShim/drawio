@@ -118,5 +118,24 @@ mod tests {
         assert_eq!(item, meta);
     }
    
+    #[test]
+    fn json_deser_works() {
+        let json = r#"{"@uuid":"07c41b9b-75f9-460f-97f0-f0f0e7e93f9a","@group":"valves","ds":{"@tag":"some-tag","@path":""}}"#;
+
+        let widget = serde_json::from_str::<WidgetMeta>(json).unwrap();
+        println!("{widget:?}");
+
+        let tst = WidgetMeta {
+            uuid: "07c41b9b-75f9-460f-97f0-f0f0e7e93f9a".into(),
+            group: "valves".into(),
+            data_source: DataSourceMeta {
+                tag: "some-tag".into(),
+                path: String::new().into(),
+            },
+        };
+
+        assert_eq!(widget, tst);
+    }
+
 
 }

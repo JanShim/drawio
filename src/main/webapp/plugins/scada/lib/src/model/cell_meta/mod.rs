@@ -15,31 +15,7 @@ pub mod widget;
 pub mod value;
 pub mod undefiend;
 
-// fn serialize_meta<S>(item: &CellType, serializer: S) -> Result<S::Ok, S::Error>
-// where
-//     S: Serializer,
-// {
-//         match item {
-//             // CellType::Undef() => "".to_owned().serialize(serializer),
-//             CellType::Widget(widget) => {
-
-//                 #[derive(Serialize, PartialEq, Debug, Clone)]
-//                 struct Root {
-//                     widget: WidgetMeta,
-//                 }
-
-//                 let root = Root {
-//                     widget: (*widget).clone(),
-//                 };
-
-//                 root.clone().serialize(serializer)
-//             },
-//             CellType::MultyState(meta) => meta.serialize(serializer),
-//         }
-// }
-
 #[derive(Debug)]
-// #[serde(untagged)]
 pub enum CellType {
     UNDEFIEND,
     WIDGET,
@@ -157,7 +133,6 @@ impl Reducible for CellMeta {
 #[cfg(test)]
 mod tests {
     use multystate::state::StateMeta;
-    // use multystate::StateMeta;
     use quick_xml::{de::from_str, se::to_string};
     use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
     use value::ValueMeta;

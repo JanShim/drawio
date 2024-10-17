@@ -7,7 +7,7 @@ use serde::{ Deserialize, Serialize};
 #[serde(rename_all="lowercase")]
 pub enum RangeType {
     DISCRET,
-    LINEAR,
+    RANGE,
 }
 
 impl Default for RangeType {
@@ -16,11 +16,13 @@ impl Default for RangeType {
     }
 }
 
-impl From<Range> for RangeType {    
-    fn from(value: Range) -> Self {
+impl From<RangeValue> for RangeType {    
+    fn from(value: RangeValue) -> Self {
         match value {
-            Range::Discret { value:_ } => RangeType::DISCRET,
-            Range::Linear { from:_, to:_ } => RangeType::LINEAR,
+            RangeValue::DiscretConst { value:_ } => RangeType::DISCRET,
+            RangeValue::RangeConst { from:_, to:_ } => RangeType::RANGE,
+            RangeValue::DiscretTag { value:_ } => RangeType::DISCRET,
+            RangeValue::RangeTag { from:_, to:_ } => RangeType::RANGE,
         }
     }
 }
@@ -29,64 +31,107 @@ impl fmt::Display for RangeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             RangeType::DISCRET => write!(f, "discret"),
-            RangeType::LINEAR => write!(f, "linear"),
+            RangeType::RANGE => write!(f, "linear"),
         }
     }
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[serde(tag = "type", rename_all = "kebab-case")]
+pub enum RangeValueJson {
+    DiscretConst { value: u32 },
+    RangeConst { from: f32, to: f32 },     //  value in (from, to]
+    DiscretTag { value: String },
+    RangeTag { from: String, to: String },     //  value in (from, to]    
+}
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
-pub enum Range {
-    #[serde(rename = "discret")]
-    Discret { 
-        // #[serde(skip)]
-        // prev: u32,
+impl Default for RangeValueJson {
+    fn default() -> Self {
+        RangeValueJson::DiscretConst {value: 0 }
+    }
+}
+
+impl From<RangeValue> for RangeValueJson  {
+    fn from(value: RangeValue) -> Self {
+        match value {
+            RangeValue::DiscretConst { value } => RangeValueJson::DiscretConst { value },
+            RangeValue::DiscretTag { value } => RangeValueJson::DiscretTag { value },
+            RangeValue::RangeConst { from, to } => RangeValueJson::RangeConst { from, to },
+            RangeValue::RangeTag { from, to } => RangeValueJson::RangeTag { from, to },
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub enum RangeValue {
+    DiscretConst { 
          #[serde(rename = "@value")]
         value: u32,
     },
-    #[serde(rename = "linear")]
-    Linear { 
-        // #[serde(skip)]
-        // prev: f32,
+    DiscretTag { 
+        #[serde(rename = "@value")]
+       value: String,
+    },    
+    RangeConst { 
         #[serde(rename = "@from")]
         from: f32, 
         #[serde(rename = "@to")]
         to: f32,
     },
+    RangeTag { 
+        #[serde(rename = "@from")]
+        from: String, 
+        #[serde(rename = "@to")]
+        to: String,
+    },
 }
 
-impl Range {
+impl RangeValue {
     pub fn get_value(&self) -> u32 {
         match self {
-            Range::Discret { value } => *value,
+            RangeValue::DiscretConst { value } => *value,
             _ => 0,
         }
     }
     pub fn get_to(&self) -> f32 {
         match self {
-            Range::Linear { from:_, to  } => *to,
+            RangeValue::RangeConst { from:_, to  } => *to,
             _ => f32::MIN,
         }
     }    
     pub fn get_from(&self) -> f32 {
         match self {
-            Range::Linear { from, to:_  } => *from,
+            RangeValue::RangeConst { from, to:_  } => *from,
             _ => f32::MIN,
         }
     }        
 }
 
-impl Default for Range {
+impl Default for RangeValue {
     fn default() -> Self {
-        Range::Discret {value: 0, }
+        RangeValue::DiscretConst {value: 0, }
     }
 }
 
-impl fmt::Display for Range {
+impl fmt::Display for RangeValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Range::Discret { value } =>  write!(f, "{value}"),
-            Range::Linear { from:_, to } =>  write!(f, "{to}"),
+            RangeValue::DiscretConst { value } =>  write!(f, "{value}"),
+            RangeValue::RangeConst { from:_, to } =>  write!(f, "{to}"),
+            RangeValue::DiscretTag { value } => write!(f, "{value}"),
+            RangeValue::RangeTag { from:_, to } => write!(f, "{to}"),
+        }
+    }
+}
+
+impl From<RangeValueJson> for  RangeValue {
+    fn from(value: RangeValueJson) -> Self {
+        match value {
+            RangeValueJson::DiscretConst { value } => RangeValue::DiscretConst { value },
+            RangeValueJson::DiscretTag { value } => RangeValue::DiscretTag { value },
+            RangeValueJson::RangeConst { from, to } => RangeValue::RangeConst { from, to },
+            RangeValueJson::RangeTag { from, to } => RangeValue::RangeTag { from, to },
         }
     }
 }
@@ -103,29 +148,127 @@ mod tests {
 
     #[test]
     fn xml_range_discret_serde_works() {
-        let item = Range::default();
+        let item = RangeValue::default();
 
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<Range>(&str).unwrap();
+        let meta = from_str::<RangeValue>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
     }    
 
     #[test]
-    fn xml_range_linear_serde_works() {
-        let item = Range::Linear { from: 0.1, to: 0.2, };
+    fn xml_range_discret_tag_serde_works() {
+        let item = RangeValue::DiscretTag { value: "disc-tag".to_owned() };
 
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<Range>(&str).unwrap();
+        let meta = from_str::<RangeValue>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }      
+
+    #[test]
+    fn xml_range_range_const_serde_works() {
+        let item = RangeValue::RangeConst { from: 0.1, to: 0.2, };
+
+        let str = to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = from_str::<RangeValue>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    } 
+
+    #[test]
+    fn xml_range_range_tag_serde_works() {
+        let item = RangeValue::RangeTag { from: "from".to_owned(), to: "to".to_owned() };
+
+        let str = to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = from_str::<RangeValue>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }        
+
+    #[test]
+    fn json_discret_constant_serde_works() {
+        let item = RangeValueJson::default();
+
+        let str = serde_json::to_string::<RangeValueJson>(&item).unwrap();
+        println!("{str}");
+
+        let meta = serde_json::from_str::<RangeValueJson>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }
+
+    #[test]
+    fn json_discret_tag_serde_works() {
+        let item = RangeValueJson::DiscretTag { value: "some-tag".to_owned() };
+
+        let str = serde_json::to_string::<RangeValueJson>(&item).unwrap();
+        println!("{str}");
+
+        let meta = serde_json::from_str::<RangeValueJson>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }       
+
+    #[test]
+    fn json_range_linear_tag_serde_works() {
+        let item =  RangeValueJson::RangeTag { 
+            from: "from".to_owned(), 
+            to: "to".to_owned(), 
+        };
+
+        let str = serde_json::to_string::<RangeValueJson>(&item).unwrap();
+        println!("{str}");
+
+        let meta = serde_json::from_str::<RangeValueJson>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
     }    
 
+    #[test]
+    fn json_from_works() {
+        let item = RangeValue::RangeConst { from: 0.1, to: 0.2 } ;
+        let item: RangeValueJson = item.into();
+
+        let str = serde_json::to_string::<RangeValueJson>(&item).unwrap();
+        println!("{str}");
+
+        let meta = serde_json::from_str::<RangeValueJson>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }      
+
+    #[test]
+    fn json_from2_works() {
+        let item =  RangeValueJson::RangeTag { 
+            from: "from".to_owned(), 
+            to: "to".to_owned(), 
+        };
+        let item: RangeValue = item.into();
+
+        let str = to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = from_str::<RangeValue>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }        
 
 }

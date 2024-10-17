@@ -54,9 +54,9 @@ impl From<FormData> for DiagramForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    use quick_xml::de::from_str;
+    // use quick_xml::de::from_str;
 
-    use super::*;
+    // use super::*;
 
     // #[test]
     // fn xml_diagram_deser_works() {

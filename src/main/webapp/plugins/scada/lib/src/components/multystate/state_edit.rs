@@ -25,7 +25,7 @@ pub fn component(Props {
 }: &Props) -> Html {
     // cell meta storage
     let (cell_state, cell_state_dispatch) = use_store::<store::cell::State>();
-    let range_type = use_state(|| Into::<RangeType>::into(value.range.clone()));
+    let range_type = use_state(|| Into::<RangeType>::into(value.value.clone()));
 
     let my_state = use_reducer(|| value.clone());
     {
@@ -85,7 +85,7 @@ pub fn component(Props {
         <tr>
             <td width="200">{ my_state.name.as_str() }</td>
             <td>{"знач: "}</td>
-            <td width="35">{ my_state.range.to_string() }</td>
+            <td width="35">{ my_state.value.to_string() }</td>
             <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
         </tr>
         </table>
@@ -93,15 +93,15 @@ pub fn component(Props {
 
     let edit_mode_edit = {
         let pk = value.pk;
-        let init_value = value.range.to_string();
+        let init_value = value.value.to_string();
         let range_type = range_type.clone();
 
         html! {
         <form onsubmit={ form_onsubmit } class="input-form">
             <input type="hidden" id="pk" name="pk" value={pk.to_string()}/>
             <input type="hidden" id="range-type" name="range-type" value={(*range_type).to_string()}/>
-            if (*range_type)==RangeType::LINEAR {
-                <input type="hidden" id="from" name="from" value={value.range.get_from().to_string()}/>
+            if (*range_type)==RangeType::RANGE {
+                <input type="hidden" id="from" name="from" value={value.value.get_from().to_string()}/>
             }
 
             <table>

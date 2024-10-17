@@ -7,10 +7,23 @@ use implicit_clone::{unsync::IString, ImplicitClone};
 use yewdux::Reducer;
 
 use crate::{
-     errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant}, store::cell
+     model::cell_meta::{CellMeta, CellMetaVariant}, store::cell
 };
 
-use super::state_range::{Range, RangeType};
+use super::state_range::{RangeType, RangeValue, RangeValueJson};
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default, ImplicitClone)]
+#[serde(rename = "state")]
+pub struct StateJson {
+    #[serde(rename = "pk")]
+    pub pk: usize,
+    #[serde(rename = "name")]
+    pub name: IString,
+    #[serde(rename = "style")]
+    pub style: IString,
+    #[serde(rename = "value")]
+    pub value: RangeValueJson,
+}
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "state")]
@@ -22,7 +35,7 @@ pub struct StateMeta {
     #[serde(rename = "@style")]
     pub style: IString,
     #[serde(rename = "$value")]
-    pub range: Range,
+    pub value: RangeValue,
     #[serde(skip)]
     pub selected: bool,
 }
@@ -47,7 +60,7 @@ impl Default for StateMeta {
             name: "state".into(),
             style: "".into(),
             selected: false,
-            range: Default::default(),
+            value: Default::default(),
         }
     }
 }
@@ -57,7 +70,7 @@ impl From<FormData> for StateMeta {
         let range_type = match data.get("range-type").as_string() {
             Some(value) => match value {
                 _ if value=="discret" => RangeType::DISCRET,
-                _ => RangeType::LINEAR,
+                _ => RangeType::RANGE,
             },
             None => RangeType::DISCRET,
         };
@@ -65,12 +78,12 @@ impl From<FormData> for StateMeta {
         let range = match range_type {
             RangeType::DISCRET => {
                let value = data.get("value").as_string().map(|s| s.parse::<u32>().unwrap()).unwrap();
-               Range::Discret { value }
+               RangeValue::DiscretConst { value }
             },
-            RangeType::LINEAR => {
+            RangeType::RANGE => {
                let from =  data.get("from").as_string().map(|s| s.parse::<f32>().unwrap()).unwrap();
                let to =  data.get("value").as_string().map(|s| s.parse::<f32>().unwrap()).unwrap();
-               Range::Linear {from, to}
+               RangeValue::RangeConst {from, to}
             },
         };
 
@@ -79,7 +92,19 @@ impl From<FormData> for StateMeta {
             name: data.get("name").as_string().unwrap().into(),
             style: Default::default(),      // will by replased later
             selected: false,
-            range,
+            value: range,
+        }
+    }
+}
+
+impl From<StateJson> for StateMeta {
+    fn from(StateJson { pk, name, style, value }: StateJson) -> Self {
+        Self { 
+            pk, 
+            name, 
+            style, 
+            value: value.into(), 
+            selected: false, 
         }
     }
 }
@@ -102,21 +127,21 @@ impl Reducible for StateMeta {
                 pk: self.pk,
                 name: self.name.clone(),
                 style, 
-                range: self.range.clone(),
+                value: self.value.clone(),
                 selected: self.selected,
             }.into(),
             StateAction::Clone(meta) => Self {
                 pk: meta.pk,
                 name: meta.name,
                 style: meta.style, 
-                range: meta.range,
+                value: meta.value,
                 selected: meta.selected,
             }.into(),
             StateAction::SetName(name) => Self {
                 pk: self.pk,
                 name,
                 style: self.style.clone(), 
-                range: self.range.clone(),
+                value: self.value.clone(),
                 selected: self.selected,
             }.into(),
             StateAction::SetDiscretRange(value) => {
@@ -125,14 +150,14 @@ impl Reducible for StateMeta {
                 pk: self.pk,
                 name: self.name.clone(),
                 style: self.style.clone(), 
-                range: Range::Discret { value },
+                value: RangeValue::DiscretConst { value },
                 selected: self.selected,
             }.into()},
             StateAction::SetLinearRange(val) => Self {
                 pk: self.pk,
                 name: self.name.clone(),
                 style: self.style.clone(), 
-                range: Range::Linear { from: self.range.get_from(), to: val },
+                value: RangeValue::RangeConst { from: self.value.get_from(), to: val },
                 selected: self.selected,
             }.into(),            
        }
@@ -189,10 +214,26 @@ mod tests {
     }    
 
     #[test]
-    fn xml_state_meta_linear_range_serde_works() {
+    fn json_state_meta_serde_works() {
+        let item = StateJson {
+            pk: 0,
+            ..Default::default()
+        };
+
+        let str = serde_json::to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = serde_json::from_str::<StateJson>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }      
+
+    #[test]
+    fn range_linear_serde_works() {
         let item = StateMeta {
             pk: 0,
-            range: Range::Linear { from: 1.0, to: 2.0, },
+            value: RangeValue::RangeConst { from: 1.0, to: 2.0, },
             ..Default::default()
         };
 
@@ -204,5 +245,41 @@ mod tests {
 
         assert_eq!(item, meta);
     }    
+
+    #[test]
+    fn json_range_linear_serde_works() {
+        let item = StateJson {
+            pk: 0,
+            value: RangeValueJson::RangeConst { from: 1.0, to: 2.0, },
+            ..Default::default()
+        };
+
+        let str = serde_json::to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = serde_json::from_str::<StateJson>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }    
+
+    #[test]
+    fn from_works() {
+        let item = StateJson {
+            pk: 0,
+            value: RangeValueJson::RangeConst { from: 1.0, to: 2.0, },
+            ..Default::default()
+        };
+
+        let item: StateMeta = item.into();
+
+        let str = to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = from_str::<StateMeta>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }           
 
 }

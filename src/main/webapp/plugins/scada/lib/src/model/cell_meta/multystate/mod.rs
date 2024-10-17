@@ -1,13 +1,13 @@
 use std::rc::Rc;
-use data_source::DataSourceMeta;
-use serde::{ser::Serializer, Deserialize, Deserializer, Serialize};
-use state::StateMeta;
+use data_source::{DataSourceJson, DataSourceMeta};
+use serde::{ Deserialize, Serialize};
+use state::{StateJson, StateMeta};
 use implicit_clone::ImplicitClone;
-use state_range::{Range, RangeType};
+use state_range::{RangeValue, RangeType};
 use yew::Reducible;
 use yewdux::Reducer;
 
-use crate::{errors::CellStateError, store::cell};
+use crate::store::cell;
 
 use super::{CellMeta, CellMetaVariant};
 
@@ -15,18 +15,13 @@ pub mod state;
 pub mod data_source;
 pub mod state_range;
 
-fn unwrap_states<'de, D>(deserializer: D) -> Result<Vec<StateMeta>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    /// Represents <states>...</states>
-    #[derive(Deserialize, Debug, PartialEq)]
-    struct List {
-        #[serde(default)]
-        state: Vec<StateMeta>,
-    }
-
-    Ok(List::deserialize(deserializer)?.state)
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
+#[serde(rename = "multystate")]
+pub struct MultystateJson {
+    #[serde(rename="range-type")]
+    pub range_type: RangeType,
+    pub ds: DataSourceJson,
+    pub states: Vec<StateJson>,
 }
 
 
@@ -37,7 +32,6 @@ pub struct MultystateMeta {
     pub range_type: RangeType,
     #[serde(rename="ds", default)]
     pub data_source: DataSourceMeta,
-    // #[serde(deserialize_with = "unwrap_states", default)]
     #[serde(rename="state", default)]
     pub states: Vec<StateMeta>,
 }
@@ -72,37 +66,17 @@ impl Default for MultystateMeta {
     }
 }
 
-// impl Serialize for MultystateMeta {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         #[derive(Serialize)]
-//         #[serde(rename = "multystate")]
-//         struct Root<'a> {
-//             #[serde(rename="@range-type", default)]
-//             range_type: &'a RangeType,
-//             #[serde(rename="ds", default)]
-//             pub data_source: &'a DataSourceMeta,
-//             states: List<'a>,
-//         }
-
-//         #[derive(Serialize)]
-//         struct List<'a> {
-//             state: &'a Vec<StateMeta>,
-//         }
-
-//         let helper = Root {
-//             range_type: &self.range_type,
-//             data_source: &self.data_source,
-//             states: List {
-//                 state: &self.states,
-//             },
-//         };
-//         helper.serialize(serializer)
-//     }
-// }
-
+impl From<MultystateJson> for MultystateMeta {
+    fn from(MultystateJson { range_type, ds, states }: MultystateJson) -> Self 
+    {
+        Self { 
+            range_type, 
+            data_source: ds.into(), 
+            states: states.iter().map(|o| o.clone().into()).collect(), 
+        }
+    }
+}
+// ------------ SetDataSource ------------------
 pub struct SetDataSource(pub DataSourceMeta);
 impl Reducer<MultystateMeta> for SetDataSource {
     fn apply(self, state: Rc<MultystateMeta>) -> Rc<MultystateMeta> {
@@ -114,7 +88,7 @@ impl Reducer<MultystateMeta> for SetDataSource {
     }
 }
 
-/// reducer's Action
+// ---------------- reducer's Action
 pub enum MultystateMetaAction {
     CreateState,
     ApplyDataSource(DataSourceMeta),
@@ -161,25 +135,25 @@ impl Reducer<cell::State> for MultystateAddStateAction {
             match multystate.range_type {
                 RangeType::DISCRET => {
                     let prev = multystate.states.last()
-                        .map(|o| o.range.get_value())
+                        .map(|o| o.value.get_value())
                         .unwrap_or(0);
     
                     multystate.states.push(StateMeta { 
                         pk: multystate.states.len(), 
                         name: format!("state-{}", multystate.states.len()).into(),
-                        range: Range::Discret { value: prev },
+                        value: RangeValue::DiscretConst { value: prev },
                         ..Default::default() 
                     })
                 },
-                RangeType::LINEAR => {
+                RangeType::RANGE => {
                     let prev = multystate.states.last()
-                        .map(|o| o.range.get_to())
+                        .map(|o| o.value.get_to())
                         .unwrap_or(0.0);
     
                     multystate.states.push(StateMeta { 
                         pk: multystate.states.len(), 
                         name: format!("state-{}", multystate.states.len()).into(),
-                        range: Range::Linear { from: prev, to: prev },
+                        value: RangeValue::RangeConst { from: prev, to: prev },
                         ..Default::default() 
                     })
                 },            
@@ -225,7 +199,7 @@ mod tests {
     #[test]
     fn xml_multystate_meta_states_serde_works() {
         let item = MultystateMeta {
-            range_type: RangeType::LINEAR,
+            range_type: RangeType::RANGE,
             data_source: DataSourceMeta { 
                 tag: "tag".into(), 
                 path: "path".into(),
@@ -234,13 +208,11 @@ mod tests {
                 StateMeta {
                     pk: 1,
                     name: "name-1".into(),
-                    // range: Range::Linear { from: 1.0, to: 2.0 },
                     ..Default::default()
                 },
                 StateMeta {
                     pk: 2,
                     name: "name-1".into(),
-                    // range: Range::Discret { value: 123 },
                     ..Default::default()
                 },
             ],
@@ -253,6 +225,40 @@ mod tests {
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
+    }
+
+    #[test]
+    fn from_xml_works() {
+        let xml = r#"      <multystate range-type="discret">
+        <ds tag="" path="" />
+        <state pk="0" name="state-0" style="triangle;flipH=0;strokeWidth=5;rounded=0;perimeterSpacing=0;aspect=fixed;points=[[0,0.5,0,0,0]];fillColor=#666666;">
+          <discret-const value="0" />
+        </state>
+        <state pk="1" name="state-1" style="triangle;flipH=0;strokeWidth=5;rounded=0;perimeterSpacing=0;aspect=fixed;points=[[0,0.5,0,0,0]];fillColor=#CCCCCC;strokeColor=#FF0000;">
+          <discret-const value="1" />
+        </state>
+        <state pk="2" name="state-2" style="triangle;flipH=0;strokeWidth=5;rounded=0;perimeterSpacing=0;aspect=fixed;points=[[0,0.5,0,0,0]];fillColor=#00FF00;strokeColor=#000000;">
+          <discret-const value="2" />
+        </state>
+        <state pk="3" name="state-3" style="triangle;flipH=0;strokeWidth=5;rounded=0;perimeterSpacing=0;aspect=fixed;points=[[0,0.5,0,0,0]];fillColor=#FFFF00;strokeColor=#000000;">
+          <discret-const value="3" />
+        </state>
+      </multystate>"#;
+
+
+      let item = from_str::<MultystateMeta>(xml).unwrap();
+      println!("{item:?}");
+
+
+    }
+
+    #[test]
+    fn json_deser_works() {
+        let json = r#"{"range-type":"discret","ds":{"tag":"","path":""},"states":[{"pk":0,"name":"","style":"","value":{"type":"discret-const","value":0}},{"pk":0,"name":"","style":"","value":{"type":"discret-const","value":0}}]}"#;
+
+        let multy = serde_json::from_str::<MultystateJson>(json).unwrap();
+        let multy: MultystateMeta = multy.into();
+        println!("{multy:?}");
     }
 
 

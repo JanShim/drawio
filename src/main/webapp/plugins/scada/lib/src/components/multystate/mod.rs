@@ -17,16 +17,6 @@ pub mod state;
 pub mod state_edit;
 pub mod state_rect;
 
-// struct ApplyMultyStateMeta(MultystateMeta);
-// impl Reducer<cell::CellState> for ApplyMultyStateMeta {
-//     fn apply(self, state: Rc<cell::CellState>) -> Rc<cell::CellState> {
-//         cell::CellState {
-//             meta: CellMeta { multystate: Some(self.0), ..(state.meta.clone()) },
-//             cell: state.cell.clone(),
-//         }.into()        
-//     }
-// }
-
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
