@@ -1,6 +1,5 @@
 use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
-use yew::AttrValue;
 
 use crate::utils::NULL_UUID;
 
@@ -13,16 +12,19 @@ pub struct WidgetDto {
     pub model: String,
     pub group: String,
     pub types: Vec<String>,
+    pub svg: Option<String>,
+
 }
 
 impl WidgetDto {
-    pub fn new(group: String, name: String, model: String, types: Vec<String>) -> Self {
+    pub fn new(group: String, name: String, model: String, types: Vec<String>, svg: Option<String>) -> Self {
         WidgetDto {
             uuid: NULL_UUID.to_owned(),
             group,
             name,
             model,
             types,
+            svg,
         }
     }
 }

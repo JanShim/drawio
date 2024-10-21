@@ -5,7 +5,6 @@ use yewdux::Dispatch;
 use web_sys::{js_sys::JsString, HtmlDivElement};
 
 use crate::{
-    // errors::FetchError, 
     components::{get_global_css, InfoComponent}, 
     model::{
         common::ModelForm, 

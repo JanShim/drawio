@@ -65,12 +65,15 @@ pub fn scada_diagram_component() -> Html {
                     wasm_bindgen_futures::spawn_local(async move {
                         if let Ok(node) = state.get_graph_xml() {
                             if let Ok(Some(model_str)) = state.get_xml(node) {
+                                let svg = state.get_graph_svg();
+
                                 if form.is_new_item() {
                                     let item = WidgetDto::new(
                                         form.group.to_string(), 
                                         form.name.to_string(),
                                         cliped_model_box(model_str).into(), 
-                                        vec![]
+                                        vec![],
+                                        Some(svg)
                                     ); 
 
                                     log::debug!("post: {item:?}");
@@ -98,6 +101,7 @@ pub fn scada_diagram_component() -> Html {
                                         name: form.name.to_string(), 
                                         model: cliped_model_box(model_str).into(), 
                                         types: vec!["ZDV2".to_owned()],  
+                                        svg: Some(svg),
                                     };
 
                                     put(format!("{}/widget/{}", state.api_url, form.uuid), item).await
