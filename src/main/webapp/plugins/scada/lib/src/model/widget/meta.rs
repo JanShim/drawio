@@ -107,21 +107,21 @@ impl From<FormData> for WidgetForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    use quick_xml::de::from_str;
+    use quick_xml::{de::from_str, se::to_string};
 
     use super::*;
     
     #[test]
-    fn xml_widget_deser_works() {
-        let xml = r#"<widget object-type="ZDV2"/>"#;
+    fn xml_deser_works() {
+        let item = Widget::default();
 
-        let widget = from_str::<Widget>(xml);    
-        match widget {
-            Ok(item) => {
-                assert_eq!(item.object_type, "ZDV2".to_owned());
-            },
-            Err(err) => panic!("err: {}", err),
-        }
+        let str = to_string(&item).unwrap();
+        println!("{str}");
+
+        let meta = from_str::<Widget>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
     }    
 
 

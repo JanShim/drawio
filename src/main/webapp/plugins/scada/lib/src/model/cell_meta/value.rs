@@ -6,25 +6,27 @@ use yewdux::Reducer;
 
 use crate::store::cell;
 
-use super::{CellMeta, CellMetaVariant};
+use super::{data_source::DataSourceMeta, CellMeta, CellMetaVariant};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
 #[serde(rename = "value")]
 pub struct ValueMeta {
-    #[serde(rename="@tag")]
-    pub tag: IString,
-    #[serde(rename="@path")]
-    pub path: IString,
+    pub ds: DataSourceMeta,
+
+    // #[serde(rename="@tag")]
+    // pub tag: IString,
+    // #[serde(rename="@path")]
+    // pub path: IString,
 }
 
-impl Default for ValueMeta {
-    fn default() -> Self {
-        Self { 
-            tag: Default::default(), 
-            path: Default::default() 
-        }
-    }
-}
+// impl Default for ValueMeta {
+//     fn default() -> Self {
+//         Self { 
+//             tag: Default::default(), 
+//             path: Default::default() 
+//         }
+//     }
+// }
 
 
 /// reducer's Action
@@ -43,9 +45,9 @@ impl Reducible for ValueMeta {
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         let curr = (*self).clone();
         match action {
-            ValueAction::SetTag(tag) => Self { tag, ..curr }.into(),
-            ValueAction::SetPath(path) => Self { path, ..curr }.into(),
-            ValueAction::Set{tag, path} => Self { tag, path }.into(),
+            ValueAction::SetTag(tag) => Self { ds: DataSourceMeta { tag, ..self.ds.clone() } }.into(),
+            ValueAction::SetPath(path) => Self { ds: DataSourceMeta { path, ..self.ds.clone() } }.into(),
+            ValueAction::Set{tag, path} => Self { ds: DataSourceMeta { tag, path } }.into(),
         }
     }
 }
@@ -80,7 +82,6 @@ mod tests {
     #[test]
     fn xml_value_meta_serde_works() {
         let item = ValueMeta {
-            tag: "some_tag".into(),
             ..Default::default()
         };
 

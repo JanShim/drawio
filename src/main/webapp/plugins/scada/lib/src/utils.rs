@@ -50,6 +50,9 @@ extern "C" {
     #[wasm_bindgen(js_name=clipedModelBox)]
     pub fn cliped_model_box(model_str: String) -> JsString;
 
+    // #[wasm_bindgen(js_name=getDiagramBoundingBox)]
+    // pub fn get_diagram_bounding_box(editor: &MxEditor) -> JsValue;    
+
 }
 
 //------------------------------------------------------------------

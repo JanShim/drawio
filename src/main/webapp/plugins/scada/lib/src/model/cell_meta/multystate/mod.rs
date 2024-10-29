@@ -1,5 +1,4 @@
 use std::rc::Rc;
-use data_source::{DataSourceJson, DataSourceMeta};
 use serde::{ Deserialize, Serialize};
 use state::{StateJson, StateMeta};
 use implicit_clone::ImplicitClone;
@@ -9,10 +8,10 @@ use yewdux::Reducer;
 
 use crate::store::cell;
 
-use super::{CellMeta, CellMetaVariant};
+use super::{data_source::{DataSourceJson, DataSourceMeta}, CellMeta, CellMetaVariant};
 
 pub mod state;
-pub mod data_source;
+// pub mod data_source;
 pub mod state_range;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]

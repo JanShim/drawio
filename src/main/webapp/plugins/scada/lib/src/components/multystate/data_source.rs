@@ -6,7 +6,7 @@ use yewdux::{use_store, Reducer};
 
 use crate::{
     model::cell_meta::{
-            multystate::{data_source::{DataSourceAction, DataSourceMeta}, MultystateMeta}, CellMeta, CellMetaVariant 
+            data_source::{DataSourceAction, DataSourceMeta}, multystate::MultystateMeta, CellMeta, CellMetaVariant 
         }, 
     store::cell,
 };

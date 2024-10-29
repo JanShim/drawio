@@ -10,6 +10,7 @@ use widget::WidgetMeta;
 
 use crate::errors::CellStateError;
 
+pub mod data_source;
 pub mod multystate;
 pub mod widget;
 pub mod value;
@@ -132,6 +133,7 @@ impl Reducible for CellMeta {
 // ==========================================================
 #[cfg(test)]
 mod tests {
+    use data_source::DataSourceMeta;
     use multystate::state::StateMeta;
     use quick_xml::{de::from_str, se::to_string};
     use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
@@ -200,7 +202,7 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_value_works() {
-        let value = ValueMeta { tag: "some_tag".into(), ..Default::default() };
+        let value = ValueMeta { ds: DataSourceMeta { tag: "some_tag".into(), ..Default::default()} };
 
         let item = CellMeta {
             label: "value".into(),

@@ -57,9 +57,9 @@ pub fn component(Props {value, apply}: &Props ) -> Html {
         let value = value_state.clone();
         html! {
             if *(is_edit.clone()) {
-                <input id="tag" {oninput} value={ format!("{}", value.tag) }/>
+                <input id="tag" {oninput} value={ format!("{}", value.ds.tag) }/>
             } else {
-                {value.tag.clone()}
+                {value.ds.tag.clone()}
             }
         }
     };    

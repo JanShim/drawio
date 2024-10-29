@@ -32,8 +32,14 @@ pub fn scada_diagram_component() -> Html {
     };    
 
     let on_cancel = {
+        // let state = state.clone();
+
         let edit_mode = edit_mode.clone();
         Callback::from(move |_: MouseEvent| {
+
+            // let bounding_box = state.get_diagram_bounding_box().unwrap();
+            // log::debug!("get_diagram_bounding_box : {bounding_box:?}");
+            
             edit_mode.set(false);
         }) 
     };

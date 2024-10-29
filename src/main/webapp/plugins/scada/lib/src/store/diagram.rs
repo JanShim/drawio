@@ -24,6 +24,11 @@ impl State {
     pub fn get_xml(&self, node: Node) -> Result<Option<String>, JsValue> {
         self.mx_utils.get_xml(node)
     }
+
+    // pub fn get_diagram_bounding_box(&self) -> Result<JsValue, JsValue>
+    // {
+    //     self.mx_editor.get_diagram_bounding_box()
+    // }
 }
 
 impl Default for State {

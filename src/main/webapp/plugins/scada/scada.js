@@ -38,6 +38,14 @@ function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
 
+// function getDiagramBoundingBox(editor) {
+// 	let cells = editor.graph.model.cells;
+// 	modelCells = Object.entries(cells).map(( [k, v] ) => v);
+
+// 	let box = editor.graph.getBoundingBox(modelCells);
+// 	return box;
+// }
+
 // двигает модель в (0,0) угол
 function clipedModelBox(modelStr) {
 	let node = mxUtils.parseXml(modelStr).documentElement;

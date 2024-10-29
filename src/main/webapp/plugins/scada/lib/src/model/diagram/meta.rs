@@ -54,23 +54,21 @@ impl From<FormData> for DiagramForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    // use quick_xml::de::from_str;
+    use quick_xml::{de::from_str, se::to_string};
 
-    // use super::*;
+    use super::*;
 
-    // #[test]
-    // fn xml_diagram_deser_works() {
-    //     let xml = r#"<diagram uuid="aaaaaaaaaa" name="test"/>"#;
+    #[test]
+    fn xml_deser_works() {
+        let item = Diagram::default();
 
-    //     let diagram = from_str::<Diagram>(xml);    
-    //     match diagram {
-    //         Ok(item) => {
-    //             assert_eq!(item.uuid, "aaaaaaaaaa");
-    //             assert_eq!(item.name, "test");
-    //         },
-    //         Err(err) => panic!("err: {}", err),
-    //     }
-    // }    
+        let str = to_string(&item).unwrap();
+        println!("{str}");
 
+        let meta = from_str::<Diagram>(&str).unwrap();
+        println!("{meta:#?}");
+
+        assert_eq!(item, meta);
+    }   
 
 }

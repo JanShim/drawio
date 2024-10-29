@@ -1,14 +1,11 @@
 use std::rc::Rc;
-use data_source::DataSourceMeta;
 use implicit_clone::unsync::IString;
 use serde::{Deserialize, Serialize};
 use yewdux::Reducer;
 
 use crate::store::cell;
 
-use super::{CellMeta, CellMetaVariant};
-
-pub mod data_source;
+use super::{data_source::DataSourceMeta, CellMeta, CellMetaVariant};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename = "widget")]
