@@ -1,27 +1,9 @@
-use implicit_clone::{unsync::IString, ImplicitClone};
-use serde::{Deserialize, Serialize};
+use implicit_clone::unsync::IString;
 use web_sys::FormData;
 
 use super::NULL_UUID;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct Diagram {
-    // #[serde(rename="@uuid")]    
-    // pub uuid: IString,
-    // #[serde(rename="@name")]    
-    // pub name: IString,
-}
-
-impl Default for Diagram {
-    fn default() -> Self {
-        Self { 
-            // uuid: NULL_UUID.into(),
-            // name: Default::default(),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, ImplicitClone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DiagramForm {
     pub uuid: IString,
     pub name: IString,
@@ -54,21 +36,6 @@ impl From<FormData> for DiagramForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    use quick_xml::{de::from_str, se::to_string};
-
-    use super::*;
-
-    #[test]
-    fn xml_deser_works() {
-        let item = Diagram::default();
-
-        let str = to_string(&item).unwrap();
-        println!("{str}");
-
-        let meta = from_str::<Diagram>(&str).unwrap();
-        println!("{meta:#?}");
-
-        assert_eq!(item, meta);
-    }   
+ 
 
 }

@@ -1,3 +1,4 @@
+use common_model::widget::WidgetXml;
 use yew::prelude::*;
 use data_source::DataSourceComponent;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
@@ -9,7 +10,7 @@ use glyph::{WidgetGlyph, Props as GlyphProps};
 use crate::{
 	errors::CellStateError, 
 	model::{cell_meta::{
-			widget::{WidgetMeta, WidgetUuidApplyAction}, 
+			widget:: WidgetUuidApplyAction, 
 			CellMetaVariant
 		}, 
 		widget::WidgetGlyphItem
@@ -39,7 +40,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 			return widget;
 		};
 		log::error!("{}", CellStateError::NotWidget);
-		WidgetMeta::default()
+		WidgetXml::default()
 	});  
 
     let type_edit_mode = use_state(|| false);

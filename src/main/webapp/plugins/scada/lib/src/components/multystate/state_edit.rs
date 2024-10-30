@@ -1,12 +1,13 @@
+use common_model::multystate::{range::RangeType, state::StateXml};
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::{function_component, html, use_effect_with, use_memo, use_reducer, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
+use yew::{html, function_component, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
 use yewdux::use_store;
 
 use crate::{
-    components::multystate::state_rect::StateSampleRect, model::cell_meta::multystate::{
-        state::{MultystateApplyStateAction, StateAction, StateXml}, 
-        state_range::RangeType}, store, utils::{map_to_svg_style, mx_style_to_map} 
+    components::multystate::state_rect::StateSampleRect, 
+    model::cell_meta::multystate::state::MultystateApplyStateAction, 
+    store, utils::{map_to_svg_style, mx_style_to_map} 
 };
 
 
@@ -27,13 +28,14 @@ pub fn component(Props {
     let (cell_state, cell_state_dispatch) = use_store::<store::cell::State>();
     let range_type = use_state(|| Into::<RangeType>::into(value.value.clone()));
 
-    let my_state = use_reducer(|| value.clone());
-    {
-        let my_state = my_state.clone();
-        use_effect_with(value.clone(), move |value| {
-            my_state.dispatch(StateAction::Clone((*value).clone()));
-        });
-    }
+    let my_state = use_state(|| value.clone());
+    // {
+    //     let my_state = my_state.clone();
+    //     use_effect_with(value.clone(), move |value| {
+    //         // my_state.dispatch(StateAction::Clone((*value).clone()));
+    //         my_state.set((*value).clone());
+    //     });
+    // }
 
     let toggle_edit = {
         let my_state = my_state.clone();

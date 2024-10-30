@@ -1,20 +1,19 @@
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_reducer, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
-
-use crate::model::cell_meta::value::{ValueAction, ValueMeta};
+use yew::{html, function_component, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
+use common_model::value::ValueXml;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     #[prop_or_default]
-    pub value: ValueMeta,
+    pub value: ValueXml,
     #[prop_or_default]
-    pub apply: Callback<ValueMeta>,
+    pub apply: Callback<ValueXml>,
 }
 
 #[function_component(ValueComponent)]
 pub fn component(Props {value, apply}: &Props ) -> Html {
-    let value_state = use_reducer(|| value.clone());
+    let value_state = use_state(|| value.clone());
 
     let is_edit = use_state(|| false);
     let togle_edit = {
@@ -24,21 +23,23 @@ pub fn component(Props {value, apply}: &Props ) -> Html {
 
     let togle_apply = {
         let is_edit = is_edit.clone();
-        let value = value_state.clone();
+        let value_state = value_state.clone();
         let apply = apply.clone();
         Callback::from(move |_: MouseEvent| {
-            apply.emit((*value).clone());
+            apply.emit((*value_state).clone());
             is_edit.set(!*is_edit);     // togle is_edit
         })
     };        
 
     // tag name input
     let oninput = {
-            let value = value_state.clone();
+            let value_state = value_state.clone();
             Callback::from(move |e:InputEvent| {
                 e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
                     .map(|input| {
-                        value.dispatch(ValueAction::SetTag(input.value().into()));
+                        let mut ds = value_state.ds.clone();
+                        ds.set_tag(input.value().into());
+                        value_state.set( ValueXml { ds });
                     });
             })
         };

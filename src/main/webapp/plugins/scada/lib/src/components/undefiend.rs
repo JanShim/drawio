@@ -1,13 +1,14 @@
+use yew::prelude::*;
+use common_model::undefiend::UndefiendXml;
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::prelude::*;
 
-use crate::model::cell_meta::{undefiend::UndefiendMeta, CellType};
+use crate::model::cell_meta::CellType;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     #[prop_or_default]
-    pub value: UndefiendMeta,
+    pub value: UndefiendXml,
     #[prop_or_default]
     pub apply: Callback<CellType>,
 }

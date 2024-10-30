@@ -1,3 +1,4 @@
+use common_model::multystate::{state::StateXml, MultystateXml};
 use state_edit::MultystateStateEditComponent;
 use yew::{function_component, html, use_state, Callback, Html, Properties,};
 use yewdux::{use_selector, use_store, };
@@ -6,10 +7,7 @@ use data_source::DataSourceComponent;
 use state::MultystateStateComponent;
 
 use crate::{
-    errors::CellStateError, model::cell_meta::{multystate::{
-        state::StateXml, 
-        MultystateAddStateAction, MultystateXml
-    }, CellMetaVariant}, store::cell
+    errors::CellStateError, model::cell_meta::{multystate::MultystateAddStateAction, CellMetaVariant}, store::cell
 };
 
 pub mod data_source;

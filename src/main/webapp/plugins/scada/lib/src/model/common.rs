@@ -1,17 +1,23 @@
 use implicit_clone::ImplicitClone;
 use serde::{Deserialize, Serialize};
-use quick_xml::{de::from_str, se::to_string};
+use quick_xml::de::from_str;
 use web_sys::Element;
+use common_model::diagram::DiagramXml;
+use common_model::widget::WidgetXml;
 
-use super::{diagram::meta::{Diagram, DiagramForm}, mx_cell::MxCell, widget::meta::{Widget, WidgetForm}};
+use super::{
+    diagram::meta::DiagramForm, 
+    mx_cell::MxCell, 
+    widget::meta::WidgetForm
+};
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 pub enum GraphModel {
     #[serde(rename="diagram")]    
-    Diagram(Diagram),
+    Diagram(DiagramXml),
     #[serde(rename="widget")]    
-    Widget(Widget),
+    Widget(WidgetXml),
 }
 
 impl GraphModel {
@@ -86,31 +92,16 @@ impl Default for ModelForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
+    use common_model::widget::WidgetContainerXml;
+    use quick_xml::se::to_string;
+
     use super::*;
-    
-    // #[test]
-    // fn xml_diagram_meta_deser_works() {
-    //     let xml = r#"<object label="" id="0">
-    //   <diagram uuid="aaaaaaaaaa" name="test"/>
-    // </object>"#;
-
-    //     let diagram = from_str::<DiagramMeta>(xml);    
-    //     match diagram {
-    //         Ok(item) => {
-    //             println!("{item:#?}");
-    //             assert_eq!(item.get_uuid(), "aaaaaaaaaa".to_owned());
-
-    //         },
-    //         Err(err) => panic!("err: {}", err),
-    //     }
-    // }
 
     #[test]
     fn xml_diagram_meta_ser_works() {
         let item = DiagramMeta {
             label: "".to_owned(),
             model: GraphModel::Diagram(Default::default()),
-
         };
 
         let str = to_string(&item).unwrap();
@@ -122,41 +113,25 @@ mod tests {
     }
  
 
-    // #[test]
-    // fn xml_widget_meta_deser_works() {
-    //     let xml = r#"<object label="" id="0">
-    //   <widget uuid="aaaaaaaaaa" name="test" group="задвижки"/>
-    // </object>"#;
+    #[test]
+    fn xml_widget_meta_deser_works() {
+        let item = DiagramMeta {
+            label: "".to_owned(),
+            model: GraphModel::Widget(Default::default()),
+        };        
 
-    //     let widget = from_str::<DiagramMeta>(xml);    
-    //     match widget {
-    //         Ok(item) => {
-    //             println!("{item:#?}");
-    //             assert_eq!(item.model.get_uuid(), "aaaaaaaaaa");
-    //             // assert_eq!(item.widget.group, "задвижки");
+        let xml = quick_xml::se::to_string(&item).unwrap();
+        println!("{xml}");
 
-    //         },
-    //         Err(err) => panic!("err: {}", err),
-    //     }
-    // }
+        // let xml = r#"<object label="" id="0"><widget object-type=""/></object>"#;
 
-    // #[test]
-    // fn xml_widget_meta_ser_works() {
-    //     let item = DiagramMeta {
-    //         label: "".to_owned(),
-    //         model: GraphModel::Widget( Widget {
-    //             uuid: "aaaaaaaaaa".into(),
-    //             name: "test".into(),
-    //             ..Default::default()
-    //         })
-    //     };
-
-    //     let str = to_string(&item).unwrap();
-    //     println!("{str}");        
-
-    //     let widget = from_str::<DiagramMeta>(&str).unwrap();    
-
-    //     assert_eq!(item, widget);
-    // }
+        let widget = quick_xml::de::from_str::<DiagramMeta>(&xml);    
+        match widget {
+            Ok(item) => {
+                println!("{item:#?}");
+            },
+            Err(err) => panic!("err: {}", err),
+        }
+    }
 
 }
