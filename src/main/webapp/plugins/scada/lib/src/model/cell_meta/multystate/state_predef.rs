@@ -65,14 +65,19 @@ mod tests {
 
     #[test]
     fn xml_serde_works() {
-        let item = PredefStateXml {
-            ..Default::default()
-        };
+
+        #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
+        pub struct StateXml {
+            #[serde(rename="$value")]                
+            pub default: StatePredefXml,
+        }
+
+        let item = StateXml { default: StatePredefXml::Default(Default::default()) };
 
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<PredefStateXml>(&str).unwrap();
+        let meta = from_str::<StateXml>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);

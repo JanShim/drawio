@@ -4,7 +4,7 @@ use web_sys::FormData;
 use yew::Reducible;
 use serde::{Deserialize, Serialize};
 use undefiend::UndefiendMeta;
-use multystate::MultystateMeta;
+use multystate::MultystateXml;
 use value::ValueMeta;
 use widget::WidgetMeta;
 
@@ -44,7 +44,7 @@ pub enum CellMetaVariant {
     #[serde(rename = "value")]
     Value(ValueMeta),
     #[serde(rename = "multystate")]
-    Multystate(MultystateMeta),
+    Multystate(MultystateXml),
     #[serde(rename = "widget")]
     Widget(WidgetMeta),
 }
@@ -80,14 +80,14 @@ impl CellMeta {
         }
     }
 
-    pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateMeta, JsValue>{
+    pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateXml, JsValue>{
         if let CellMetaVariant::Multystate(m) = &mut self.data {
             return Ok(m);
         }
         Err(CellStateError::NotMultystate.into())
     }
 
-    pub fn get_multystate(&self) -> Result<&MultystateMeta, JsValue>{
+    pub fn get_multystate(&self) -> Result<&MultystateXml, JsValue>{
         if let CellMetaVariant::Multystate(m) = &self.data {
             return Ok(m);
         }
@@ -134,7 +134,7 @@ impl Reducible for CellMeta {
 #[cfg(test)]
 mod tests {
     use data_source::DataSourceMeta;
-    use multystate::state::StateXml;
+    use multystate::{state::StateXml, state_predef::StatePredefXml};
     use quick_xml::{de::from_str, se::to_string};
     use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
     use value::ValueMeta;
@@ -177,13 +177,15 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_multystate_works() {
-        let multy = MultystateMeta {
+        let multy = MultystateXml {
             range_type: Default::default(),
             states: vec![
                 StateXml { pk: 0, ..Default::default() },
                 StateXml { pk: 1, ..Default::default() },
             ],
             data_source: Default::default(),
+            predef: vec![StatePredefXml::Default(Default::default()), StatePredefXml::Bad(Default::default())],
+            // bad: Default::default()
         };
 
         let item = CellMeta {

@@ -8,7 +8,7 @@ use state::MultystateStateComponent;
 use crate::{
     errors::CellStateError, model::cell_meta::{multystate::{
         state::StateXml, 
-        MultystateAddStateAction, MultystateMeta
+        MultystateAddStateAction, MultystateXml
     }, CellMetaVariant}, store::cell
 };
 
@@ -31,7 +31,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 			return multystate;
 		};
         log::error!("{}", CellStateError::NotMultystate);
-        MultystateMeta::default().into()
+        MultystateXml::default().into()
     });    
     
     /* #region selected_state */

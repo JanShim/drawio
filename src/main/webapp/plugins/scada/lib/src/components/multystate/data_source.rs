@@ -6,7 +6,7 @@ use yewdux::{use_store, Reducer};
 
 use crate::{
     model::cell_meta::{
-            data_source::{DataSourceAction, DataSourceMeta}, multystate::MultystateMeta, CellMeta, CellMetaVariant 
+            data_source::{DataSourceAction, DataSourceMeta}, multystate::MultystateXml, CellMeta, CellMetaVariant 
         }, 
     store::cell,
 };
@@ -19,7 +19,7 @@ impl Reducer<cell::State> for MultystateApplyDsAction {
             return cell::State {
                 meta: CellMeta { 
                     data: CellMetaVariant::Multystate(
-                        MultystateMeta {
+                        MultystateXml {
                             data_source: self.0,
                             ..multy.clone()
                         }
