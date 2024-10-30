@@ -7,7 +7,7 @@ use state::MultystateStateComponent;
 
 use crate::{
     errors::CellStateError, model::cell_meta::{multystate::{
-        state::StateMeta, 
+        state::StateXml, 
         MultystateAddStateAction, MultystateMeta
     }, CellMetaVariant}, store::cell
 };
@@ -36,20 +36,19 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
     
     /* #region selected_state */
     let selected_state = use_state(|| {
-        let value: Option<StateMeta> = None;
+        let value: Option<StateXml> = None;
         value
     });
 
     let state_select_callback = {
         let selected = selected_state.clone();
-        Callback::from(move |value: Option<StateMeta>| {
+        Callback::from(move |value: Option<StateXml>| {
             // change selected
             selected.set(value);
 
         })
     };
     /* #endregion */
-
 
     // -------------------------------------------------------
     let on_state_add = cell_store_dispatch.apply_callback(|_| MultystateAddStateAction); 
@@ -93,9 +92,10 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
         <>
         <hr/>
         { data_source_view }
-        <div class="flex-box delim-label">{"Состояния"}
+        <div class="flex-box delim-label">
+            {"Состояния"}
             if *edit_mode {
-                <button onclick={on_state_add}>{"+"}</button>
+                 <button onclick={on_state_add} title="Добавить">{"+"}</button> 
             } 
         </div>
         { states_view }

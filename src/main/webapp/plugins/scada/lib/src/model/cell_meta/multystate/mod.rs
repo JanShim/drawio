@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use serde::{ Deserialize, Serialize};
-use state::{StateJson, StateMeta};
+use state::{StateJson, StateXml};
 use implicit_clone::ImplicitClone;
 use state_range::{RangeValue, RangeType};
 use yew::Reducible;
@@ -11,10 +11,13 @@ use crate::store::cell;
 use super::{data_source::{DataSourceJson, DataSourceMeta}, CellMeta, CellMetaVariant};
 
 pub mod state;
+pub mod state_bad;
+pub mod state_default;
+pub mod state_predef;
 // pub mod data_source;
 pub mod state_range;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
+#[derive(Deserialize, PartialEq, Debug, Clone, Default)]
 #[serde(rename = "multystate")]
 pub struct MultystateJson {
     #[serde(rename="range-type")]
@@ -32,12 +35,12 @@ pub struct MultystateMeta {
     #[serde(rename="ds", default)]
     pub data_source: DataSourceMeta,
     #[serde(rename="state", default)]
-    pub states: Vec<StateMeta>,
+    pub states: Vec<StateXml>,
 }
 
 impl MultystateMeta {
     pub fn create_state(&mut self) {
-        self.states.push(StateMeta {
+        self.states.push(StateXml {
             pk: self.states.len(), 
             ..Default::default()
         });
@@ -91,7 +94,7 @@ impl Reducer<MultystateMeta> for SetDataSource {
 pub enum MultystateMetaAction {
     CreateState,
     ApplyDataSource(DataSourceMeta),
-    ApplyMultystateStateMeta(StateMeta),
+    ApplyMultystateStateMeta(StateXml),
 }
 
 impl Reducible for MultystateMeta {
@@ -105,7 +108,7 @@ impl Reducible for MultystateMeta {
             MultystateMetaAction::CreateState => Self {
                 states: {
                     let mut states = curr.states.clone();
-                    states.push(StateMeta { pk: states.len(), ..Default::default() }); 
+                    states.push(StateXml { pk: states.len(), ..Default::default() }); 
                     states
                 },
                 ..curr
@@ -137,7 +140,7 @@ impl Reducer<cell::State> for MultystateAddStateAction {
                         .map(|o| o.value.get_value())
                         .unwrap_or(0);
     
-                    multystate.states.push(StateMeta { 
+                    multystate.states.push(StateXml { 
                         pk: multystate.states.len(), 
                         name: format!("state-{}", multystate.states.len()).into(),
                         value: RangeValue::DiscretConst { value: prev },
@@ -149,7 +152,7 @@ impl Reducer<cell::State> for MultystateAddStateAction {
                         .map(|o| o.value.get_to())
                         .unwrap_or(0.0);
     
-                    multystate.states.push(StateMeta { 
+                    multystate.states.push(StateXml { 
                         pk: multystate.states.len(), 
                         name: format!("state-{}", multystate.states.len()).into(),
                         value: RangeValue::RangeConst { from: prev, to: prev },
@@ -204,12 +207,12 @@ mod tests {
                 path: "path".into(),
             },
             states: vec![
-                StateMeta {
+                StateXml {
                     pk: 1,
                     name: "name-1".into(),
                     ..Default::default()
                 },
-                StateMeta {
+                StateXml {
                     pk: 2,
                     name: "name-1".into(),
                     ..Default::default()

@@ -3,12 +3,12 @@ use yew::{function_component, html, use_effect_with, use_memo, use_reducer, Attr
 
 use crate::{
     components::multystate::state_rect::{self, StateSampleRect}, 
-    model::cell_meta::multystate::state::{StateAction, StateMeta}, utils::{map_to_svg_style, mx_style_to_map, string_to_map} 
+    model::cell_meta::multystate::state::{StateAction, StateXml}, utils::{map_to_svg_style, mx_style_to_map, string_to_map} 
 };
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
-    pub value: StateMeta,
+    pub value: StateXml,
 }
 
 #[function_component(MultystateStateComponent)]

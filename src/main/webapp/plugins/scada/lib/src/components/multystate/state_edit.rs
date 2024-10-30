@@ -5,7 +5,7 @@ use yewdux::use_store;
 
 use crate::{
     components::multystate::state_rect::StateSampleRect, model::cell_meta::multystate::{
-        state::{MultystateApplyStateAction, StateAction, StateMeta}, 
+        state::{MultystateApplyStateAction, StateAction, StateXml}, 
         state_range::RangeType}, store, utils::{map_to_svg_style, mx_style_to_map} 
 };
 
@@ -13,8 +13,8 @@ use crate::{
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub selected: bool,
-    pub value: StateMeta,
-    pub select: Callback<Option<StateMeta>>,
+    pub value: StateXml,
+    pub select: Callback<Option<StateXml>>,
 }
 
 #[function_component(MultystateStateEditComponent)]
@@ -65,9 +65,9 @@ pub fn component(Props {
                 .and_then(|t| t.dyn_into::<HtmlFormElement>().ok());
 
             if let Some(form) = form {
-                if let Some(state_meta) = FormData::new_with_form(&form).ok().map(|data | Into::<StateMeta>::into(data)) {
+                if let Some(state_meta) = FormData::new_with_form(&form).ok().map(|data | Into::<StateXml>::into(data)) {
                     if let Some(style) = cell_state.get_cell_style().ok() {
-                        let meta = StateMeta {
+                        let meta = StateXml {
                             style,
                             ..state_meta
                         };

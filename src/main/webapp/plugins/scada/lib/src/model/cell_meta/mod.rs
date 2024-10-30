@@ -134,7 +134,7 @@ impl Reducible for CellMeta {
 #[cfg(test)]
 mod tests {
     use data_source::DataSourceMeta;
-    use multystate::state::StateMeta;
+    use multystate::state::StateXml;
     use quick_xml::{de::from_str, se::to_string};
     use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
     use value::ValueMeta;
@@ -180,8 +180,8 @@ mod tests {
         let multy = MultystateMeta {
             range_type: Default::default(),
             states: vec![
-                StateMeta { pk: 0, ..Default::default() },
-                StateMeta { pk: 1, ..Default::default() },
+                StateXml { pk: 0, ..Default::default() },
+                StateXml { pk: 1, ..Default::default() },
             ],
             data_source: Default::default(),
         };

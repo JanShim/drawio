@@ -27,7 +27,7 @@ pub struct StateJson {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 #[serde(rename = "state")]
-pub struct StateMeta {
+pub struct StateXml {
     #[serde(rename = "@pk")]
     pub pk: usize,
     #[serde(rename = "@name")]
@@ -40,7 +40,7 @@ pub struct StateMeta {
     pub selected: bool,
 }
 
-impl StateMeta {
+impl StateXml {
     pub fn set_style(&mut self, style: IString) {
         self.style = style;
         log::debug!("set_style:!! {:?}", self.style);
@@ -53,7 +53,7 @@ impl StateMeta {
 
 }
 
-impl Default for StateMeta {
+impl Default for StateXml {
     fn default() -> Self {
         Self { 
             pk: Default::default(),
@@ -65,7 +65,7 @@ impl Default for StateMeta {
     }
 }
 
-impl From<FormData> for StateMeta {
+impl From<FormData> for StateXml {
     fn from(data: FormData) -> Self {
         let range_type = match data.get("range-type").as_string() {
             Some(value) => match value {
@@ -97,7 +97,7 @@ impl From<FormData> for StateMeta {
     }
 }
 
-impl From<StateJson> for StateMeta {
+impl From<StateJson> for StateXml {
     fn from(StateJson { pk, name, style, value }: StateJson) -> Self {
         Self { 
             pk, 
@@ -111,14 +111,14 @@ impl From<StateJson> for StateMeta {
 
 /// reducer's Action
 pub enum StateAction {
-    Clone(StateMeta),
+    Clone(StateXml),
     SetStyle(IString),
     SetName(IString),
     SetLinearRange(f32),
     SetDiscretRange(u32),
 }
 
-impl Reducible for StateMeta {
+impl Reducible for StateXml {
     type Action = StateAction;
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
@@ -164,14 +164,14 @@ impl Reducible for StateMeta {
     }
 }
 
-pub struct MultystateApplyStateAction(pub StateMeta);
+pub struct MultystateApplyStateAction(pub StateXml);
 impl Reducer<cell::State> for MultystateApplyStateAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
             let new_state = self.0;            
             let index = new_state.get_index();
             let states = &mut multystate.states;
-            states[index] = StateMeta { ..new_state };
+            states[index] = StateXml { ..new_state };
 
             return  cell::State {
                     meta: CellMeta { 
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn xml_state_meta_serde_works() {
-        let item = StateMeta {
+        let item = StateXml {
             pk: 0,
             ..Default::default()
         };
@@ -207,7 +207,7 @@ mod tests {
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<StateMeta>(&str).unwrap();
+        let meta = from_str::<StateXml>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn range_linear_serde_works() {
-        let item = StateMeta {
+        let item = StateXml {
             pk: 0,
             value: RangeValue::RangeConst { from: 1.0, to: 2.0, },
             ..Default::default()
@@ -240,7 +240,7 @@ mod tests {
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<StateMeta>(&str).unwrap();
+        let meta = from_str::<StateXml>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
@@ -271,12 +271,12 @@ mod tests {
             ..Default::default()
         };
 
-        let item: StateMeta = item.into();
+        let item: StateXml = item.into();
 
         let str = to_string(&item).unwrap();
         println!("{str}");
 
-        let meta = from_str::<StateMeta>(&str).unwrap();
+        let meta = from_str::<StateXml>(&str).unwrap();
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
