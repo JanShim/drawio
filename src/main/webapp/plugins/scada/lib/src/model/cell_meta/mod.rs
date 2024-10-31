@@ -1,4 +1,4 @@
-use common_model::{multystate::MultystateXml, undefiend::UndefiendXml, value::ValueXml, widget::WidgetXml};
+use common_model::{free_value::FreeValueXml, multystate::MultystateXml, undefiend::UndefiendXml, widget::WidgetXml};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use web_sys::FormData;
@@ -7,10 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors::CellStateError;
 
-pub mod data_source;
-pub mod multystate;
-pub mod widget;
-pub mod value;
+pub mod data_source_reducers;
+pub mod widget_reducers;
+pub mod value_reducers;
 
 #[derive(Debug)]
 pub enum CellType {
@@ -38,7 +37,7 @@ pub enum CellMetaVariant {
     #[serde(rename = "undefiend")]
     Undefiend(UndefiendXml),
     #[serde(rename = "value")]
-    Value(ValueXml),
+    Value(FreeValueXml),
     #[serde(rename = "multystate")]
     Multystate(MultystateXml),
     #[serde(rename = "widget")]
@@ -61,7 +60,7 @@ impl CellMeta {
         self.label = label;
     }
 
-    pub fn set_value_meta(&mut self, value: ValueXml) {
+    pub fn set_value_meta(&mut self, value: FreeValueXml) {
         if let CellMetaVariant::Value(_) = self.data {
             self.data = CellMetaVariant::Value(value);
         }
@@ -177,7 +176,7 @@ mod tests {
                 StateXml { pk: 0, ..Default::default() },
                 StateXml { pk: 1, ..Default::default() },
             ],
-            data_source: Default::default(),
+            ds: Default::default(),
             predef: vec![StatePredefXml::Default(Default::default()), StatePredefXml::Bad(Default::default())],
             // bad: Default::default()
         };
@@ -198,7 +197,7 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_value_works() {
-        let value = ValueXml { ds: DataSourceXml { tag: "some_tag".into(), ..Default::default()} };
+        let value = FreeValueXml { ds: DataSourceXml { tag: "some_tag".into(), ..Default::default()} };
 
         let item = CellMeta {
             label: "value".into(),

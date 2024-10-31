@@ -6,9 +6,9 @@ use common_model::diagram::DiagramXml;
 use common_model::widget::WidgetXml;
 
 use super::{
-    diagram::meta::DiagramForm, 
+    diagram::form_meta::DiagramForm, 
     mx_cell::MxCell, 
-    widget::meta::WidgetForm
+    widget::form_meta::WidgetForm
 };
 
 

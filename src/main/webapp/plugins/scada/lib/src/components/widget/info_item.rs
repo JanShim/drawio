@@ -8,7 +8,7 @@ use yewdux::{use_selector, use_store};
 use crate::{
     model::{
         common::ModelForm, 
-        widget::{meta::WidgetForm, WidgetDto}
+        widget::{form_meta::WidgetForm, WidgetDto}
     }, 
     store::diagram, 
     utils::{cliped_model_box, post, put}

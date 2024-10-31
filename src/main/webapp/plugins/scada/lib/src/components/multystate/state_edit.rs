@@ -6,8 +6,7 @@ use yewdux::use_store;
 
 use crate::{
     components::multystate::state_rect::StateSampleRect, 
-    model::cell_meta::multystate::state::MultystateApplyStateAction, 
-    store, utils::{map_to_svg_style, mx_style_to_map} 
+    store::{self, cell::MultystateApplyStateAction}, utils::{map_to_svg_style, mx_style_to_map} 
 };
 
 

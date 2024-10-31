@@ -16,8 +16,8 @@ use crate::{
     // errors::FetchError, 
     model::{
         common::ModelForm, 
-        diagram::{meta::DiagramForm, DiagramListItem}, 
-        widget::{meta::WidgetForm, WidgetListItem},   
+        diagram::{form_meta::DiagramForm, DiagramListItem}, 
+        widget::{form_meta::WidgetForm, WidgetListItem},   
         editor_ui::EditorUi, 
         mx_editor::MxEditor, 
         mx_utils::MxUtils, 

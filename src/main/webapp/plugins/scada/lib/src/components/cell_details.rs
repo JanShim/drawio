@@ -1,6 +1,6 @@
-use common_model::value::ValueXml;
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
+use common_model::free_value::FreeValueXml;
 
 use crate::{
     components::{
@@ -9,7 +9,7 @@ use crate::{
         value::{self, ValueComponent}, 
         widget::{self, WidgetComponent}
     }, model::cell_meta::{
-        value::ApplyValueMetaAction, 
+        value_reducers::ApplyValueMetaAction, 
         CellMetaVariant, 
         CellType
     }, store::cell::{self, SetCellTypeAction}, utils::set_widget_model 
@@ -26,7 +26,7 @@ pub fn component() -> Html {
 
     let edit_mode = use_state(|| false);
 
-    let value_apply = cell_state_dispatch.apply_callback(|value: ValueXml| ApplyValueMetaAction(value));
+    let value_apply = cell_state_dispatch.apply_callback(|value: FreeValueXml| ApplyValueMetaAction(value));
 
     let edit_mode_toggle = {
             let edit_mode = edit_mode.clone();

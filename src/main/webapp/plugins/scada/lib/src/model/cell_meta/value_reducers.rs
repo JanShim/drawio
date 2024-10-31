@@ -2,7 +2,7 @@ use std::rc::Rc;
 use implicit_clone::unsync::IString;
 use yewdux::Reducer;
 
-use common_model::{data_source::DataSourceXml, value::ValueXml};
+use common_model::{data_source::DataSourceXml, free_value::FreeValueXml};
 
 use crate::store::cell;
 
@@ -14,19 +14,19 @@ pub enum ValueAction {
     SetPath(IString),
     Set{tag: IString, path: IString},
 }
-impl Reducer<ValueXml> for ValueAction {
-    fn apply(self, state: Rc<ValueXml>) -> Rc<ValueXml> {
+impl Reducer<FreeValueXml> for ValueAction {
+    fn apply(self, state: Rc<FreeValueXml>) -> Rc<FreeValueXml> {
         let curr = (*state).clone();
         match self {
-            ValueAction::SetTag(tag) => ValueXml { ds: DataSourceXml { tag, ..curr.ds.clone() } }.into(),
-            ValueAction::SetPath(path) => ValueXml { ds: DataSourceXml { path, ..curr.ds.clone() } }.into(),
-            ValueAction::Set{tag, path} => ValueXml { ds: DataSourceXml { tag, path } }.into(),
+            ValueAction::SetTag(tag) => FreeValueXml { ds: DataSourceXml { tag, ..curr.ds.clone() } }.into(),
+            ValueAction::SetPath(path) => FreeValueXml { ds: DataSourceXml { path, ..curr.ds.clone() } }.into(),
+            ValueAction::Set{tag, path} => FreeValueXml { ds: DataSourceXml { tag, path } }.into(),
         }
     }
 }
 
 
-pub struct ApplyValueMetaAction(pub ValueXml);
+pub struct ApplyValueMetaAction(pub FreeValueXml);
 impl Reducer<cell::State> for ApplyValueMetaAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         if let CellMetaVariant::Value(_) = state.meta.data {

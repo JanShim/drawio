@@ -10,7 +10,7 @@ use glyph::{WidgetGlyph, Props as GlyphProps};
 use crate::{
 	errors::CellStateError, 
 	model::{cell_meta::{
-			widget:: WidgetUuidApplyAction, 
+			widget_reducers:: WidgetUuidApplyAction, 
 			CellMetaVariant
 		}, 
 		widget::WidgetGlyphItem
@@ -101,7 +101,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
     // ------------ View Items
     let data_source_view = {
         let props = yew::props!(data_source::Props {
-            ds: widget.data_source.clone(),
+            ds: widget.ds.clone(),
             edit_mode: *edit_mode,
         });
         html! {<DataSourceComponent ..props/>}

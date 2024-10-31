@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::NULL_UUID;
 
-pub mod meta;
+pub mod form_meta;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct WidgetDto {

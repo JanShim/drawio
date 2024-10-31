@@ -5,7 +5,7 @@ use yew::{function_component, html, use_reducer, use_state, Callback, Html, Inpu
 use yewdux::use_store;
 
 use crate::{
-    model::cell_meta::data_source::WidgetApplyDsAction, 
+    model::cell_meta::data_source_reducers::WidgetApplyDsAction, 
     store::cell 
 };
 

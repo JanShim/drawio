@@ -5,7 +5,7 @@ use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
 use crate::model::{
-    diagram::{meta::DiagramForm, DiagramDto},
+    diagram::{form_meta::DiagramForm, DiagramDto},
     common::ModelForm,
 };
 use crate::store;
@@ -68,6 +68,9 @@ pub fn scada_diagram_component() -> Html {
                     wasm_bindgen_futures::spawn_local(async move {
                         if let Ok(node) = state.get_graph_xml() {
                             if let Ok(Some(model_str)) = state.get_xml(node) {
+
+                                log::debug!("saving: {model_str}");
+
                                 let svg = state.get_graph_svg();
 
                                 if form.is_new_item() {

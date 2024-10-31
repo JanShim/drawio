@@ -1,14 +1,14 @@
+use common_model::free_value::FreeValueXml;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::{html, function_component, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
-use common_model::value::ValueXml;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     #[prop_or_default]
-    pub value: ValueXml,
+    pub value: FreeValueXml,
     #[prop_or_default]
-    pub apply: Callback<ValueXml>,
+    pub apply: Callback<FreeValueXml>,
 }
 
 #[function_component(ValueComponent)]
@@ -39,7 +39,7 @@ pub fn component(Props {value, apply}: &Props ) -> Html {
                     .map(|input| {
                         let mut ds = value_state.ds.clone();
                         ds.set_tag(input.value().into());
-                        value_state.set( ValueXml { ds });
+                        value_state.set( FreeValueXml { ds });
                     });
             })
         };

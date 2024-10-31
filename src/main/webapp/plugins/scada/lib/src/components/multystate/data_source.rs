@@ -19,7 +19,7 @@ impl Reducer<cell::State> for MultystateApplyDsAction {
                 meta: CellMeta { 
                     data: CellMetaVariant::Multystate(
                         MultystateXml {
-                            data_source: self.0,
+                            ds: self.0,
                             ..multy.clone()
                         }
                     ),

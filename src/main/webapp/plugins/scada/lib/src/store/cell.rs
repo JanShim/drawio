@@ -1,7 +1,7 @@
 use std::rc::Rc;
+use common_model::multystate::{range::{RangeType, RangeValue}, state::StateXml};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use web_sys::{EventTarget, Node};
 use yew::AttrValue;
 use yewdux::{store::Store, Reducer};
 
@@ -173,4 +173,70 @@ impl Reducer<State> for SetCellModelAction {
     }
 }
 
+pub struct MultystateApplyStateAction(pub StateXml);
+impl Reducer<State> for MultystateApplyStateAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
+            let new_state = self.0;            
+            let index = new_state.get_index();
+            let states = &mut multystate.states;
+            states[index] = StateXml { ..new_state };
+
+            return  State {
+                    meta: CellMeta { 
+                        data: CellMetaVariant::Multystate(multystate.clone()), 
+                        ..state.meta.clone() 
+                    },
+                    ..(*state).clone()
+                }
+                .into();
+        }
+        state
+    }
+}
+
+pub struct MultystateAddStateAction;
+impl Reducer<State> for MultystateAddStateAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone() {
+            match multystate.range_type {
+                RangeType::DISCRET => {
+                    let prev = multystate.states.last()
+                        .map(|o| o.value.get_value())
+                        .unwrap_or(0);
+    
+                    multystate.states.push(StateXml { 
+                        pk: multystate.states.len(), 
+                        name: format!("state-{}", multystate.states.len()).into(),
+                        value: RangeValue::DiscretConst { value: prev },
+                        ..Default::default() 
+                    })
+                },
+                RangeType::RANGE => {
+                    let prev = multystate.states.last()
+                        .map(|o| o.value.get_to())
+                        .unwrap_or(0.0);
+    
+                    multystate.states.push(StateXml { 
+                        pk: multystate.states.len(), 
+                        name: format!("state-{}", multystate.states.len()).into(),
+                        value: RangeValue::RangeConst { from: prev, to: prev },
+                        ..Default::default() 
+                    })
+                },            
+            };
+    
+            return State {
+               meta: CellMeta { 
+                    data: CellMetaVariant::Multystate(multystate.clone()),
+                    ..state.meta.clone() 
+                },
+                ..(*state).clone()
+            }
+            .into()
+        }
+        log::error!("can't add state for not multystate");
+        state
+    }
+}
 
