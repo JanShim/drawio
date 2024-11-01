@@ -40,8 +40,8 @@ pub struct Props {
     pub edit_mode: bool,
 }
 
-#[function_component(DataSourceComponent)]
-pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
+#[function_component]
+pub fn DataSourceComponent(Props {ds, edit_mode}: &Props ) -> Html {
     let (_, cell_store_dispatch) = use_store::<cell::State>();
 
     let data_source = use_state(|| ds.clone());

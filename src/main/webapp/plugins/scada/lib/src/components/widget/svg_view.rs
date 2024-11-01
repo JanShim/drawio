@@ -1,10 +1,8 @@
+use common_model::utils::{css_to_map, map_to_css};
 use wasm_bindgen::JsCast;
 use web_sys::{Node, SvgElement};
 use yew::prelude::*;
 use implicit_clone::unsync::IString;
-
-use crate::utils::{map_to_string, string_to_map};
-
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -24,12 +22,12 @@ pub fn component(props: &Props) -> Html {
         if let Some(svg) = div.first_child() {
             if let Some(svg) = svg.dyn_into::<SvgElement>().ok() {
                 if let Some(style) = svg.get_attribute("style") {
-                    let mut style_map = string_to_map(style.as_str());
+                    let mut style_map = css_to_map(style.as_str());
                     style_map.remove(&"display");
                     style_map.remove(&"width");
                     style_map.remove(&"height");
 
-                    let style = map_to_string(style_map);
+                    let style = map_to_css(style_map);
                     svg.set_attribute("style", &style).ok();
                 };  
 

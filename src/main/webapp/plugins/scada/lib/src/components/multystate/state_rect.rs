@@ -6,8 +6,8 @@ pub struct Props {
     pub style: AttrValue,
 }
 
-#[function_component(StateSampleRect)]
-pub fn component(Props { style }: &Props) -> Html {
+#[function_component]
+pub fn StateSampleRect(Props { style }: &Props) -> Html {
 
     // ========= view =================
     html! {

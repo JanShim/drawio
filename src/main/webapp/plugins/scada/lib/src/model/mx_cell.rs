@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use web_sys::Element;
+use web_sys::{js_sys::JsString, Element};
 use quick_xml::{
     de::from_str, 
     se::to_string,
@@ -50,6 +50,15 @@ extern "C" {
     #[wasm_bindgen(method, js_name=getStyle)]
     fn mx_get_style(this: &MxCell) -> JsValue;
 
+    /**
+     * Function: setStyle
+     *
+     * Sets the string to be used as the <style>.
+     */
+    // mxCell.prototype.setStyle = function(style)
+    #[wasm_bindgen(method, js_name=setStyle)]
+    fn mx_set_style(this: &MxCell, value: String);
+
 }
 
 impl MxCell {
@@ -71,6 +80,10 @@ impl MxCell {
     pub fn get_style(&self) -> Option<String> {
         self.mx_get_style().as_string()
     }
+
+    pub fn set_style(&self, style: String) {
+        self.mx_set_style(style);
+    }    
 
     pub fn get_diagram_meta(&self) -> Result<common::DiagramMeta, JsValue> {
         match self.mx_get_value() {
@@ -106,23 +119,6 @@ impl MxCell {
         }
         None
     }
-
-    // pub fn append_meta_element<F>(&self, provider: F) -> Result<Element, JsValue>
-    //     where F: FnOnce(&Element) -> &Element
-    // {
-    //     if let Ok(CellValue::Object(root)) = self.get_value() {
-    //         // if let Some(doc) =  el.owner_document() {
-    //         //     let doc.create_element("")
-    //         // }
-    //         let child = provider(&root);
-    //         return root.append_child(child)
-    //             .map(|node| match node.dyn_into::<Element>() {
-    //                 Ok(e) => Ok(e),
-    //                 Err(_) => Err(JsValue::from("can't convert to Element")),
-    //             })?;
-    //     }
-    //     Err(JsValue::from_str("can't appent element to root"))
-    // }
 
     pub fn get_meta(&self) -> Result<CellMeta, JsValue> {
         match self.get_value() {

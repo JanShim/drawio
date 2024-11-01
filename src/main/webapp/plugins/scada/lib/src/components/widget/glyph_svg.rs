@@ -1,10 +1,6 @@
-use wasm_bindgen::JsCast;
-use web_sys::{Node, SvgElement};
+use web_sys::Node;
 use yew::prelude::*;
 use implicit_clone::unsync::IString;
-
-use crate::utils::{map_to_string, string_to_map};
-
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {

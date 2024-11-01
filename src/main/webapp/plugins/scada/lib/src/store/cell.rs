@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use common_model::multystate::{range::{RangeType, RangeValue}, state::StateXml};
+use common_model::{multystate::{range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefType, MultystateXml}, traits::PredefStyle};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yew::AttrValue;
@@ -88,6 +88,10 @@ impl State {
             .ok_or(JsValue::from("no cell"))
     }
 
+    pub fn set_cell_style(&self, style: String) {
+        self.cell.set_style(style);
+    }    
+
     // pub fn set_multystate_state_style(&self, i: usize, style: IString) -> Result<(), JsValue> {
     //     log::debug!("set_multystate_state_style: multy {:?}", self.meta.multystate);
     //     if let Some(multy) = self.meta.multystate.clone() {
@@ -137,7 +141,7 @@ impl Store for State {
     }
 }
 
-
+// ========= reducers =================
 pub struct SetCellTypeAction(pub CellType);
 impl Reducer<State> for SetCellTypeAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
@@ -173,8 +177,8 @@ impl Reducer<State> for SetCellModelAction {
     }
 }
 
-pub struct MultystateApplyStateAction(pub StateXml);
-impl Reducer<State> for MultystateApplyStateAction {
+pub struct ApplyStateAction(pub StateXml);
+impl Reducer<State> for ApplyStateAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
         if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
             let new_state = self.0;            
@@ -187,6 +191,35 @@ impl Reducer<State> for MultystateApplyStateAction {
                         data: CellMetaVariant::Multystate(multystate.clone()), 
                         ..state.meta.clone() 
                     },
+                    ..(*state).clone()
+                }
+                .into();
+        }
+        state
+    }
+}
+
+pub struct ApplyPredefStateStyleAction {
+    pub r#type: StatePredefType, 
+    pub style: IString,
+}
+impl Reducer<State> for ApplyPredefStateStyleAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        if let CellMetaVariant::Multystate(curr) = state.meta.data.clone()  {
+            let mut curr_predef_item = match self.r#type {
+                    StatePredefType::Default => curr.predef[0].clone(),
+                    StatePredefType::Bad => curr.predef[1].clone(),
+                };  
+            curr_predef_item.set_style(self.style);
+
+            let predef = match self.r#type {
+                    StatePredefType::Default => vec![curr_predef_item, curr.predef[1].clone()],
+                    StatePredefType::Bad => vec![curr.predef[0].clone(), curr_predef_item],
+                };
+
+            let data = CellMetaVariant::Multystate(MultystateXml { predef, ..curr });
+            return State {
+                    meta: CellMeta { data, ..state.meta.clone() },
                     ..(*state).clone()
                 }
                 .into();
