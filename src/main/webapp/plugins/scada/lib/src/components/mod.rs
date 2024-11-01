@@ -85,6 +85,10 @@ pub fn get_global_css() -> VNode {
         div.value {
             padding: 2px;
         }
+
+        input.state-val {
+            width: 30px !important;
+        }
         
         "#)} />
     }

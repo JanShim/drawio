@@ -160,7 +160,7 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
                     </td>
                     <td>{"знач: "}</td>
                     <td width="35">
-                        <input type="number" id="value" name="value" value={init_value.clone()} min={format!("{init_value}")} step="1" />
+                        <input type="number" id="value" name="value" value={init_value.clone()} min={format!("{init_value}")} step="1" class="state-val"/>
                     </td>
                     <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
                     <td width="20">
