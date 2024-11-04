@@ -1,8 +1,5 @@
-use common_model::utils::{map_to_string, string_to_map};
-use implicit_clone::unsync::IString;
 use wasm_bindgen::prelude::*;
 use web_sys::{js_sys::JsString, Element};
-use std::collections::HashMap;
 
 use reqwasm::{
     http::Request, 
