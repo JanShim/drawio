@@ -14,6 +14,7 @@ pub mod data_source;
 pub mod state;
 pub mod state_rect;
 pub mod state_predef;
+pub mod multystate_value;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {

@@ -6,7 +6,7 @@ use crate::{
     components::{
         multystate::{self, MultystateComponent}, 
         undefiend::{self, UndefiendComponent}, 
-        value::{self, ValueComponent}, 
+        free_value::{self, FreeValueComponent}, 
         widget::{self, WidgetComponent}
     }, model::cell_meta::{
         value_reducers::ApplyValueMetaAction, 
@@ -78,11 +78,11 @@ pub fn component() -> Html {
             },
             CellMetaVariant::Value(value) => {
                 log::debug!("cell as value: {cell_meta:?}");
-                let props = yew::props! { value::Props {value: value.clone(), apply: value_apply} };
+                let props = yew::props! { free_value::Props {value: value.clone(), apply: value_apply} };
                 html!{ 
                     <>
                     <CellDetailsHeader ..header_props />
-                    <ValueComponent ..props/> 
+                    <FreeValueComponent ..props/> 
                     </>
                 }                    
             },

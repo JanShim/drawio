@@ -11,8 +11,8 @@ pub struct Props {
     pub apply: Callback<FreeValueXml>,
 }
 
-#[function_component(ValueComponent)]
-pub fn component(Props {value, apply}: &Props ) -> Html {
+#[function_component]
+pub fn MultystateValueComponent(Props {value, apply}: &Props ) -> Html {
     let value_state = use_state(|| value.clone());
 
     let is_edit = use_state(|| false);
