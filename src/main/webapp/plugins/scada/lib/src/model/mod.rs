@@ -10,3 +10,10 @@ pub mod mx_graph_model;
 pub mod mx_rectangle;
 pub mod editor_ui;
 pub mod cell_meta;
+
+#[macro_export]
+macro_rules! rrefcell {
+    ($var:ident) => (
+        Rc::new(RefCell::new($var))
+    );
+}

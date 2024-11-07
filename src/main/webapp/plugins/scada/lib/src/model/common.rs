@@ -92,7 +92,6 @@ impl Default for ModelForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    use common_model::widget::WidgetContainerXml;
     use quick_xml::se::to_string;
 
     use super::*;

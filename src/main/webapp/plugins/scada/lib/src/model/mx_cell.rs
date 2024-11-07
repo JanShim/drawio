@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use web_sys::{js_sys::JsString, Element};
+use web_sys::Element;
 use quick_xml::{
     de::from_str, 
     se::to_string,
@@ -144,13 +144,33 @@ impl MxCell {
          Err(JsValue::from_str("can't set cell meta data"))        
     }
 
-    pub fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
-        let inner_html = match &meta.data {
-            CellMetaVariant::Undefiend(undef) => to_string(undef),
-            CellMetaVariant::Value(value) => to_string(value),
-            CellMetaVariant::Multystate(multy) => to_string(multy),
-            CellMetaVariant::Widget(widget) => to_string(widget),
-        }.map_err(|err| JsValue::from(err.to_string().as_str()))?;
+    fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
+        let inner_html = meta.types.iter()
+            .map(|data| {
+                let outer_html = match data {
+                        CellMetaVariant::Label(value) => to_string(value),
+                        CellMetaVariant::Multystate(multy) => to_string(multy),
+                        CellMetaVariant::WidgetContainer(widget) => to_string(widget),
+                    }
+                    .map_err(|err| JsValue::from(err.to_string().as_str()));
+                outer_html
+            })
+            .collect::<Vec<_>>();
+
+        // what if has errors
+        let error = inner_html.iter().find(|o| o.is_err());
+        if error.is_some() {
+            let res = error.unwrap();
+            let err = (*res).clone().err().unwrap();
+            return Err(err);
+        }
+
+        // join results to string
+        let inner_html = inner_html.into_iter()
+            .map(|o| o.unwrap())
+            .collect::<Vec<_>>()
+            .join("");
+
         Ok(inner_html)
     }
 
@@ -177,5 +197,17 @@ impl std::fmt::Debug for MxCell {
 impl Clone for MxCell {
     fn clone(&self) -> Self {
         Self { obj: self.obj.clone() }
+    }
+}
+
+
+// ==========================================================
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn get_meta_inner_html_works() {
+
+        todo!()
     }
 }

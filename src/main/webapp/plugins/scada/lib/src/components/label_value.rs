@@ -1,4 +1,5 @@
-use common_model::free_value::FreeValueXml;
+use std::rc::Rc;
+use common_model::free_value::LabelValueXml;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::{html, function_component, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
@@ -6,14 +7,14 @@ use yew::{html, function_component, use_state, Callback, Html, InputEvent, Mouse
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     #[prop_or_default]
-    pub value: FreeValueXml,
+    pub value: Rc<LabelValueXml>,
     #[prop_or_default]
-    pub apply: Callback<FreeValueXml>,
+    pub apply: Callback<Rc<LabelValueXml>>,
 }
 
 #[function_component]
-pub fn MultystateValueComponent(Props {value, apply}: &Props ) -> Html {
-    let value_state = use_state(|| value.clone());
+pub fn LabelValueComponent(Props {value, apply}: &Props ) -> Html {
+    let label_state = use_state(|| value.clone());
 
     let is_edit = use_state(|| false);
     let togle_edit = {
@@ -23,23 +24,23 @@ pub fn MultystateValueComponent(Props {value, apply}: &Props ) -> Html {
 
     let togle_apply = {
         let is_edit = is_edit.clone();
-        let value_state = value_state.clone();
+        let label_state = label_state.clone();
         let apply = apply.clone();
         Callback::from(move |_: MouseEvent| {
-            apply.emit((*value_state).clone());
+            apply.emit((*label_state).clone());
             is_edit.set(!*is_edit);     // togle is_edit
         })
     };        
 
     // tag name input
     let oninput = {
-            let value_state = value_state.clone();
+            let label_state = label_state.clone();
             Callback::from(move |e:InputEvent| {
                 e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
                     .map(|input| {
-                        let mut ds = value_state.ds.clone();
+                        let mut ds = label_state.ds.clone();
                         ds.set_tag(input.value().into());
-                        value_state.set( FreeValueXml { ds });
+                        label_state.set(Rc::new(LabelValueXml { ds }));
                     });
             })
         };
@@ -55,7 +56,7 @@ pub fn MultystateValueComponent(Props {value, apply}: &Props ) -> Html {
     };    
 
     let tag_view = {
-        let value = value_state.clone();
+        let value = label_state.clone();
         html! {
             if *(is_edit.clone()) {
                 <input id="tag" {oninput} value={ format!("{}", value.ds.tag) }/>

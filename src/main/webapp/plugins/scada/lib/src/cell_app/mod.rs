@@ -1,27 +1,32 @@
-use std::rc::Rc;
-
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
-use yewdux::Dispatch;
+use yewdux::{use_selector, Dispatch};
 use stylist::yew::styled_component;
 use web_sys::HtmlDivElement;
 
 use crate::{
-    components::{cell_details::CellDetailsComponent, get_global_css}, 
+    components::{cell_details::{CellDetailsComponent, CellTypeSelectorComponent}, get_global_css}, 
     model::{mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils}, 
     store, 
     utils::SchemaOptions
 };
 
 
-#[styled_component(CellComponent)]
-pub fn app() -> Html {
+#[styled_component]
+pub fn CellComponent() -> Html {
+    let cell_types_num = use_selector(|st: &store::cell::State| {st.meta.types.len()});
 
     // === view items ====
     html! {
     <>
         { get_global_css() }
-        <CellDetailsComponent/>
+
+        if *cell_types_num > 0 {
+            <CellDetailsComponent/>
+        } else {
+            <CellTypeSelectorComponent/>
+        }
+
     </>        
     }    
 }

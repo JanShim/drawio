@@ -21,3 +21,4 @@ pub fn main_js() -> Result<(), JsValue> {
     log::info!("wasm loaded");
     Ok(())
 }
+

@@ -1,29 +1,30 @@
-use common_model::{free_value::FreeValueXml, multystate::MultystateXml, undefiend::UndefiendXml, widget::WidgetXml};
+use std::{cell::{self, RefCell}, collections::HashSet, rc::Rc};
+
+use common_model::{free_value::LabelValueXml, multystate::MultystateXml, traits::ReplaceWith, widget::{WidgetContainerXml, WidgetXml}};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use web_sys::FormData;
+use web_sys::{FormData, Position};
 use yew::Reducible;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::CellStateError;
+use crate::{errors::CellStateError, rrefcell};
 
 pub mod data_source_reducers;
 pub mod widget_reducers;
 pub mod value_reducers;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CellType {
-    UNDEFIEND,
-    WIDGET,
+    LABEL,
     MULTYSTATE,
-    VALUE,
+    WIDGETCONTAINER,
 }
 
 impl From<FormData> for CellType {
     fn from(data: FormData) -> Self {
         match data.get("cell-type").as_string() {
             Some(value) => match value {
-                _ if value=="value" => CellType::VALUE,
+                _ if value=="value" => CellType::LABEL,
                 _ => CellType::MULTYSTATE,
             },
             None => CellType::MULTYSTATE,
@@ -34,63 +35,157 @@ impl From<FormData> for CellType {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum CellMetaVariant {
-    #[serde(rename = "undefiend")]
-    Undefiend(UndefiendXml),
-    #[serde(rename = "value")]
-    Value(FreeValueXml),
+    // #[serde(rename = "undefiend")]
+    // Undefiend(UndefiendXml),
+    #[serde(rename = "label")]
+    Label(Rc<LabelValueXml>),
     #[serde(rename = "multystate")]
-    Multystate(MultystateXml),
-    #[serde(rename = "widget")]
-    Widget(WidgetXml),
+    Multystate(Rc<RefCell<MultystateXml>>),
+    #[serde(rename = "widget-container")]
+    WidgetContainer(Rc<WidgetContainerXml>),
+}
+
+impl CellMetaVariant {
+    pub fn create_state(&self) {
+        if let Self::Multystate(multy) = self {
+            multy.borrow_mut().create_state();
+        }
+    }
+
+    pub fn get_label(&self) -> Option<Rc<LabelValueXml>> {
+        match self {
+            CellMetaVariant::Label(label) => Some(label.clone()),
+            _ => None
+        }
+    }
+
+    pub fn get_multystate(&self) -> Option<Rc<RefCell<MultystateXml>>> {
+        match self {
+            CellMetaVariant::Multystate(multystate) => Some(multystate.clone()),
+            _ => None
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-#[serde(rename = "d-flow")]
+#[serde(rename = "dflow")]
 pub struct CellMeta {
     #[serde(rename = "@label")]
     pub label: IString,
 
-    #[serde(rename = "$value")]
-    pub data: CellMetaVariant,
+    #[serde(rename = "$value", default)]
+    pub types: Vec<CellMetaVariant>,
 }
 
-
 impl CellMeta {
+    // pub fn find_widget_container(&self) -> Option<WidgetContainerXml>  {
+    //     let items = self.data.iter()
+    //         .filter(|o| {
+    //             if let CellMetaVariant::WidgetContainer(_) = o {
+    //                 return true;
+    //             }
+    //             false
+    //         })
+    //         .collect::<Vec<_>>();
+    //     // found widget contaier
+    //     if items.len() > 0  {
+    //         if let CellMetaVariant::WidgetContainer(item) = items[0] {
+    //             return Some(item.clone());
+    //         }
+    //         return None;
+    //     }
+    //     // result
+    //     None
+    // }
+
+    // pub fn find_multystate(&self) -> Option<MultystateXml>  {
+    //     let items = self.data.iter()
+    //         .filter(|o| {
+    //             if let CellMetaVariant::Multystate(_) = o {
+    //                 return true;
+    //             }
+    //             false
+    //         })
+    //         .collect::<Vec<_>>();
+    //     // found Multystate
+    //     if items.len() > 0  {
+    //         if let CellMetaVariant::Multystate(item) = items[0] {
+    //             return Some(item.clone());
+    //         }
+    //         return None;
+    //     }
+    //     // result
+    //     None
+    // }    
+
     pub fn set_label(&mut self, label: IString) {
         self.label = label;
     }
 
-    pub fn set_value_meta(&mut self, value: FreeValueXml) {
-        if let CellMetaVariant::Value(_) = self.data {
-            self.data = CellMetaVariant::Value(value);
+    pub fn get_cell_type(&self) -> HashSet<CellType> {
+        self.types.iter()
+            .map(|o| match *o {
+                CellMetaVariant::Label(_) => CellType::LABEL,
+                CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
+                CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
+            })
+            .collect::<HashSet<_>>()
+    }
+
+    fn get_meta_position(&self, cell_type: CellType) -> Option<usize> {
+        self.types.iter()
+            .position(|o| {
+                match cell_type {
+                    CellType::LABEL => if let CellMetaVariant::Label(_) = *o { return true; },
+                    CellType::MULTYSTATE => if let CellMetaVariant::Multystate(_) = *o { return true; },
+                    CellType::WIDGETCONTAINER => if let CellMetaVariant::WidgetContainer(_) = *o { return true; },
+                };
+                false
+            })
+    }
+
+    pub fn set_label_meta(&mut self, value: LabelValueXml) {
+        let position = self.get_meta_position(CellType::LABEL);
+        if position.is_some()  {
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Label(Rc::new(value)).into());
         }
     }
 
-    pub fn get_cell_type(&self) -> CellType {
-        match self.data {
-            CellMetaVariant::Undefiend(_) => CellType::UNDEFIEND,
-            CellMetaVariant::Value(_) => CellType::VALUE,
-            CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
-            CellMetaVariant::Widget(_) => CellType::WIDGET,
+    pub fn set_multystate_meta(&mut self, value: MultystateXml) {
+        let position = self.get_meta_position(CellType::MULTYSTATE);
+        if position.is_some()  {
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Multystate(rrefcell!(value)).into());
         }
     }
 
-    pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateXml, JsValue>{
-        if let CellMetaVariant::Multystate(m) = &mut self.data {
-            return Ok(m);
+    pub fn set_widget_container_meta(&mut self, value: WidgetContainerXml) {
+        let position = self.get_meta_position(CellType::WIDGETCONTAINER);
+        if position.is_some()  {
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::WidgetContainer(Rc::new(value)).into());
         }
-        Err(CellStateError::NotMultystate.into())
     }
 
-    pub fn get_multystate(&self) -> Result<&MultystateXml, JsValue>{
-        if let CellMetaVariant::Multystate(m) = &self.data {
-            return Ok(m);
+    // pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateXml, JsValue>{
+    //     let item = 
+    //     if let CellMetaVariant::Multystate(m) = &mut self.data {
+    //         return Ok(m);
+    //     }
+    //     Err(CellStateError::NotMultystate.into())
+    // }
+
+    pub fn get_multystate(&self) -> Result<Rc<RefCell<MultystateXml>>, JsValue>{
+        let position = self.get_meta_position(CellType::MULTYSTATE);
+        if position.is_some()  {
+            let item = self.types[position.unwrap()].get_multystate().unwrap();
+            return Ok(item);
         }
         Err(CellStateError::NotMultystate.into())
     }    
 
     pub fn create_state(&mut self) {
-        if let CellMetaVariant::Multystate(multystate) = &mut self.data {
+        let position = self.get_meta_position(CellType::MULTYSTATE);
+        if position.is_some() {
+            let multystate = &mut self.types[position.unwrap()];
             multystate.create_state();
         }
     }
@@ -100,37 +195,36 @@ impl Default for CellMeta {
     fn default() -> Self {
         Self { 
             label: Default::default(), 
-            data: CellMetaVariant::Undefiend(Default::default()),
+            types: vec![],
         }
     }
 }
 
 
-/// reducer's Action
-pub enum Action {
-    SetWidgetMeta(WidgetXml),
-}
+// /// reducer's Action
+// pub enum Action {
+//     SetWidgetMeta(WidgetXml),
+// }
 
-impl Reducible for CellMeta {
-    type Action = Action;
+// impl Reducible for CellMeta {
+//     type Action = Action;
     
-    fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
-        match action {
-            Action::SetWidgetMeta(meta) => Self {
-                label: self.label.clone(),
-                data: CellMetaVariant::Widget(meta),
-            }.into(),
-        }
-    }
-
-}
+//     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
+//         let position = self.get_meta_position(CellType::WIDGETCONTAINER)
+//         match action {
+//             Action::SetWidgetMeta(meta) => Self {
+//                 label: self.label.clone(),
+//                 data: CellMetaVariant::WidgetContainer(meta),
+//             }.into(),
+//         }
+//     }
+// }
 
 // ==========================================================
 #[cfg(test)]
 mod tests {
-    use common_model::{data_source::DataSourceXml, multystate::{state::StateXml, state_predef::StatePredefXml}};
+    use common_model::{data_source::DataSourceXml, multystate::{state::StateXml, state_predef::StatePredefXml}, widget::WidgetContainerXml};
     use quick_xml::{de::from_str, se::to_string};
-    use serde::{ser::SerializeTupleVariant, Deserializer, Serializer};
 
     use super::*;
 
@@ -149,14 +243,14 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_widget_works() {
-        let widget = WidgetXml {
+        let widget = WidgetContainerXml {
             uuid: "some-uuid".into(),
             ..Default::default()
         };
 
         let item = CellMeta {
             label: "widget".into(),
-            data: CellMetaVariant::Widget(widget),
+            types: vec![CellMetaVariant::WidgetContainer(widget.into())],
         };
 
         let str = to_string(&item).unwrap();
@@ -170,7 +264,7 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_multystate_works() {
-        let multy = MultystateXml {
+        let multy  = MultystateXml {
             range_type: Default::default(),
             states: vec![
                 StateXml { pk: 0, ..Default::default() },
@@ -181,9 +275,11 @@ mod tests {
             // bad: Default::default()
         };
 
+        let multy: Rc<RefCell<MultystateXml>> = Rc::new(RefCell::new(multy));
+
         let item = CellMeta {
             label: "multy".into(),
-            data: CellMetaVariant::Multystate(multy),
+            types: vec![CellMetaVariant::Multystate(multy)],
         };
 
         let str = to_string(&item).unwrap();
@@ -197,11 +293,11 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_value_works() {
-        let value = FreeValueXml { ds: DataSourceXml { tag: "some_tag".into(), ..Default::default()} };
+        let value = Rc::new( LabelValueXml { ds: DataSourceXml { tag: "some_tag".into(), ..Default::default()} });
 
         let item = CellMeta {
             label: "value".into(),
-            data: CellMetaVariant::Value(value),
+            types: vec![CellMetaVariant::Label(value).into()],
         };
 
         let str = to_string(&item).unwrap();
@@ -212,149 +308,72 @@ mod tests {
 
         assert_eq!(item, meta);
     }    
-   
-
-    /* #region example serialize_tuple_variant*/
-    enum E {
-        T(u8),
-        U(String),
-    }
-
-    impl Serialize for E {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            match *self {
-                E::T(ref a) => {
-                    let mut tv = serializer.serialize_tuple_variant("E", 0, "T", 1)?;
-                    tv.serialize_field(a)?;
-                    tv.end()
-                }
-                E::U(ref a) => {
-                    let mut tv = serializer.serialize_tuple_variant("E", 1, "U", 1)?;
-                    tv.serialize_field(a)?;
-                    tv.end()
-                }
-            }
-        }
-    }
-    
 
     #[test]
-    fn example_serialize_tuple_variant_works() {
+    fn get_cell_type_works() {
+        let label_meta = Rc::new( LabelValueXml { ds: Default::default() } );
 
-        #[derive(Serialize)]
-        pub struct CellMeta {
-            meta: E,
-        }
-
-        let meta = CellMeta {
-            meta: E::T(123),
+        let meta = CellMeta { 
+            label: Default::default(), 
+            types: vec![CellMetaVariant::Label(label_meta)],
         };
 
-        let str = to_string(&meta);
-        println!("{str:#?}")
+        let tst = meta.get_cell_type();
 
-    }
-
-    /* #endregion */
-
-    /* #region  example for array */
-    fn unwrap_list<'de, D>(deserializer: D) -> Result<Vec<Element>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        /// Represents <list>...</list>
-        #[derive(Deserialize, Debug, PartialEq)]
-        struct List {
-            #[serde(default)]
-            // #[serde(rename(serialize="list"))]
-            element: Vec<Element>,
-        }
-
-        Ok(List::deserialize(deserializer)?.element)
-    }
-
-    /// Represents <element/>
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    #[serde(rename = "element")]
-    struct Element {
-        #[serde(rename = "@attr")]
-        attr: String,
+        assert!(tst.contains(&CellType::LABEL));
+        assert!(!tst.contains(&CellType::MULTYSTATE));
     }
 
     #[test]
-    fn xml_element_serde_works() {
-        let item = Element {
-            attr: "aaaa".to_owned(),
+    fn set_label_meta_works() {
+        let label_meta = Rc::new( LabelValueXml { ds: Default::default() } );
+
+        let mut meta = CellMeta { 
+            label: Default::default(), 
+            types: vec![CellMetaVariant::Label(label_meta)],
         };
 
-        let str = to_string(&item).unwrap();
-        println!("{str}");
-
-        let meta = from_str::<Element>(&str).unwrap();
-        println!("{meta:#?}");
-
-        assert_eq!(item, meta);
-    }
-
-    #[derive(Deserialize, Debug, PartialEq)]
-    #[serde(rename = "root")]
-    struct Root {
-        #[serde(deserialize_with = "unwrap_list")]
-        pub list: Vec<Element>,
-    }
-
-    impl Serialize for Root {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            #[derive(Serialize)]
-            #[serde(rename = "root")]
-            struct Root<'a> {
-                list: List<'a>,
-            }
-
-            #[derive(Serialize)]
-            #[serde(rename = "list")]
-            struct List<'a> {
-                element: &'a Vec<Element>,
-            }
-
-            let helper = Root {
-                list: List {
-                    element: &self.list,
-                },
-            };
-            helper.serialize(serializer)
-        }
-    }
-
-    #[test]
-    fn example_serde_works() {
-        // let from = AnyName { list: List { elements: vec![(), (), ()] } };
-        let root = Root {
-            list: vec![
-                Element {
-                    attr: "1".to_owned(),
-                },
-                Element {
-                    attr: "2".to_owned(),
-                },
-            ],
-        };
-        println!("{root:#?}");
-
-        let str = to_string(&root).unwrap();
-        println!("{str:#?}");
+        let str = to_string(&meta).unwrap();
+        println!("{str:?}");
 
         let from = from_str(&str).unwrap();
         println!("{from:#?}");
+        assert_eq!(meta, from);        
 
-        assert_eq!(root, from);
+        let new_label_meta = LabelValueXml { ds: DataSourceXml { tag: "tag-1".into(), path: "".into() } };
+        meta.set_label_meta(new_label_meta);
+
+
+        let str = to_string(&meta).unwrap();
+        println!("{str:?}");     
+
+        let from = from_str(&str).unwrap();
+        println!("{from:#?}");
+        assert_eq!(meta, from);             
+        
     }
 
-    /* #endregion */
+    #[test]
+    fn create_state_works() {
+        let multy_meta = MultystateXml { 
+            range_type: Default::default(), 
+            ds: Default::default(), 
+            predef: Default::default(), 
+            states: vec![],
+        };
+
+        let mut meta = CellMeta { 
+            label: Default::default(), 
+            types: vec![CellMetaVariant::Multystate(rrefcell!( multy_meta ))],
+        };
+
+        meta.create_state();
+
+        let str = to_string(&meta).unwrap();
+        println!("{str:?}");
+
+        assert!(str.contains("<state pk=\"0\" name=\"state\""));
+    }
+
+
 }

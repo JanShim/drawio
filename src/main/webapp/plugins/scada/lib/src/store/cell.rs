@@ -1,5 +1,5 @@
-use std::rc::Rc;
-use common_model::{multystate::{range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefType, MultystateXml}, traits::PredefStyle};
+use std::{borrow::BorrowMut, cmp::Ordering, collections::HashSet, rc::Rc};
+use common_model::{multystate::{self, range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefType, MultystateXml}, traits::PredefStyle};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yew::AttrValue;
@@ -138,25 +138,42 @@ impl Store for State {
         self != old
         || self.cell != old.cell
         || self.meta != old.meta
+        
     }
 }
 
+pub fn cell_type_compare(a: &CellType, b: &CellType) -> Ordering {
+    let a = (*a).clone() as u8;
+    let b = (*b).clone() as u8;
+    a.cmp(&b)
+}
 // ========= reducers =================
-pub struct SetCellTypeAction(pub CellType);
+pub struct SetCellTypeAction(pub HashSet<CellType>);
 impl Reducer<State> for SetCellTypeAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        let meta = match self.0 {
-            CellType::MULTYSTATE => CellMeta {
-                label: state.cell.get_label().into(),
-                data: CellMetaVariant::Multystate(Default::default()),
-            },
-            CellType::VALUE => CellMeta {
-                label: state.cell.get_label().into(),
-                data: CellMetaVariant::Value(Default::default()),
-            },
-            _ => Default::default(),
-        };
+        let mut cell_types = self.0.into_iter().collect::<Vec<_>>();
+        cell_types.sort_by(cell_type_compare);
+
+        let data = cell_types.into_iter()
+            .map(|o| match o {
+                CellType::LABEL =>  CellMetaVariant::Label(Default::default()),
+                CellType::MULTYSTATE => CellMetaVariant::Multystate(Default::default()),
+                CellType::WIDGETCONTAINER =>  CellMetaVariant::WidgetContainer(Default::default()),
+            })
+            .collect::<Vec<_>>();
+
+        let meta = CellMeta{ 
+                label: state.cell.get_label().into(), 
+                types: data 
+            };
+
+        // assigne meta to editor cell
+        let res = state.cell.set_meta(&meta);
+        if res.is_err() {
+            log::error!("{:?}", res.err().unwrap().as_string())
+        }
         
+        // return
         State {
             meta,
             ..(*state).clone()
@@ -180,22 +197,24 @@ impl Reducer<State> for SetCellModelAction {
 pub struct ApplyStateAction(pub StateXml);
 impl Reducer<State> for ApplyStateAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
-            let new_state = self.0;            
-            let index = new_state.get_index();
-            let states = &mut multystate.states;
-            states[index] = StateXml { ..new_state };
+        todo!();
 
-            return  State {
-                    meta: CellMeta { 
-                        data: CellMetaVariant::Multystate(multystate.clone()), 
-                        ..state.meta.clone() 
-                    },
-                    ..(*state).clone()
-                }
-                .into();
-        }
-        state
+        // if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
+        //     let new_state = self.0;            
+        //     let index = new_state.get_index();
+        //     let states = &mut multystate.states;
+        //     states[index] = StateXml { ..new_state };
+
+        //     return  State {
+        //             meta: CellMeta { 
+        //                 data: CellMetaVariant::Multystate(multystate.clone()), 
+        //                 ..state.meta.clone() 
+        //             },
+        //             ..(*state).clone()
+        //         }
+        //         .into();
+        // }
+        // state
     }
 }
 
@@ -205,68 +224,76 @@ pub struct ApplyPredefStateStyleAction {
 }
 impl Reducer<State> for ApplyPredefStateStyleAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        if let CellMetaVariant::Multystate(curr) = state.meta.data.clone()  {
-            let mut curr_predef_item = match self.r#type {
-                    StatePredefType::Default => curr.predef[0].clone(),
-                    StatePredefType::Bad => curr.predef[1].clone(),
-                };  
-            curr_predef_item.set_style(self.style);
+		todo!();
 
-            let predef = match self.r#type {
-                    StatePredefType::Default => vec![curr_predef_item, curr.predef[1].clone()],
-                    StatePredefType::Bad => vec![curr.predef[0].clone(), curr_predef_item],
-                };
+        // if let CellMetaVariant::Multystate(curr) = state.meta.data.clone()  {
+        //     let mut curr_predef_item = match self.r#type {
+        //             StatePredefType::Default => curr.predef[0].clone(),
+        //             StatePredefType::Bad => curr.predef[1].clone(),
+        //         };  
+        //     curr_predef_item.set_style(self.style);
 
-            let data = CellMetaVariant::Multystate(MultystateXml { predef, ..curr });
-            return State {
-                    meta: CellMeta { data, ..state.meta.clone() },
-                    ..(*state).clone()
-                }
-                .into();
-        }
-        state
+        //     let predef = match self.r#type {
+        //             StatePredefType::Default => vec![curr_predef_item, curr.predef[1].clone()],
+        //             StatePredefType::Bad => vec![curr.predef[0].clone(), curr_predef_item],
+        //         };
+
+        //     let data = CellMetaVariant::Multystate(MultystateXml { predef, ..curr });
+        //     return State {
+        //             meta: CellMeta { data, ..state.meta.clone() },
+        //             ..(*state).clone()
+        //         }
+        //         .into();
+        // }
+        // state
     }
 }
 
 pub struct MultystateAddStateAction;
 impl Reducer<State> for MultystateAddStateAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone() {
+        if let Ok(multystate) =  state.meta.get_multystate() {
+            let mut multystate = (*multystate).borrow_mut();
+            let pk = multystate.states.len();
+            let name: IString = format!("state-{}", multystate.states.len()).into();
             match multystate.range_type {
                 RangeType::DISCRET => {
                     let prev = multystate.states.last()
                         .map(|o| o.value.get_value())
                         .unwrap_or(0);
-    
-                    multystate.states.push(StateXml { 
-                        pk: multystate.states.len(), 
-                        name: format!("state-{}", multystate.states.len()).into(),
+
+                    let state = StateXml { 
+                        pk, name,
                         value: RangeValue::DiscretConst { value: prev },
                         ..Default::default() 
-                    })
+                    };
+                    multystate.push_state(state);
                 },
                 RangeType::RANGE => {
                     let prev = multystate.states.last()
                         .map(|o| o.value.get_to())
                         .unwrap_or(0.0);
     
-                    multystate.states.push(StateXml { 
-                        pk: multystate.states.len(), 
-                        name: format!("state-{}", multystate.states.len()).into(),
+                    let state = StateXml { 
+                        pk, name,
                         value: RangeValue::RangeConst { from: prev, to: prev },
                         ..Default::default() 
-                    })
+                    };
+                    multystate.push_state(state);
                 },            
             };
     
+            // state.meta.borrow_mut().set_multystate_meta(multystate);
+
             return State {
                meta: CellMeta { 
-                    data: CellMetaVariant::Multystate(multystate.clone()),
+                    // types: CellMetaVariant::Multystate(multystate.clone()),
                     ..state.meta.clone() 
                 },
                 ..(*state).clone()
             }
             .into()
+
         }
         log::error!("can't add state for not multystate");
         state

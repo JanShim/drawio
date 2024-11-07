@@ -35,13 +35,15 @@ pub struct Props {
 pub fn component(Props { edit_mode }: &Props) -> Html {
     let (_, cell_store_dispatch) = use_store::<cell::State>();
 	let api_url = use_selector(|state: &cell::State| state.api_url.clone());
-    let widget = use_selector(|cell_state: &cell::State| {
-		if let CellMetaVariant::Widget(widget) = cell_state.meta.data.clone() {
-			return widget;
-		};
-		log::error!("{}", CellStateError::NotWidget);
-		WidgetXml::default()
-	});  
+
+	todo!();
+    // let widget = use_selector(|cell_state: &cell::State| {
+	// 	if let CellMetaVariant::WidgetContainer(widget) = cell_state.meta.data.clone() {
+	// 		return widget;
+	// 	};
+	// 	log::error!("{}", CellStateError::NotWidget);
+	// 	WidgetXml::default()
+	// });  
 
     let type_edit_mode = use_state(|| false);
     let togle_type_edit = {
@@ -90,21 +92,25 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 		})
 	};
 
-    let widget_list = {
-		let url = api_url.clone();
-		let group = (*widget).group.clone();
-		use_async_with_options(
-			async move { fetch::<Vec::<WidgetGlyphItem>>(format!("{url}/widget/{group}/glyphs")).await },
-			UseAsyncOptions::enable_auto(),
-    )};
+	todo!();
+    // let widget_list = {
+	// 	let url = api_url.clone();
+	// 	let group = (*widget).group.clone();
+	// 	use_async_with_options(
+	// 		async move { fetch::<Vec::<WidgetGlyphItem>>(format!("{url}/widget/{group}/glyphs")).await },
+	// 		UseAsyncOptions::enable_auto(),
+	// 	)
+	// };
 
     // ------------ View Items
     let data_source_view = {
-        let props = yew::props!(data_source::Props {
-            ds: widget.ds.clone(),
-            edit_mode: *edit_mode,
-        });
-        html! {<DataSourceComponent ..props/>}
+		todo!();
+
+        // let props = yew::props!(data_source::Props {
+        //     ds: widget.ds.clone(),
+        //     edit_mode: *edit_mode,
+        // });
+        // html! {<DataSourceComponent ..props/>}
     };    
 
     let svg_view = {
@@ -127,31 +133,32 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
         }
     };    	
 
-    let widgets_view = {
-		let on_item_select = on_item_select.clone();
-        if widget_list.loading {
-            html! { "Loading, wait a sec..." }
-        } else  {
-            widget_list.data.as_ref().map_or_else(
-                || html! {},        // default
-                |repo| html! { 
-                    for repo.iter().map(|item: &WidgetGlyphItem| {
-						let props = yew::props! {GlyphProps {
-							pk: item.uuid.to_string(),
-							on_select: on_item_select.clone(),
-							glyph: item.glyph.clone(),
-						}};
-                        html!{ <WidgetGlyph ..props /> }
-					})
-            })      
-        }   
-    };	
+	todo!();
+    // let widgets_view = {
+	// 	let on_item_select = on_item_select.clone();
+    //     if widget_list.loading {
+    //         html! { "Loading, wait a sec..." }
+    //     } else  {
+    //         widget_list.data.as_ref().map_or_else(
+    //             || html! {},        // default
+    //             |repo| html! { 
+    //                 for repo.iter().map(|item: &WidgetGlyphItem| {
+	// 					let props = yew::props! {GlyphProps {
+	// 						pk: item.uuid.to_string(),
+	// 						on_select: on_item_select.clone(),
+	// 						glyph: item.glyph.clone(),
+	// 					}};
+    //                     html!{ <WidgetGlyph ..props /> }
+	// 				})
+    //         })      
+    //     }   
+    // };	
 
     html! {
         <>
         // <pre>{ format!("{:?}", *multy_state) }</pre>
         <hr/>
-        { data_source_view }
+        // { data_source_view }
         <hr/>
         // <svg style="left: 1px; top: 1px; width: 124px; height: 120px; display: block; position: relative; overflow: hidden; pointer-events: none;"
         // viewBox="0 0 32 30">
@@ -176,7 +183,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 
         <div style="display: block;">
 	<div class="geSidebar" style="touch-action: none; display: block; transform-origin: left top;">
-		{ widgets_view }
+		// { widgets_view }
 
 
 		// <a id="07c41b9b-75f9-460f-97f0-f0f0e7e93f9a" onclick={on_item_select.clone()} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">

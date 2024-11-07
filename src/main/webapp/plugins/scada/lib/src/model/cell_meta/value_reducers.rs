@@ -2,7 +2,7 @@ use std::rc::Rc;
 use implicit_clone::unsync::IString;
 use yewdux::Reducer;
 
-use common_model::{data_source::DataSourceXml, free_value::FreeValueXml};
+use common_model::{data_source::DataSourceXml, free_value::LabelValueXml};
 
 use crate::store::cell;
 
@@ -14,31 +14,34 @@ pub enum ValueAction {
     SetPath(IString),
     Set{tag: IString, path: IString},
 }
-impl Reducer<FreeValueXml> for ValueAction {
-    fn apply(self, state: Rc<FreeValueXml>) -> Rc<FreeValueXml> {
+impl Reducer<LabelValueXml> for ValueAction {
+    fn apply(self, state: Rc<LabelValueXml>) -> Rc<LabelValueXml> {
         let curr = (*state).clone();
         match self {
-            ValueAction::SetTag(tag) => FreeValueXml { ds: DataSourceXml { tag, ..curr.ds.clone() } }.into(),
-            ValueAction::SetPath(path) => FreeValueXml { ds: DataSourceXml { path, ..curr.ds.clone() } }.into(),
-            ValueAction::Set{tag, path} => FreeValueXml { ds: DataSourceXml { tag, path } }.into(),
+            ValueAction::SetTag(tag) => LabelValueXml { ds: DataSourceXml { tag, ..curr.ds.clone() } }.into(),
+            ValueAction::SetPath(path) => LabelValueXml { ds: DataSourceXml { path, ..curr.ds.clone() } }.into(),
+            ValueAction::Set{tag, path} => LabelValueXml { ds: DataSourceXml { tag, path } }.into(),
         }
     }
 }
 
 
-pub struct ApplyValueMetaAction(pub FreeValueXml);
-impl Reducer<cell::State> for ApplyValueMetaAction {
+pub struct ApplyLabelValueMetaAction(pub Rc<LabelValueXml>);
+impl Reducer<cell::State> for ApplyLabelValueMetaAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        if let CellMetaVariant::Value(_) = state.meta.data {
+        let position = state.meta.get_meta_position(super::CellType::LABEL);
+        if position.is_some() {
+            let mut new_data= state.meta.types.clone();
+            let _ = std::mem::replace(&mut new_data[position.unwrap()], CellMetaVariant::Label(self.0).into());
             return cell::State {
                 meta: CellMeta {
-                    data: CellMetaVariant::Value(self.0),
+                    types: new_data,
                     ..state.meta.clone()
                 }, 
                 ..(*state).clone()
             }.into();
-                
         }
+        // do nothing
         state
     }
 }

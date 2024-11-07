@@ -1,3 +1,5 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use common_model::multystate::{state::StateXml, state_predef::StatePredefXml, MultystateXml};
 use state_predef::{StatePredefComponent, StatePredefEditComponent};
 use yew::{function_component, html, use_state, Callback, Html, Properties,};
@@ -7,14 +9,13 @@ use data_source::DataSourceComponent;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    errors::CellStateError, model::cell_meta::CellMetaVariant, store::cell::{self, MultystateAddStateAction}
+    errors::CellStateError, model::cell_meta::CellMetaVariant, rrefcell, store::cell::{self, MultystateAddStateAction}
 };
 
 pub mod data_source;
 pub mod state;
 pub mod state_rect;
 pub mod state_predef;
-pub mod multystate_value;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -26,11 +27,12 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
     let (_, cell_store_dispatch) = use_store::<cell::State>();
 
     let cell_state = use_selector(|cell_state: &cell::State| {
-        if let CellMetaVariant::Multystate(multystate) = cell_state.meta.data.clone() {
+        if let Ok(multystate) = cell_state.meta.get_multystate() {
 			return multystate;
 		};
         log::error!("{}", CellStateError::NotMultystate);
-        MultystateXml::default().into()
+        let def = MultystateXml::default();
+        rrefcell!( def )
     });    
     
     /* #region selected_state */
@@ -44,7 +46,6 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
         Callback::from(move |value: Option<StateXml>| {
             // change selected
             selected.set(value);
-
         })
     };
     /* #endregion */
@@ -55,14 +56,14 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
     //====== View Items =====
     let data_source_view = {
         let props = yew::props!(data_source::Props {
-            ds: cell_state.ds.clone(),
+            ds: cell_state.borrow().ds.clone(),
             edit_mode: *edit_mode,
         });
         html! {<DataSourceComponent ..props/>}
     };
 
     let default_state_view: Html = {
-        let default = cell_state.predef[0].clone();
+        let default = cell_state.borrow().predef[0].clone();
         html! {
             if *edit_mode {
                 <StatePredefEditComponent<StatePredefXml> value={default}/>
@@ -73,7 +74,7 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
     };    
 
     let bad_state_view: Html = {
-        let bad = cell_state.predef[1].clone();
+        let bad = cell_state.borrow().predef[1].clone();
         html! {
             if *edit_mode {
                 <StatePredefEditComponent<StatePredefXml> value={bad}/>
@@ -85,7 +86,7 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
 
     let states_view = {
         let selected = selected_state.clone();
-        cell_state.states.iter().enumerate()
+        cell_state.borrow().states.iter().enumerate()
             .map(|(id, meta)| {
                 if *edit_mode {
                     let props = yew::props!(state::MultystateStateEditProps {

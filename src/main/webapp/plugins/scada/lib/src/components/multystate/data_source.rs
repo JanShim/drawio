@@ -14,20 +14,22 @@ use crate::{
 pub struct MultystateApplyDsAction(pub DataSourceXml);
 impl Reducer<cell::State> for MultystateApplyDsAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        if let CellMetaVariant::Multystate(multy) = &state.meta.data  {
-            return cell::State {
-                meta: CellMeta { 
-                    data: CellMetaVariant::Multystate(
-                        MultystateXml {
-                            ds: self.0,
-                            ..multy.clone()
-                        }
-                    ),
-                    ..state.meta.clone()
-                },
-                ..(*state).clone()
-            }.into()            
-        }
+        // if let CellMetaVariant::Multystate(multy) = &state.meta.data  {
+        //     return cell::State {
+        //         meta: CellMeta { 
+        //             data: CellMetaVariant::Multystate(
+        //                 MultystateXml {
+        //                     ds: self.0,
+        //                     ..multy.clone()
+        //                 }
+        //             ),
+        //             ..state.meta.clone()
+        //         },
+        //         ..(*state).clone()
+        //     }.into()            
+        // }
+
+        todo!();
 
         // multystate.data_source = self.0;
         state

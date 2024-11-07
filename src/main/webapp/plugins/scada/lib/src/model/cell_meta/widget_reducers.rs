@@ -10,37 +10,41 @@ use super::{CellMeta, CellMetaVariant};
 pub struct WidgetUuidApplyAction(pub IString);
 impl Reducer<cell::State> for WidgetUuidApplyAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        if let CellMetaVariant::Widget(meta) = &state.meta.data {
-            return cell::State {
-                    meta: CellMeta { 
-                        label: state.meta.label.clone(),
-                        data: CellMetaVariant::Widget(WidgetXml { 
-                            uuid: self.0, 
-                           ..meta.clone() 
-                        }),
-                    },
-                    ..(*state).clone()
-                }
-                .into();        
-        }
-        state
+		todo!();
+
+        // if let CellMetaVariant::WidgetContainer(meta) = &state.meta.data {
+        //     return cell::State {
+        //             meta: CellMeta { 
+        //                 label: state.meta.label.clone(),
+        //                 data: CellMetaVariant::WidgetContainer(WidgetXml { 
+        //                     uuid: self.0, 
+        //                    ..meta.clone() 
+        //                 }),
+        //             },
+        //             ..(*state).clone()
+        //         }
+        //         .into();        
+        // }
+        // state
     }
 }
 
 pub struct WidgetMetaApplyAction(pub WidgetXml);
 impl Reducer<cell::State> for WidgetMetaApplyAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        if let CellMetaVariant::Widget(_) = &state.meta.data {
-            return cell::State {
-                    meta: CellMeta { 
-                        label: state.meta.label.clone(),
-                        data: CellMetaVariant::Widget(self.0),
-                    },
-                    ..(*state).clone()
-                }
-                .into();        
-        }
-        state
+		todo!();
+
+        // if let CellMetaVariant::WidgetContainer(_) = &state.meta.data {
+        //     return cell::State {
+        //             meta: CellMeta { 
+        //                 label: state.meta.label.clone(),
+        //                 data: CellMetaVariant::WidgetContainer(self.0),
+        //             },
+        //             ..(*state).clone()
+        //         }
+        //         .into();        
+        // }
+        // state
     }
 }
 

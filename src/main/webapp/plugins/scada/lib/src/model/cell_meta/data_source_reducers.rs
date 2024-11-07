@@ -9,20 +9,22 @@ use super::{CellMeta, CellMetaVariant};
 pub struct WidgetApplyDsAction(pub DataSourceXml);
 impl Reducer<cell::State> for WidgetApplyDsAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        if let CellMetaVariant::Widget(widget) = &state.meta.data {
-            return cell::State {
-                    meta: CellMeta { 
-                        label: state.meta.label.clone(), 
-                        data: CellMetaVariant::Widget(WidgetXml {
-                            ds: self.0,
-                            ..widget.clone()
-                        }),
-                    },
-                    ..(*state).clone()
-                }.into();
-        };
+        todo!();
 
-        state
+        // if let CellMetaVariant::WidgetContainer(widget) = &state.meta.data {
+        //     return cell::State {
+        //             meta: CellMeta { 
+        //                 label: state.meta.label.clone(), 
+        //                 data: CellMetaVariant::WidgetContainer(WidgetXml {
+        //                     ds: self.0,
+        //                     ..widget.clone()
+        //                 }),
+        //             },
+        //             ..(*state).clone()
+        //         }.into();
+        // };
+
+        // state
     }
 }
 
