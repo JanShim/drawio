@@ -1,13 +1,10 @@
 use common_model::{multystate::{range::RangeType, state::StateXml}, utils::{filter_state_mxstyle, map_to_svg_style, mx_style_to_map}};
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::{function_component, html, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
+use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
 use yewdux::use_store;
 
-use crate::{
-    components::multystate::state_rect:: StateSampleRect, 
-    store::{self, cell::ApplyStateAction},   
-};
+use crate::{components::multystate::state_rect:: StateSampleRect, store};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -17,14 +14,16 @@ pub struct Props {
 #[function_component]
 pub fn MultystateStateComponent(Props { value, }: &Props) -> Html 
 {
-
     let my_state = use_state(|| value.clone());
-    // {
-    //     let my_state = my_state.clone();
-    //     use_effect_with(value.clone(), move |value| {
-    //         my_state.dispatch(StateAction::Clone((*value).clone()));
-    //     });
-    // }
+    {
+        let my_state = my_state.clone();
+        use_effect_with(value.clone(), move |value | {
+            // my_state.dispatch(StateAction::Clone((*value).clone()));
+
+            log::debug!("{:?}", value);
+            my_state.set((*value).clone());
+        });
+    }
 
     let style_string = use_memo(my_state.style.clone(), |style| {
         let map = mx_style_to_map(style); 
@@ -61,27 +60,28 @@ pub fn MultystateStateComponent(Props { value, }: &Props) -> Html
 pub struct MultystateStateEditProps {
     pub selected: bool,
     pub value: StateXml,
+    pub apply: Callback<StateXml>,
     pub select: Callback<Option<StateXml>>,
 }
 
 #[function_component]
 pub fn MultystateStateEditComponent(MultystateStateEditProps {
     value, 
+    apply,
     select, 
     selected
 }: &MultystateStateEditProps) -> Html {
    
-    let (cell_state, cell_state_dispatch) = use_store::<store::cell::State>();  // cell meta storage
+    let (cell_state, _) = use_store::<store::cell::State>();  // cell meta storage
     let range_type = use_state(|| Into::<RangeType>::into(value.value.clone()));
 
     let my_state = use_state(|| value.clone());
-    // {
-    //     let my_state = my_state.clone();
-    //     use_effect_with(value.clone(), move |value| {
-    //         // my_state.dispatch(StateAction::Clone((*value).clone()));
-    //         my_state.set((*value).clone());
-    //     });
-    // }
+    {
+        let my_state = my_state.clone();
+        use_effect_with(value.clone(), move |value| {
+            my_state.set((*value).clone());
+        });
+    }
 
     let toggle_edit = {
         let my_state = my_state.clone();
@@ -103,8 +103,8 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
 
 
     let form_onsubmit = {
-            let cell_state_dispatch = cell_state_dispatch.clone();
             let cell_state = cell_state.clone();
+            let apply = apply.clone();
             let select = select.clone();
             Callback::from(move |event: SubmitEvent| {
                 event.prevent_default();
@@ -120,7 +120,7 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
                                 style: filtered_style,
                                 ..state_meta
                             };
-                            cell_state_dispatch.apply(ApplyStateAction(meta));
+                            apply.emit(meta);
                         }
                     }
                 }

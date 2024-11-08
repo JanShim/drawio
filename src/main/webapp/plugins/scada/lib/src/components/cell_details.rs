@@ -1,6 +1,4 @@
-use std::{collections::{HashMap, HashSet}, rc::Rc};
-
-use implicit_clone::sync::IString;
+use std::collections::{HashMap, HashSet};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -9,10 +7,7 @@ use common_model::free_value::LabelValueXml;
 
 use crate::{
     components::{
-        multystate::{self, MultystateComponent}, 
-        undefiend::{self, UndefiendComponent}, 
-        label_value::{self, LabelValueComponent}, 
-        widget::{self, WidgetComponent}
+          label_value::LabelValueComponent, multystate::MultystateComponent, widget::WidgetComponent
     }, model::cell_meta::{
         value_reducers::ApplyLabelValueMetaAction, 
         CellMetaVariant, 
@@ -84,7 +79,7 @@ pub fn CellDetailsComponent() -> Html {
                     CellMetaVariant::Label(value) => {
                         log::debug!("cell as label: {cell_meta:?}");
                         let label_value_apply = cell_state_dispatch
-                            .apply_callback(|value: Rc<LabelValueXml>| ApplyLabelValueMetaAction(value.clone()));  
+                            .apply_callback(|value: LabelValueXml| ApplyLabelValueMetaAction(value));  
 
                         html!{ 
                             <LabelValueComponent value={value.clone()} apply={label_value_apply}/> 

@@ -38,28 +38,28 @@ pub enum CellMetaVariant {
     // #[serde(rename = "undefiend")]
     // Undefiend(UndefiendXml),
     #[serde(rename = "label")]
-    Label(Rc<LabelValueXml>),
+    Label(LabelValueXml),
     #[serde(rename = "multystate")]
-    Multystate(Rc<RefCell<MultystateXml>>),
+    Multystate(MultystateXml),
     #[serde(rename = "widget-container")]
-    WidgetContainer(Rc<WidgetContainerXml>),
+    WidgetContainer(WidgetContainerXml),
 }
 
 impl CellMetaVariant {
-    pub fn create_state(&self) {
+    pub fn create_state(&mut self) {
         if let Self::Multystate(multy) = self {
-            multy.borrow_mut().create_state();
+            multy.create_state();
         }
     }
 
-    pub fn get_label(&self) -> Option<Rc<LabelValueXml>> {
+    pub fn get_label(&self) -> Option<LabelValueXml> {
         match self {
             CellMetaVariant::Label(label) => Some(label.clone()),
             _ => None
         }
     }
 
-    pub fn get_multystate(&self) -> Option<Rc<RefCell<MultystateXml>>> {
+    pub fn get_multystate(&self) -> Option<MultystateXml> {
         match self {
             CellMetaVariant::Multystate(multystate) => Some(multystate.clone()),
             _ => None
@@ -147,21 +147,30 @@ impl CellMeta {
     pub fn set_label_meta(&mut self, value: LabelValueXml) {
         let position = self.get_meta_position(CellType::LABEL);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Label(Rc::new(value)).into());
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Label(value));
         }
     }
 
     pub fn set_multystate_meta(&mut self, value: MultystateXml) {
         let position = self.get_meta_position(CellType::MULTYSTATE);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Multystate(rrefcell!(value)).into());
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Multystate(value));
         }
     }
+
+    pub fn get_multystate_meta(&self) -> Result<MultystateXml, JsValue>{
+        let position = self.get_meta_position(CellType::MULTYSTATE);
+        if position.is_some()  {
+            let item = self.types[position.unwrap()].get_multystate().unwrap();
+            return Ok(item);
+        }
+        Err(CellStateError::NotMultystate.into())
+    }  
 
     pub fn set_widget_container_meta(&mut self, value: WidgetContainerXml) {
         let position = self.get_meta_position(CellType::WIDGETCONTAINER);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::WidgetContainer(Rc::new(value)).into());
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::WidgetContainer(value));
         }
     }
 
@@ -173,14 +182,7 @@ impl CellMeta {
     //     Err(CellStateError::NotMultystate.into())
     // }
 
-    pub fn get_multystate(&self) -> Result<Rc<RefCell<MultystateXml>>, JsValue>{
-        let position = self.get_meta_position(CellType::MULTYSTATE);
-        if position.is_some()  {
-            let item = self.types[position.unwrap()].get_multystate().unwrap();
-            return Ok(item);
-        }
-        Err(CellStateError::NotMultystate.into())
-    }    
+  
 
     pub fn create_state(&mut self) {
         let position = self.get_meta_position(CellType::MULTYSTATE);
@@ -275,7 +277,7 @@ mod tests {
             // bad: Default::default()
         };
 
-        let multy: Rc<RefCell<MultystateXml>> = Rc::new(RefCell::new(multy));
+        // let multy: Rc<RefCell<MultystateXml>> = Rc::new(RefCell::new(multy));
 
         let item = CellMeta {
             label: "multy".into(),
@@ -293,11 +295,11 @@ mod tests {
 
     #[test]
     fn xml_cell_meta_serde_value_works() {
-        let value = Rc::new( LabelValueXml { ds: DataSourceXml { tag: "some_tag".into(), ..Default::default()} });
+        let value =  LabelValueXml { ds: DataSourceXml { tag: "some_tag".into(), ..Default::default()} };
 
         let item = CellMeta {
             label: "value".into(),
-            types: vec![CellMetaVariant::Label(value).into()],
+            types: vec![CellMetaVariant::Label(value)],
         };
 
         let str = to_string(&item).unwrap();
@@ -311,7 +313,7 @@ mod tests {
 
     #[test]
     fn get_cell_type_works() {
-        let label_meta = Rc::new( LabelValueXml { ds: Default::default() } );
+        let label_meta =  LabelValueXml { ds: Default::default() } ;
 
         let meta = CellMeta { 
             label: Default::default(), 
@@ -326,7 +328,7 @@ mod tests {
 
     #[test]
     fn set_label_meta_works() {
-        let label_meta = Rc::new( LabelValueXml { ds: Default::default() } );
+        let label_meta = LabelValueXml { ds: Default::default() } ;
 
         let mut meta = CellMeta { 
             label: Default::default(), 
@@ -364,7 +366,7 @@ mod tests {
 
         let mut meta = CellMeta { 
             label: Default::default(), 
-            types: vec![CellMetaVariant::Multystate(rrefcell!( multy_meta ))],
+            types: vec![CellMetaVariant::Multystate(multy_meta)],
         };
 
         meta.create_state();

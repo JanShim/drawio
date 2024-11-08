@@ -26,7 +26,7 @@ impl Reducer<LabelValueXml> for ValueAction {
 }
 
 
-pub struct ApplyLabelValueMetaAction(pub Rc<LabelValueXml>);
+pub struct ApplyLabelValueMetaAction(pub LabelValueXml);
 impl Reducer<cell::State> for ApplyLabelValueMetaAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
         let position = state.meta.get_meta_position(super::CellType::LABEL);

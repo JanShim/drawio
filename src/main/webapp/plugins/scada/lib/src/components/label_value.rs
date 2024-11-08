@@ -7,9 +7,9 @@ use yew::{html, function_component, use_state, Callback, Html, InputEvent, Mouse
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     #[prop_or_default]
-    pub value: Rc<LabelValueXml>,
+    pub value: LabelValueXml,
     #[prop_or_default]
-    pub apply: Callback<Rc<LabelValueXml>>,
+    pub apply: Callback<LabelValueXml>,
 }
 
 #[function_component]
@@ -40,7 +40,7 @@ pub fn LabelValueComponent(Props {value, apply}: &Props ) -> Html {
                     .map(|input| {
                         let mut ds = label_state.ds.clone();
                         ds.set_tag(input.value().into());
-                        label_state.set(Rc::new(LabelValueXml { ds }));
+                        label_state.set(LabelValueXml { ds });
                     });
             })
         };
@@ -67,11 +67,15 @@ pub fn LabelValueComponent(Props {value, apply}: &Props ) -> Html {
     };    
 
     html!{
-        <table class="prop-table">
-        <td class="label" width="20">{"tag"}</td>
-        <td>{ tag_view }</td>
-        <td class="img">{ img_view }</td>
-        </table>
+        <fieldset>
+            <legend>{"Настройки значения:"}</legend>
+            
+            <table class="prop-table">
+                <td class="label" width="20">{"tag"}</td>
+                <td>{ tag_view }</td>
+                <td class="img">{ img_view }</td>
+            </table>
+        </fieldset>
     }
     
 }

@@ -1,5 +1,5 @@
 use std::{borrow::BorrowMut, cmp::Ordering, collections::HashSet, rc::Rc};
-use common_model::{multystate::{self, range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefType, MultystateXml}, traits::PredefStyle};
+use common_model::{multystate::{self, range::{RangeType, RangeValue}, state::StateXml, state_predef::{StatePredefType, StatePredefXml}, MultystateXml}, traits::PredefStyle};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yew::AttrValue;
@@ -194,109 +194,109 @@ impl Reducer<State> for SetCellModelAction {
     }
 }
 
-pub struct ApplyStateAction(pub StateXml);
-impl Reducer<State> for ApplyStateAction {
-    fn apply(self, state: Rc<State>) -> Rc<State> {
-        todo!();
+// pub struct ApplyStateAction(pub StateXml);
+// impl Reducer<State> for ApplyStateAction {
+//     fn apply(self, state: Rc<State>) -> Rc<State> {
+//         todo!();
 
-        // if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
-        //     let new_state = self.0;            
-        //     let index = new_state.get_index();
-        //     let states = &mut multystate.states;
-        //     states[index] = StateXml { ..new_state };
+//         // if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
+//         //     let new_state = self.0;            
+//         //     let index = new_state.get_index();
+//         //     let states = &mut multystate.states;
+//         //     states[index] = StateXml { ..new_state };
 
-        //     return  State {
-        //             meta: CellMeta { 
-        //                 data: CellMetaVariant::Multystate(multystate.clone()), 
-        //                 ..state.meta.clone() 
-        //             },
-        //             ..(*state).clone()
-        //         }
-        //         .into();
-        // }
-        // state
-    }
-}
+//         //     return  State {
+//         //             meta: CellMeta { 
+//         //                 data: CellMetaVariant::Multystate(multystate.clone()), 
+//         //                 ..state.meta.clone() 
+//         //             },
+//         //             ..(*state).clone()
+//         //         }
+//         //         .into();
+//         // }
+//         // state
+//     }
+// }
 
-pub struct ApplyPredefStateStyleAction {
-    pub r#type: StatePredefType, 
-    pub style: IString,
-}
-impl Reducer<State> for ApplyPredefStateStyleAction {
-    fn apply(self, state: Rc<State>) -> Rc<State> {
-		todo!();
+// pub struct ApplyPredefStateStyleAction {
+//     pub r#type: StatePredefType, 
+//     pub style: IString,
+// }
+// impl Reducer<State> for ApplyPredefStateStyleAction {
+//     fn apply(self, state: Rc<State>) -> Rc<State> {
+// 		todo!();
 
-        // if let CellMetaVariant::Multystate(curr) = state.meta.data.clone()  {
-        //     let mut curr_predef_item = match self.r#type {
-        //             StatePredefType::Default => curr.predef[0].clone(),
-        //             StatePredefType::Bad => curr.predef[1].clone(),
-        //         };  
-        //     curr_predef_item.set_style(self.style);
+//         // if let CellMetaVariant::Multystate(curr) = state.meta.data.clone()  {
+//         //     let mut curr_predef_item = match self.r#type {
+//         //             StatePredefType::Default => curr.predef[0].clone(),
+//         //             StatePredefType::Bad => curr.predef[1].clone(),
+//         //         };  
+//         //     curr_predef_item.set_style(self.style);
 
-        //     let predef = match self.r#type {
-        //             StatePredefType::Default => vec![curr_predef_item, curr.predef[1].clone()],
-        //             StatePredefType::Bad => vec![curr.predef[0].clone(), curr_predef_item],
-        //         };
+//         //     let predef = match self.r#type {
+//         //             StatePredefType::Default => vec![curr_predef_item, curr.predef[1].clone()],
+//         //             StatePredefType::Bad => vec![curr.predef[0].clone(), curr_predef_item],
+//         //         };
 
-        //     let data = CellMetaVariant::Multystate(MultystateXml { predef, ..curr });
-        //     return State {
-        //             meta: CellMeta { data, ..state.meta.clone() },
-        //             ..(*state).clone()
-        //         }
-        //         .into();
-        // }
-        // state
-    }
-}
+//         //     let data = CellMetaVariant::Multystate(MultystateXml { predef, ..curr });
+//         //     return State {
+//         //             meta: CellMeta { data, ..state.meta.clone() },
+//         //             ..(*state).clone()
+//         //         }
+//         //         .into();
+//         // }
+//         // state
+//     }
+// }
 
-pub struct MultystateAddStateAction;
-impl Reducer<State> for MultystateAddStateAction {
-    fn apply(self, state: Rc<State>) -> Rc<State> {
-        if let Ok(multystate) =  state.meta.get_multystate() {
-            let mut multystate = (*multystate).borrow_mut();
-            let pk = multystate.states.len();
-            let name: IString = format!("state-{}", multystate.states.len()).into();
-            match multystate.range_type {
-                RangeType::DISCRET => {
-                    let prev = multystate.states.last()
-                        .map(|o| o.value.get_value())
-                        .unwrap_or(0);
+// pub struct MultystateAddStateAction;
+// impl Reducer<State> for MultystateAddStateAction {
+//     fn apply(self, state: Rc<State>) -> Rc<State> {
+//         if let Ok(multystate) =  state.meta.get_multystate() {
+//             let mut multystate = (*multystate).borrow_mut();
+//             let pk = multystate.states.len();
+//             let name: IString = format!("state-{}", multystate.states.len()).into();
+//             match multystate.range_type {
+//                 RangeType::DISCRET => {
+//                     let prev = multystate.states.last()
+//                         .map(|o| o.value.get_value())
+//                         .unwrap_or(0);
 
-                    let state = StateXml { 
-                        pk, name,
-                        value: RangeValue::DiscretConst { value: prev },
-                        ..Default::default() 
-                    };
-                    multystate.push_state(state);
-                },
-                RangeType::RANGE => {
-                    let prev = multystate.states.last()
-                        .map(|o| o.value.get_to())
-                        .unwrap_or(0.0);
+//                     let state = StateXml { 
+//                         pk, name,
+//                         value: RangeValue::DiscretConst { value: prev },
+//                         ..Default::default() 
+//                     };
+//                     multystate.push_state(state);
+//                 },
+//                 RangeType::RANGE => {
+//                     let prev = multystate.states.last()
+//                         .map(|o| o.value.get_to())
+//                         .unwrap_or(0.0);
     
-                    let state = StateXml { 
-                        pk, name,
-                        value: RangeValue::RangeConst { from: prev, to: prev },
-                        ..Default::default() 
-                    };
-                    multystate.push_state(state);
-                },            
-            };
+//                     let state = StateXml { 
+//                         pk, name,
+//                         value: RangeValue::RangeConst { from: prev, to: prev },
+//                         ..Default::default() 
+//                     };
+//                     multystate.push_state(state);
+//                 },            
+//             };
     
-            // state.meta.borrow_mut().set_multystate_meta(multystate);
+//             // state.meta.borrow_mut().set_multystate_meta(multystate);
 
-            return State {
-               meta: CellMeta { 
-                    // types: CellMetaVariant::Multystate(multystate.clone()),
-                    ..state.meta.clone() 
-                },
-                ..(*state).clone()
-            }
-            .into()
+//             return State {
+//                meta: CellMeta { 
+//                     // types: CellMetaVariant::Multystate(multystate.clone()),
+//                     ..state.meta.clone() 
+//                 },
+//                 ..(*state).clone()
+//             }
+//             .into()
 
-        }
-        log::error!("can't add state for not multystate");
-        state
-    }
-}
+//         }
+//         log::error!("can't add state for not multystate");
+//         state
+//     }
+// }
 
