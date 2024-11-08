@@ -1,5 +1,5 @@
 use std::{borrow::BorrowMut, cmp::Ordering, collections::HashSet, rc::Rc};
-use common_model::{multystate::{self, range::{RangeType, RangeValue}, state::StateXml, state_predef::{StatePredefType, StatePredefXml}, MultystateXml}, traits::PredefStyle};
+use common_model::{free_value::LabelValueXml, multystate::{self, range::{RangeType, RangeValue}, state::StateXml, state_predef::{StatePredefType, StatePredefXml}, MultystateXml}, traits::PredefStyle};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yew::AttrValue;
@@ -20,6 +20,7 @@ pub struct State {
     pub mx_utils: MxUtils,
     pub mx_editor: MxEditor,    
     pub model_node: IString,
+    pub start_apply: bool,
 }
 
 impl State {
@@ -120,6 +121,7 @@ impl Default for State {
             mx_utils: Default::default(),
             mx_editor: Default::default(),
             model_node: Default::default(),
+            start_apply: false,
         }
     }
 }
@@ -191,6 +193,42 @@ impl Reducer<State> for SetCellModelAction {
             model_node: self.0,
             ..(*state).clone()
         }.into()        
+    }
+}
+
+pub struct StartApplyAction(pub bool);
+impl Reducer<State> for StartApplyAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        State {
+            start_apply: self.0,
+            ..(*state).clone()
+        }.into()
+    }
+}
+
+pub struct SetLabelAction(pub LabelValueXml);
+impl Reducer<State> for SetLabelAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        let mut meta = state.meta.clone();
+        meta.set_label_meta(self.0);
+
+        State {
+            meta,
+            ..(*state).clone()
+        }.into()
+    }
+}
+
+pub struct SetMultystateAction(pub MultystateXml);
+impl Reducer<State> for SetMultystateAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        let mut meta = state.meta.clone();
+        meta.set_multystate_meta(self.0);
+
+        State {
+            meta,
+            ..(*state).clone()
+        }.into()
     }
 }
 

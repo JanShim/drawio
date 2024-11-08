@@ -9,7 +9,7 @@ use data_source::DataSourceComponent;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    errors::CellStateError, rrefcell, store::cell,
+    errors::CellStateError, rrefcell, store::cell::{self, SetMultystateAction},
 };
 
 pub mod data_source;
@@ -20,11 +20,12 @@ pub mod state_predef;
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
+    pub on_detals_apply: Callback<bool>,    // callback for applyed notification
 }
 
 #[function_component]
-pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
-    let (store_state, store_state_dispatch) = use_store::<cell::State>();
+pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html {
+    let (_, store_state_dispatch) = use_store::<cell::State>();
     let cell_state = use_selector(|cell_state: &cell::State| {
         if let Ok(multystate) = cell_state.meta.get_multystate_meta() {
 			return multystate;
@@ -51,6 +52,27 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
         })
     };
     /* #endregion */
+
+    // start apply process if true
+    let start_apply = use_selector(|state: &cell::State | state.start_apply);
+    {    
+        let my_state = cell_state.clone();
+        let on_detals_apply = on_detals_apply.clone();
+        let predef_states = predef_states.clone();
+        let states = states.clone();
+        use_effect_with(*start_apply, move |start| {
+            if *start {
+                let new_state = MultystateXml {
+                    predef: (*predef_states).clone(),
+                    states: states.current().clone(),
+                    ..(*my_state).clone()
+                };
+
+                store_state_dispatch.apply(SetMultystateAction(new_state));
+                on_detals_apply.emit(true);
+            }
+        })
+    };
 
     // ======== Events ==========
     let state_apply_callback = {
@@ -139,7 +161,6 @@ pub fn MultystateComponent(Props { edit_mode }: &Props) -> Html {
     let states_view = {
         let edit_mode = edit_mode.clone();
         let selected = selected_state.clone();
-        // let states = states.clone();
         states.current().iter()
             .map(move |item| {
                 if edit_mode {

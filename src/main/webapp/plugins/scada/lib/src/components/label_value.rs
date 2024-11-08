@@ -2,7 +2,10 @@ use std::rc::Rc;
 use common_model::free_value::LabelValueXml;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{html, function_component, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
+use yew::{function_component, html, use_effect_with, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
+use yewdux::{use_selector, use_store};
+
+use crate::store::cell::{self, SetLabelAction};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -10,11 +13,27 @@ pub struct Props {
     pub value: LabelValueXml,
     #[prop_or_default]
     pub apply: Callback<LabelValueXml>,
+    pub on_detals_apply: Callback<bool>,
 }
 
 #[function_component]
-pub fn LabelValueComponent(Props {value, apply}: &Props ) -> Html {
+pub fn LabelValueComponent(Props {value, apply, on_detals_apply}: &Props ) -> Html 
+{
+    let (_, store_state_dispatch) = use_store::<cell::State>();
+
+    let start_apply = use_selector(|state: &cell::State | state.start_apply);
     let label_state = use_state(|| value.clone());
+    {    
+        let label_state = label_state.clone();
+        let on_detals_apply = on_detals_apply.clone();
+        use_effect_with(*start_apply, move |start| {
+            if *start {
+                store_state_dispatch.apply(SetLabelAction((*label_state).clone()));
+                on_detals_apply.emit(true);
+            }
+        })
+    };
+
 
     let is_edit = use_state(|| false);
     let togle_edit = {

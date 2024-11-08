@@ -2,9 +2,9 @@ use common_model::{multystate::{range::RangeType, state::StateXml}, utils::{filt
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
 use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
-use yewdux::use_store;
+use yewdux::{use_selector, use_store};
 
-use crate::{components::multystate::state_rect:: StateSampleRect, store};
+use crate::{components::multystate::state_rect:: StateSampleRect, store::{self, cell}};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -69,8 +69,10 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
     value, 
     apply,
     select, 
-    selected
-}: &MultystateStateEditProps) -> Html {
+    selected,
+}: &MultystateStateEditProps) -> Html 
+{
+    // let (_, store_state_dispatch) = use_store::<cell::State>();
    
     let (cell_state, _) = use_store::<store::cell::State>();  // cell meta storage
     let range_type = use_state(|| Into::<RangeType>::into(value.value.clone()));

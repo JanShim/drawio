@@ -1,7 +1,7 @@
+use yew::prelude::*;
 use std::collections::{HashMap, HashSet};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 use common_model::free_value::LabelValueXml;
 
@@ -12,7 +12,7 @@ use crate::{
         value_reducers::ApplyLabelValueMetaAction, 
         CellMetaVariant, 
         CellType
-    }, store::cell::{self, SetCellTypeAction}, utils::set_widget_model 
+    }, store::cell::{self, SetCellTypeAction, StartApplyAction}, utils::set_widget_model
 };
 
 
@@ -20,9 +20,6 @@ use crate::{
 pub fn CellDetailsComponent() -> Html {
     let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
     let cell_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone());
-    use_effect_with(cell_meta.clone(), |meta| {
-        log::debug!("use_effect_with: cell_meta {meta:?}");
-    });
 
     let edit_mode = use_state(|| false);
 
@@ -32,16 +29,42 @@ pub fn CellDetailsComponent() -> Html {
         };
 
     let cell_details_apply: Callback<MouseEvent> = {
-            let edit_mode = edit_mode.clone();
-            let cell_state = cell_state.clone();
-            let cell_meta = cell_meta.clone();
+
+            let cell_state_dispatch = cell_state_dispatch.clone();
             Callback::from(move |_: MouseEvent| {
-                log::debug!("CURR CELL META:: {:?}", cell_meta);
-                set_widget_model(cell_state.mx_editor.clone(), cell_state.cell.clone(), cell_state.model_node.to_string());
-                let _meta = cell_state.cell.set_meta(&cell_meta).ok();
-                edit_mode.set(false);
+               cell_state_dispatch.apply(StartApplyAction(true));
             })
         };
+
+    let features_count = use_mut_ref(|| cell_meta.types.len());
+    let on_detals_apply = {
+            let features_count = features_count.clone();
+            Callback::from(move |_: bool| {
+                *features_count.borrow_mut() -= 1;      // decrement counter
+            })
+        };
+
+    // effect on cell_meta changed
+    {
+        let features_count = features_count.clone(); 
+        let edit_mode = edit_mode.clone();
+        let cell_state = cell_state.clone();
+        let cell_state_dispatch = cell_state_dispatch.clone();
+        use_effect_with(cell_meta.clone(), move |meta| {
+            if *features_count.borrow() == 0 {
+                log::debug!("use_effect_with: apply meta {meta:?}");
+
+                //TODO: забыл чаем этоы
+                set_widget_model(cell_state.mx_editor.clone(), cell_state.cell.clone(), cell_state.model_node.to_string());
+
+                let new_meta = (**meta).clone();
+                let _ = cell_state.cell.set_meta(&new_meta).ok();                
+
+                cell_state_dispatch.apply(StartApplyAction(false));
+                edit_mode.set(false);
+            }            
+        })
+    };        
 
     // let cell_type_apply = {
     //     let cell_state_dispatch = cell_state_dispatch.clone();
@@ -82,13 +105,13 @@ pub fn CellDetailsComponent() -> Html {
                             .apply_callback(|value: LabelValueXml| ApplyLabelValueMetaAction(value));  
 
                         html!{ 
-                            <LabelValueComponent value={value.clone()} apply={label_value_apply}/> 
+                            <LabelValueComponent value={value.clone()} apply={label_value_apply} on_detals_apply={on_detals_apply.clone()}/> 
                         }
                     },
                     CellMetaVariant::Multystate(_) => {
                         log::debug!("cell as multystate: {cell_meta:?}");
                         html!{ 
-                            <MultystateComponent edit_mode={*edit_mode}/> 
+                            <MultystateComponent edit_mode={*edit_mode} on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },
                     CellMetaVariant::WidgetContainer(_) => {
