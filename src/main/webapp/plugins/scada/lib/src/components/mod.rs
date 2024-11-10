@@ -13,6 +13,7 @@ pub mod cell_details;
 pub mod multystate;
 pub mod label_value;
 pub mod undefiend;
+pub mod shared;
 
 
 pub fn get_global_css() -> VNode {

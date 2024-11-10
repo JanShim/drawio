@@ -7,12 +7,15 @@ use common_model::free_value::LabelValueXml;
 
 use crate::{
     components::{
-          label_value::LabelValueComponent, multystate::MultystateComponent, widget::WidgetComponent
-    }, model::cell_meta::{
+        label_value::LabelValueComponent, multystate::MultystateComponent, shared::{MdIcon, MdIconType}, widget::WidgetComponent
+    },
+    model::cell_meta::{
         value_reducers::ApplyLabelValueMetaAction, 
         CellMetaVariant, 
         CellType
-    }, store::cell::{self, SetCellTypeAction, StartApplyAction}, utils::set_widget_model
+    }, 
+    store::cell::{self, SetCellTypeAction, StartApplyAction}, 
+    utils::set_widget_model
 };
 
 
@@ -29,36 +32,38 @@ pub fn CellDetailsComponent() -> Html {
         };
 
     let cell_details_apply: Callback<MouseEvent> = {
-
             let cell_state_dispatch = cell_state_dispatch.clone();
             Callback::from(move |_: MouseEvent| {
                cell_state_dispatch.apply(StartApplyAction(true));
             })
         };
 
-    let features_count = use_mut_ref(|| cell_meta.types.len());
+    let features_set = use_mut_ref(|| cell_meta.get_cell_type());
     let on_detals_apply = {
-            let features_count = features_count.clone();
-            Callback::from(move |_: bool| {
-                *features_count.borrow_mut() -= 1;      // decrement counter
+            let features_set = features_set.clone();
+            Callback::from(move |t: CellType| {
+                log::debug!("apply set: {:?} -{t:?}", features_set.borrow());
+                features_set.borrow_mut().remove(&t);      // remove from set
             })
         };
 
     // effect on cell_meta changed
     {
-        let features_count = features_count.clone(); 
+        let features_set = features_set.clone(); 
         let edit_mode = edit_mode.clone();
         let cell_state = cell_state.clone();
         let cell_state_dispatch = cell_state_dispatch.clone();
         use_effect_with(cell_meta.clone(), move |meta| {
-            if *features_count.borrow() == 0 {
-                log::debug!("use_effect_with: apply meta {meta:?}");
-
+            // log::debug!("use_effect_with: apply meta {meta:?}");
+            if features_set.borrow().len() == 0 {
                 //TODO: забыл чаем этоы
                 set_widget_model(cell_state.mx_editor.clone(), cell_state.cell.clone(), cell_state.model_node.to_string());
 
                 let new_meta = (**meta).clone();
                 let _ = cell_state.cell.set_meta(&new_meta).ok();                
+
+                // reset apply counter
+                *features_set.borrow_mut() = meta.get_cell_type();
 
                 cell_state_dispatch.apply(StartApplyAction(false));
                 edit_mode.set(false);
@@ -100,7 +105,7 @@ pub fn CellDetailsComponent() -> Html {
             .map(|o| {
                 match o.clone() {
                     CellMetaVariant::Label(value) => {
-                        log::debug!("cell as label: {cell_meta:?}");
+                        // log::debug!("cell as label: {cell_meta:?}");
                         let label_value_apply = cell_state_dispatch
                             .apply_callback(|value: LabelValueXml| ApplyLabelValueMetaAction(value));  
 
@@ -109,13 +114,13 @@ pub fn CellDetailsComponent() -> Html {
                         }
                     },
                     CellMetaVariant::Multystate(_) => {
-                        log::debug!("cell as multystate: {cell_meta:?}");
+                        // log::debug!("cell as multystate: {cell_meta:?}");
                         html!{ 
                             <MultystateComponent edit_mode={*edit_mode} on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },
                     CellMetaVariant::WidgetContainer(_) => {
-                        log::debug!("cell as widget: {cell_meta:?}");
+                        // log::debug!("cell as widget: {cell_meta:?}");
                         html!{
                             <WidgetComponent edit_mode={*edit_mode}/> 
                         }                    
@@ -225,7 +230,7 @@ pub fn CellTypeSelectorComponent() -> Html {
         <div>
             // <CellTypeSelectorHeader cell_types_apply={cell_types_apply} />
             <div class="flex-box-2 delim-label" >
-                <button onclick={cell_types_apply} disabled={!*is_checkable}><img src="images/checkmark.gif" width="16" height="16"/></button>
+                <button onclick={cell_types_apply} disabled={!*is_checkable}><MdIcon icon={MdIconType::Check}/></button>
             </div>   
 
             <fieldset class="types-list">
@@ -251,10 +256,11 @@ pub struct CellDetailsHeaderProps {
 pub fn CellDetailsHeader(CellDetailsHeaderProps { edit_mode, cell_details_apply, edit_mode_toggle }: &CellDetailsHeaderProps) -> Html {
     html!{
         <div class="flex-box-2 delim-label" >
+        // arrow_back
         if *edit_mode {
-            <button onclick={cell_details_apply}><img src="images/checkmark.gif" width="16" height="16"/></button>
+            <button onclick={cell_details_apply}><MdIcon icon={MdIconType::Check}/></button>
         } else {
-            <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
+            <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
         }
         </div>           
     }    

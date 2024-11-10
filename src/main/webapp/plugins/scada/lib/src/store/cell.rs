@@ -134,8 +134,8 @@ impl Store for State {
     }
     
     fn should_notify(&self, old: &Self) -> bool {
-        log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
-        log::debug!("CellState  {:?}", self);
+        // log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
+        // log::debug!("CellState  {:?}", self);
 
         self != old
         || self.cell != old.cell
@@ -187,7 +187,7 @@ pub struct SetCellModelAction(pub IString);
 impl Reducer<State> for SetCellModelAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
         // let model = state.mx_utils.parse_xml(self.0.to_string()).unwrap();
-        log::debug!("SetCellModelAction model: {:?}", self.0);
+        // log::debug!("SetCellModelAction model: {:?}", self.0);
 
         State {
             model_node: self.0,
@@ -199,6 +199,9 @@ impl Reducer<State> for SetCellModelAction {
 pub struct StartApplyAction(pub bool);
 impl Reducer<State> for StartApplyAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
+
+        // log::debug!("start apply {}", self.0);
+
         State {
             start_apply: self.0,
             ..(*state).clone()

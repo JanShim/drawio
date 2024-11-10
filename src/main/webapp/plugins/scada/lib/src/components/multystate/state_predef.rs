@@ -3,7 +3,7 @@ use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrVa
 use yewdux::use_store;
 
 use crate::{
-    components::multystate::state_rect:: StateSampleRect, 
+    components::{multystate::state_rect:: StateSampleRect, shared::{MdIcon, MdIconType}}, 
     store,
 };
 
@@ -141,7 +141,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
         if *selected { 
             html! { <img src="images/close.png" onclick={toggle_close}/> }
         } else {
-            html! { <img src="images/edit16.png" onclick={toggle_edit}/> }
+            html! { <button onclick={toggle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
         }
     };
 
@@ -161,7 +161,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
             <td width="100%">{ my_state.get_name().as_str() }</td>
             <td width="50"><StateSampleRect style={(*css_string).clone()}/></td>
             <td width="20">
-                <button onclick={toggle_check}><img src="images/checkmark.gif" class="img-16"/></button>
+                <button onclick={toggle_check}><MdIcon icon={MdIconType::Check}/></button>
             </td>
         </tr>
         </table>    

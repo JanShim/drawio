@@ -8,15 +8,12 @@ use svg_view::SvgViewComponent;
 use glyph::{WidgetGlyph, Props as GlyphProps};
 
 use crate::{
-	errors::CellStateError, 
-	model::{cell_meta::{
+	components::shared::{MdIcon, MdIconType}, errors::CellStateError, model::{cell_meta::{
 			widget_reducers:: WidgetUuidApplyAction, 
 			CellMetaVariant
 		}, 
 		widget::WidgetGlyphItem
-	}, 
-	store::cell::{self, SetCellModelAction}, 
-	utils::{fetch, fetch_string, NULL_UUID},
+	}, store::cell::{self, SetCellModelAction}, utils::{fetch, fetch_string, NULL_UUID}
 };
 
 pub mod info_item;
@@ -124,9 +121,9 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
 		let type_edit_mode = type_edit_mode.clone();
         if edit_mode {
             if *type_edit_mode { 
-                html! { <img class="img-16" src="images/checkmark.gif" onclick={on_type_apply}/>  }
+                html! { <button onclick={on_type_apply}> <MdIcon icon={MdIconType::Check}/></button> }
              } else {
-                html! { <img class="img-16" src="images/edit16.png" onclick={togle_type_edit}/> }
+                html! { <button onclick={togle_type_edit}><MdIcon icon={MdIconType::Edit}/></button> }
              }
         } else {
             html! { <span/> }

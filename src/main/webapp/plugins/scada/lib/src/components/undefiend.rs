@@ -3,7 +3,7 @@ use common_model::undefiend::UndefiendXml;
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
 
-use crate::model::cell_meta::CellType;
+use crate::{components::shared::{MdIcon, MdIconType}, model::cell_meta::CellType};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -39,7 +39,7 @@ pub fn component(Props {value, apply}: &Props ) -> Html {
                 <option value="multystate" selected={true}>{"Множ. состояний"}</option>
                 <option value="value">{"Значение"}</option>
             </select>
-            <button  type="submit"><img src="images/checkmark.gif" width="16" height="16"/></button>
+            <button  type="submit"><MdIcon icon={MdIconType::Check}/></button>
         </div>
     </form>     
    }

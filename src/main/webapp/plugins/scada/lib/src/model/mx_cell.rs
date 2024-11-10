@@ -123,7 +123,7 @@ impl MxCell {
     pub fn get_meta(&self) -> Result<CellMeta, JsValue> {
         match self.get_value() {
             Ok(CellValue::Object(el)) => {
-                log::debug!("ELEMENT:  {:#?}", el.outer_html());
+                // log::debug!("ELEMENT:  {:#?}", el.outer_html());
                 from_str(el.outer_html().as_str())
                     .map_err(|err| JsValue::from(err.to_string().as_str()))
             },
@@ -136,7 +136,7 @@ impl MxCell {
             el.set_attribute("label", meta.label.as_str()).ok();
 
             let inner_html = self.get_meta_inner_html(&meta)?;
-            log::debug!("set_inner_html {:#?}", inner_html);
+            // log::debug!("set_inner_html {:#?}", inner_html);
             el.set_inner_html(inner_html.as_str());
 
             return self.get_meta();

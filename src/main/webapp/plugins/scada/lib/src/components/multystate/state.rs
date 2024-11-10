@@ -2,9 +2,9 @@ use common_model::{multystate::{range::RangeType, state::StateXml}, utils::{filt
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
 use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
-use yewdux::{use_selector, use_store};
+use yewdux::use_store;
 
-use crate::{components::multystate::state_rect:: StateSampleRect, store::{self, cell}};
+use crate::{components::{multystate::state_rect::StateSampleRect, shared::{MdIcon, MdIconType}}, store};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -18,9 +18,6 @@ pub fn MultystateStateComponent(Props { value, }: &Props) -> Html
     {
         let my_state = my_state.clone();
         use_effect_with(value.clone(), move |value | {
-            // my_state.dispatch(StateAction::Clone((*value).clone()));
-
-            log::debug!("{:?}", value);
             my_state.set((*value).clone());
         });
     }
@@ -166,7 +163,7 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
                     </td>
                     <td width="50"><StateSampleRect style={(*style_string).clone()}/></td>
                     <td width="20">
-                        <button type="submit"><img src="images/checkmark.gif" class="img-16"/></button>
+                        <button type="submit"><MdIcon icon={MdIconType::Check}/></button>
                     </td>
                 </tr>
             </table>
@@ -177,7 +174,7 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
         if *selected { 
             html! { <img src="images/close.png" onclick={toggle_close}/> }
         } else {
-            html! { <img src="images/edit16.png" onclick={toggle_edit}/> }
+            html! { <button onclick={toggle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
         }
     };
 

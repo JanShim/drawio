@@ -1,4 +1,4 @@
-use common_model::multystate::{range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefXml, MultystateXml};
+use common_model::{data_source::DataSourceXml, multystate::{range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefXml, MultystateXml}};
 use implicit_clone::unsync::IString;
 use state_predef::{StatePredefComponent, StatePredefEditComponent};
 use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties};
@@ -9,7 +9,7 @@ use data_source::DataSourceComponent;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    errors::CellStateError, rrefcell, store::cell::{self, SetMultystateAction},
+    errors::CellStateError, model::cell_meta::CellType, store::cell::{self, SetMultystateAction}
 };
 
 pub mod data_source;
@@ -20,7 +20,7 @@ pub mod state_predef;
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
-    pub on_detals_apply: Callback<bool>,    // callback for applyed notification
+    pub on_detals_apply: Callback<CellType>,    // callback for applyed notification
 }
 
 #[function_component]
@@ -34,6 +34,7 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
         MultystateXml::default()
     });    
 
+    let data_source = use_state(|| cell_state.ds.clone());
     let predef_states = use_state(|| cell_state.predef.clone());
     let states = use_list(cell_state.states.clone());
 
@@ -46,8 +47,7 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
     let state_select_callback = {
         let selected = selected_state.clone();
         Callback::from(move |value: Option<StateXml>| {
-            log::debug!("state_select_callback: {value:?}");
-
+            // log::debug!("state_select_callback: {value:?}");
             selected.set(value);  // change selected
         })
     };
@@ -58,18 +58,21 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
     {    
         let my_state = cell_state.clone();
         let on_detals_apply = on_detals_apply.clone();
+        let data_source = data_source.clone();
         let predef_states = predef_states.clone();
         let states = states.clone();
         use_effect_with(*start_apply, move |start| {
             if *start {
+                log::debug!("multy apply");
                 let new_state = MultystateXml {
+                    ds: (*data_source).clone(),
                     predef: (*predef_states).clone(),
                     states: states.current().clone(),
                     ..(*my_state).clone()
                 };
 
                 store_state_dispatch.apply(SetMultystateAction(new_state));
-                on_detals_apply.emit(true);
+                on_detals_apply.emit(CellType::MULTYSTATE);
             }
         })
     };
@@ -92,46 +95,56 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
     };
     
     let on_state_add = {
-        let range_type = cell_state.range_type.clone();
-        let states = states.clone();
-        Callback::from(move |_| {
-            let index = states.current().len();
-            let name: IString = format!("state-{index}").into();            
-            let new_state = match range_type {
-                RangeType::DISCRET => {
-                    let prev_val = states.current().last()
-                        .map(|o| o.value.get_value())
-                        .unwrap_or(0);
-                    StateXml { 
-                        pk: index, 
-                        name,
-                        value: RangeValue::DiscretConst { value: prev_val },
-                        ..Default::default() 
-                    }
-                },
-                RangeType::RANGE => {
-                    let prev_val = states.current().last()
-                        .map(|o| o.value.get_to())
-                        .unwrap_or(0.0);
-    
-                     StateXml { 
-                        pk: index, 
-                        name,
-                        value: RangeValue::RangeConst { from: prev_val, to: prev_val },
-                        ..Default::default() 
-                    }
-                },            
-            };
+            let range_type = cell_state.range_type.clone();
+            let states = states.clone();
+            Callback::from(move |_| {
+                let index = states.current().len();
+                let name: IString = format!("state-{index}").into();            
+                let new_state = match range_type {
+                    RangeType::DISCRET => {
+                        let prev_val = states.current().last()
+                            .map(|o| o.value.get_value())
+                            .unwrap_or(0);
+                        StateXml { 
+                            pk: index, 
+                            name,
+                            value: RangeValue::DiscretConst { value: prev_val },
+                            ..Default::default() 
+                        }
+                    },
+                    RangeType::RANGE => {
+                        let prev_val = states.current().last()
+                            .map(|o| o.value.get_to())
+                            .unwrap_or(0.0);
+        
+                        StateXml { 
+                            pk: index, 
+                            name,
+                            value: RangeValue::RangeConst { from: prev_val, to: prev_val },
+                            ..Default::default() 
+                        }
+                    },            
+                };
 
-            states.insert(index, new_state);
-        })
-    };
+                states.insert(index, new_state);
+            })
+        };
+
+    let apply_ds = {
+            let data_source = data_source.clone();
+            Callback::from(move |ds: DataSourceXml| {
+                data_source.set(ds);
+            })
+        };
 
     //====== View Items =====
     let data_source_view = {
+        let data_source = data_source.clone();
+        let apply_ds = apply_ds.clone();
         let props = yew::props!(data_source::Props {
-            ds: cell_state.ds.clone(),
+            ds: (*data_source).clone(),
             edit_mode: *edit_mode,
+            apply: apply_ds,
         });
         html! {<DataSourceComponent ..props/>}
     };
@@ -167,7 +180,7 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
                     let props = yew::props!(state::MultystateStateEditProps {
                             value: (*item).clone(),
                             selected: if let Some(selected) = (*selected).clone() {
-                                log::debug!("states: {selected:?}");
+                                // log::debug!("states: {selected:?}");
 
                                 selected.get_index() == item.get_index()
                             } else {

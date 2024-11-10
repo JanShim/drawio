@@ -6,19 +6,17 @@ use yew::{
 use yewdux::{use_selector, use_store};
 
 use crate::{
-    model::{
+    components::shared::{MdIcon, MdIconType}, model::{
         common::ModelForm, 
         widget::{form_meta::WidgetForm, WidgetDto}
-    }, 
-    store::diagram, 
-    utils::{cliped_model_box, post, put}
+    }, store::diagram, utils::{cliped_model_box, post, put}
 };
 
-#[function_component(WidgetInfoComponent)]
-pub fn scada_diagram_component() -> Html {
+#[function_component]
+pub fn WidgetInfoComponent() -> Html {
     let (state, dispatch) = use_store::<diagram::State>();
     let model_meta = use_selector(|state: &diagram::State| {
-        log::debug!("selector: {:?}", state.model_meta);
+        // log::debug!("selector: {:?}", state.model_meta);
         match &state.model_meta {
             ModelForm::Widget(form) => form.clone(),
             _ => {
@@ -76,11 +74,11 @@ pub fn scada_diagram_component() -> Html {
                                         Some(svg)
                                     ); 
 
-                                    log::debug!("post: {item:?}");
+                                    // log::debug!("post: {item:?}");
 
                                     let created = post(format!("{}/widget", state.api_url), item).await
                                         .and_then(|dto| {
-                                            log::debug!("created: {dto:?}");
+                                            // log::debug!("created: {dto:?}");
                                             Ok(dto)
                                         }).unwrap();
 
@@ -106,7 +104,7 @@ pub fn scada_diagram_component() -> Html {
 
                                     put(format!("{}/widget/{}", state.api_url, form.uuid), item).await
                                         .and_then(|dto| {
-                                            log::debug!("saved:  {dto:?}");
+                                            // log::debug!("saved:  {dto:?}");
                                             Ok(dto)
                                         }).unwrap();
 
@@ -125,7 +123,7 @@ pub fn scada_diagram_component() -> Html {
     let header = html!{
         <div class="flex-box-2 delim-label" >
         if !*edit_mode {
-            <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
+            <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
         }
         </div>           
     };

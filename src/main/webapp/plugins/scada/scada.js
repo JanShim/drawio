@@ -1,4 +1,18 @@
 
+function mxCssLink(href)
+{
+	var s = document.createElement('link');
+	s.setAttribute('rel', 'stylesheet');
+	s.setAttribute('href', href);
+	
+	var t = document.getElementsByTagName('link')[0];
+	if (t != null)
+	{
+		t.parentNode.insertBefore(s, t);
+	}
+};
+
+
 function setCellAttribute(cell, name, value) {
 	//cell.value = new NamedNodeMap();
 	cell.setAttribute(name, value);
@@ -37,14 +51,6 @@ function getCell0(editor) {
 function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
-
-// function getDiagramBoundingBox(editor) {
-// 	let cells = editor.graph.model.cells;
-// 	modelCells = Object.entries(cells).map(( [k, v] ) => v);
-
-// 	let box = editor.graph.getBoundingBox(modelCells);
-// 	return box;
-// }
 
 // двигает модель в (0,0) угол
 function clipedModelBox(modelStr) {
@@ -198,6 +204,10 @@ Draw.loadPlugin(async function(ui) {
 				initSync(o);
 			});				
 	}
+	// ============= CSS =====================
+	mxCssLink("plugins/scada/css/styles.css");
+	// mxCssLink("plugins/scada/css/iconfont/material-icons.css");
+
 	// ============= windows ==================
 	let diagramDataWindow = null;
 	let cellDataWindow = null;
@@ -275,9 +285,6 @@ Draw.loadPlugin(async function(ui) {
 		if (cell == null)
 		{
 			highlight.highlight(null);
-			// app.cell_clicked(null);
-			// renderSchema(div, new SchemaOptions("http://zheleschikovav.keenetic.pro:18764/v1/configurator"));
-
 			if (!isRendered) {
 				console.log("CALL renderSchema");
 				renderSchema(mxUtils, ui.editor, div, getAppOptions());

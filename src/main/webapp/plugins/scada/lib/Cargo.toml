@@ -13,7 +13,7 @@ target = "wasm32-unknown-unknown"
 common-model = { path = "/home/janshim/projects/rust/scada_editor/common_model" }
 console_error_panic_hook = "0.1.7"
 # anyhow = "1.0.88"
-thiserror = "1.0.65"
+thiserror = "2.0.1"
 log = "0.4"
 reqwasm = { version = "0.5.0"}
 yew = { version="0.21.0", features=["csr"] }

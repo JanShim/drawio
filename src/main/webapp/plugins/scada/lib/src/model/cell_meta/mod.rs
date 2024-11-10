@@ -46,6 +46,7 @@ pub enum CellMetaVariant {
 }
 
 impl CellMetaVariant {
+
     pub fn create_state(&mut self) {
         if let Self::Multystate(multy) = self {
             multy.create_state();

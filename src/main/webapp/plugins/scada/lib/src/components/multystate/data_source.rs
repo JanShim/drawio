@@ -3,48 +3,37 @@ use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
 use yewdux::{use_store, Reducer};
-use common_model::{data_source::DataSourceXml, multystate::MultystateXml};
+use common_model::data_source::DataSourceXml;
 
-use crate::{
-    model::cell_meta::{CellMeta, CellMetaVariant}, 
-    store::cell,
-};
+use crate::{components::shared::{MdIcon, MdIconType}, store::cell};
 
+// pub struct MultystateApplyDsAction(pub DataSourceXml);
+// impl Reducer<cell::State> for MultystateApplyDsAction {
+//     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
+//         let mut meta= state.meta.clone();
+//         if let Ok(mut multystate) = meta.get_multystate_meta() {
+//             multystate.set_data_source(self.0);
+//             meta.set_multystate_meta(multystate);
 
-pub struct MultystateApplyDsAction(pub DataSourceXml);
-impl Reducer<cell::State> for MultystateApplyDsAction {
-    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        // if let CellMetaVariant::Multystate(multy) = &state.meta.data  {
-        //     return cell::State {
-        //         meta: CellMeta { 
-        //             data: CellMetaVariant::Multystate(
-        //                 MultystateXml {
-        //                     ds: self.0,
-        //                     ..multy.clone()
-        //                 }
-        //             ),
-        //             ..state.meta.clone()
-        //         },
-        //         ..(*state).clone()
-        //     }.into()            
-        // }
-
-        todo!();
-
-        // multystate.data_source = self.0;
-        state
-    }
-}
+//             return  cell::State {
+//                 meta,
+//                 ..(*state).clone()
+//             }.into();
+//         };
+//         state
+//     }
+// }
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub ds: DataSourceXml,
     pub edit_mode: bool,
+    pub apply: Callback<DataSourceXml>,
 }
 
 #[function_component]
-pub fn DataSourceComponent(Props {ds, edit_mode}: &Props ) -> Html {
-    let (_, cell_store_dispatch) = use_store::<cell::State>();
+pub fn DataSourceComponent(Props {ds, edit_mode, apply}: &Props ) -> Html {
+    // let (_, cell_store_dispatch) = use_store::<cell::State>();
 
     let data_source = use_state(|| ds.clone());
 
@@ -57,8 +46,10 @@ pub fn DataSourceComponent(Props {ds, edit_mode}: &Props ) -> Html {
     let togle_apply = {
         let is_edit = is_edit.clone();
         let ds = data_source.clone();
+        let apply = apply.clone();
         Callback::from(move |_: MouseEvent| {
-            cell_store_dispatch.apply(MultystateApplyDsAction((*ds).clone()));
+            // cell_store_dispatch.apply(MultystateApplyDsAction((*ds).clone()));
+            apply.emit((*ds).clone());
             is_edit.set(!*is_edit);     // togle is_edit
         })
     };        
@@ -81,9 +72,9 @@ pub fn DataSourceComponent(Props {ds, edit_mode}: &Props ) -> Html {
         let is_edit = is_edit.clone();
         if *edit_mode {
             if *is_edit { 
-                html! { <img src="images/checkmark.gif" onclick={togle_apply}/> }
+                html! { <button onclick={togle_apply}><MdIcon icon={MdIconType::Check}/></button> }
              } else {
-                html! { <img src="images/edit16.png" onclick={togle_edit}/> }
+                html! { <button onclick={togle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
              }
         } else {
             html! { <span/> }

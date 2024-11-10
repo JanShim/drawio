@@ -5,7 +5,7 @@ use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_effect_with, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
 use yewdux::{use_selector, use_store};
 
-use crate::store::cell::{self, SetLabelAction};
+use crate::{components::shared::{MdIcon, MdIconType}, model::cell_meta::CellType, store::cell::{self, SetLabelAction}};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -13,7 +13,7 @@ pub struct Props {
     pub value: LabelValueXml,
     #[prop_or_default]
     pub apply: Callback<LabelValueXml>,
-    pub on_detals_apply: Callback<bool>,
+    pub on_detals_apply: Callback<CellType>,
 }
 
 #[function_component]
@@ -28,8 +28,9 @@ pub fn LabelValueComponent(Props {value, apply, on_detals_apply}: &Props ) -> Ht
         let on_detals_apply = on_detals_apply.clone();
         use_effect_with(*start_apply, move |start| {
             if *start {
+                log::debug!("label appply");
                 store_state_dispatch.apply(SetLabelAction((*label_state).clone()));
-                on_detals_apply.emit(true);
+                on_detals_apply.emit(CellType::LABEL);
             }
         })
     };
@@ -68,9 +69,9 @@ pub fn LabelValueComponent(Props {value, apply, on_detals_apply}: &Props ) -> Ht
     let img_view = {
         let is_edit = is_edit.clone();
         if *is_edit { 
-           html! { <img src="images/checkmark.gif" onclick={togle_apply}/> }
+           html! { <button onclick={togle_apply}><MdIcon icon={MdIconType::Check}/></button> }
         } else {
-           html! { <img src="images/edit16.png" onclick={togle_edit}/> }
+           html! { <button onclick={togle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
         }
     };    
 

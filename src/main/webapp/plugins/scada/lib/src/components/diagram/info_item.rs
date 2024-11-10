@@ -4,10 +4,9 @@ use web_sys::{FormData, HtmlFormElement};
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
-use crate::model::{
-    diagram::{form_meta::DiagramForm, DiagramDto},
-    common::ModelForm,
-};
+use crate::{components::shared::{MdIcon, MdIconType}, model::{
+    common::ModelForm, diagram::{form_meta::DiagramForm, DiagramDto}
+}};
 use crate::store;
 use crate::utils::{post, put};
 
@@ -15,7 +14,7 @@ use crate::utils::{post, put};
 pub fn scada_diagram_component() -> Html {
     let (state, dispatch) = use_store::<store::diagram::State>();
     let model_meta = use_selector(|state: &store::diagram::State| {
-        log::debug!("selector: {:?}", state.model_meta);
+        // log::debug!("selector: {:?}", state.model_meta);
         match &state.model_meta {
             ModelForm::Diagram(form) => form.clone(),
             _ => {
@@ -69,7 +68,7 @@ pub fn scada_diagram_component() -> Html {
                         if let Ok(node) = state.get_graph_xml() {
                             if let Ok(Some(model_str)) = state.get_xml(node) {
 
-                                log::debug!("saving: {model_str}");
+                                // log::debug!("saving: {model_str}");
 
                                 let svg = state.get_graph_svg();
 
@@ -82,7 +81,7 @@ pub fn scada_diagram_component() -> Html {
 
                                     let created = post(format!("{}/diagram", state.api_url), item).await
                                         .and_then(|dto| {
-                                            log::debug!("created: {dto:?}");
+                                            // log::debug!("created: {dto:?}");
                                             Ok(dto)
                                         }).unwrap();
                                     
@@ -104,7 +103,7 @@ pub fn scada_diagram_component() -> Html {
 
                                     put(format!("{}/diagram/{}", state.api_url, form.uuid), item).await
                                         .and_then(|dto| {
-                                            log::debug!("saved:  {dto:?}");
+                                            // log::debug!("saved:  {dto:?}");
                                             Ok(dto)
                                         }).unwrap();
 
@@ -122,7 +121,7 @@ pub fn scada_diagram_component() -> Html {
     let header = html!{
         <div class="flex-box-2 delim-label" >
         if !*edit_mode {
-            <button onclick={edit_mode_toggle}><img src="images/edit16.png"/></button>
+            <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
         }
         </div>           
     };

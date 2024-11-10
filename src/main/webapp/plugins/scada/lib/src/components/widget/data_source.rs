@@ -5,8 +5,7 @@ use yew::{function_component, html, use_reducer, use_state, Callback, Html, Inpu
 use yewdux::use_store;
 
 use crate::{
-    model::cell_meta::data_source_reducers::WidgetApplyDsAction, 
-    store::cell 
+    components::shared::{MdIcon, MdIconType}, model::cell_meta::data_source_reducers::WidgetApplyDsAction, store::cell 
 };
 
 
@@ -63,9 +62,9 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
         let is_edit = is_edit.clone();
         if *edit_mode {
             if *is_edit { 
-                html! { <img src="images/checkmark.gif" onclick={togle_apply}/>  }
+                html! { <button onclick={togle_apply}><MdIcon icon={MdIconType::Check}/></button> }
              } else {
-                html! { <img src="images/edit16.png" onclick={togle_edit}/> }
+                html! { <button onclick={togle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
              }
         } else {
             html! { <span/> }
