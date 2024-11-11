@@ -537,10 +537,15 @@ Draw.loadPlugin(async function(ui) {
 				cellDataWindow.destroy();
 				console.log("cell window destroyed!");
 			}
+			// clear innerHtml
+			divScadaCellData.innerHTML = "";
+
 			cellDataWindow = newCellWindow(divScadaCellData);
 			cellDataWindow.setVisible(true);
 
 			renderCell(ui.editor, mxUtils, cell, divScadaCellData, getAppOptions());
+
+			console.log("divScadaCellData", divScadaCellData.innerHTML);
 		} 
 		else {
 			highlight.highlight(null);

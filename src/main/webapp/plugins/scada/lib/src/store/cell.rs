@@ -1,15 +1,16 @@
-use std::{borrow::BorrowMut, cmp::Ordering, collections::HashSet, rc::Rc};
-use common_model::{free_value::LabelValueXml, multystate::{self, range::{RangeType, RangeValue}, state::StateXml, state_predef::{StatePredefType, StatePredefXml}, MultystateXml}, traits::PredefStyle};
+use std::{cmp::Ordering, collections::HashSet, rc::Rc};
+use common_model::{
+    free_value::LabelValueXml, 
+    multystate::MultystateXml, 
+};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yew::AttrValue;
 use yewdux::{store::Store, Reducer};
 
 use crate::model::{
-    cell_meta::{
-        // multystate::{state::StateMeta, MultystateMeta}, 
-        CellMeta, CellMetaVariant, CellType
-    }, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
+    cell_meta::{ CellMeta, CellMetaVariant, CellType, }, 
+    mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
 };
 
 #[derive(Clone, PartialEq, Debug)]
@@ -136,6 +137,8 @@ impl Store for State {
     fn should_notify(&self, old: &Self) -> bool {
         // log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
         // log::debug!("CellState  {:?}", self);
+
+        log::debug!("should_notify?");
 
         self != old
         || self.cell != old.cell

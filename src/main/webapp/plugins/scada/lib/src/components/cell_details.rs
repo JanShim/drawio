@@ -19,8 +19,13 @@ use crate::{
 };
 
 
+#[derive(Properties, PartialEq, Debug)]
+pub struct DetailsProps {
+    pub cell_id: AttrValue,
+}
+
 #[function_component]
-pub fn CellDetailsComponent() -> Html {
+pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
     let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
     let cell_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone());
 
@@ -140,15 +145,20 @@ pub fn CellDetailsComponent() -> Html {
 }
 
 // ----------------------------------------------
+struct TypesItem {
+    pub name: AttrValue,
+    pub label: AttrValue,
+    pub selected: bool,
+}
+
+#[derive(Properties, PartialEq, Debug)]
+pub struct SelectorProps {
+    pub cell_id: AttrValue,
+}
+
 #[function_component]
-pub fn CellTypeSelectorComponent() -> Html {
-
-    struct TypesItem {
-        pub name: AttrValue,
-        pub label: AttrValue,
-        pub selected: bool,
-    }
-
+pub fn CellTypeSelectorComponent(SelectorProps { cell_id }: &SelectorProps) -> Html 
+{
     let (_, cell_state_dispatch) = use_store::<cell::State>();
     // let cell_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone());
 

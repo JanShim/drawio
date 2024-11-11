@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
-use yewdux::{use_selector, Dispatch};
+use yewdux::{use_selector, use_store, Dispatch};
 use stylist::yew::styled_component;
 use web_sys::HtmlDivElement;
 
@@ -12,9 +12,22 @@ use crate::{
 };
 
 
+#[derive(Properties, PartialEq, Debug)]
+pub struct Props {
+    pub cell_id: AttrValue,
+}
+
 #[styled_component]
-pub fn CellComponent() -> Html {
-    let cell_types_num = use_selector(|st: &store::cell::State| {st.meta.types.len()});
+pub fn CellComponent(Props { cell_id }: &Props) -> Html {
+    // let state = use_store::<store::cell::State>();
+
+    let cell_types_num = use_selector(|st: &store::cell::State| {
+        st.meta.types.len()
+    });
+
+    log::debug!("CellComponent run");
+
+    // let aaa = use_memo(deps, f);
 
     // === view items ====
     html! {
@@ -22,11 +35,10 @@ pub fn CellComponent() -> Html {
         { get_global_css() }
 
         if *cell_types_num > 0 {
-            <CellDetailsComponent/>
+            <CellDetailsComponent cell_id={cell_id}/>
         } else {
-            <CellTypeSelectorComponent/>
+            <CellTypeSelectorComponent cell_id={cell_id}/>
         }
-
     </>        
     }    
 }
@@ -34,7 +46,10 @@ pub fn CellComponent() -> Html {
 
 #[wasm_bindgen(js_name=renderCell)]
 pub fn render_cell(mx_editor: MxEditor, mx_utils: MxUtils, cell: MxCell, div: HtmlDivElement, options: SchemaOptions) {
+    let cell_id = cell.get_id().unwrap();
     let meta = cell.get_meta().unwrap_or_default();
+    
+    log::debug!("render_cell: {cell_id:?}, {meta:?}");
 
     Dispatch::<store::cell::State>::global().set(store::cell::State {
         api_url:options.api_url.unwrap_or("undefiend".to_owned()).into(), 
@@ -45,5 +60,7 @@ pub fn render_cell(mx_editor: MxEditor, mx_utils: MxUtils, cell: MxCell, div: Ht
         ..Default::default()
     });
 
-    yew::Renderer::<CellComponent>::with_root(div.into()).render();
+    let props = Props { cell_id: cell_id.into() };
+
+    yew::Renderer::<CellComponent>::with_root_and_props(div.into(), props).render();
 }
