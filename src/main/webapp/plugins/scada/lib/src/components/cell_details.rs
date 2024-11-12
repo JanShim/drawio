@@ -1,4 +1,5 @@
 use yew::prelude::*;
+use yew_hooks::use_unmount;
 use std::collections::{HashMap, HashSet};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
@@ -14,20 +15,19 @@ use crate::{
         CellMetaVariant, 
         CellType
     }, 
-    store::cell::{self, SetCellTypeAction, StartApplyAction}, 
+    store::{cell::{self, SetCellTypeAction, StartApplyAction, NOT_CELL, NOT_CELL_META, NO_CONTEXT_FOUND}, mx_context::TMxGraphContext}, 
     utils::set_widget_model
 };
 
-
-#[derive(Properties, PartialEq, Debug)]
-pub struct DetailsProps {
-    pub cell_id: AttrValue,
-}
-
 #[function_component]
-pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
+pub fn CellDetailsComponent() -> Html {
+    use_unmount(|| {
+        log::debug!("CellDetailsComponent unmount");
+    });    
+
+    let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
     let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
-    let cell_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone());
+    let state_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone().expect(NOT_CELL_META));
 
     let edit_mode = use_state(|| false);
 
@@ -43,29 +43,35 @@ pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
             })
         };
 
-    let features_set = use_mut_ref(|| cell_meta.get_cell_type());
+    let features_set = use_mut_ref(|| state_meta.get_cell_type());
     let on_detals_apply = {
             let features_set = features_set.clone();
             Callback::from(move |t: CellType| {
                 log::debug!("apply set: {:?} -{t:?}", features_set.borrow());
                 features_set.borrow_mut().remove(&t);      // remove from set
-            })
+          })
         };
 
-    // effect on cell_meta changed
+    // effect on state_meta changed
     {
         let features_set = features_set.clone(); 
         let edit_mode = edit_mode.clone();
         let cell_state = cell_state.clone();
         let cell_state_dispatch = cell_state_dispatch.clone();
-        use_effect_with(cell_meta.clone(), move |meta| {
-            // log::debug!("use_effect_with: apply meta {meta:?}");
+        let mx_graph_context = mx_graph_context.clone();
+        use_effect_with(state_meta.clone(), move |meta| {
+            log::debug!("use_effect_with: apply meta to cell {meta:?}");
             if features_set.borrow().len() == 0 {
-                //TODO: забыл чаем этоы
-                set_widget_model(cell_state.mx_editor.clone(), cell_state.cell.clone(), cell_state.model_node.to_string());
+                let meta = cell_state.get_state_meta();
+                log::debug!("apply meta to cell {meta:?}");
 
-                let new_meta = (**meta).clone();
-                let _ = cell_state.cell.set_meta(&new_meta).ok();                
+                let cell = cell_state.cell.clone().expect(NOT_CELL);
+
+                //TODO: забыл зачем это?
+                set_widget_model(mx_graph_context.mx_editor.clone(), (*cell).clone(), cell_state.model_node.to_string());
+
+                // let new_meta = (**meta).clone();
+                let _ = cell.set_meta(&meta).ok();                
 
                 // reset apply counter
                 *features_set.borrow_mut() = meta.get_cell_type();
@@ -73,8 +79,33 @@ pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
                 cell_state_dispatch.apply(StartApplyAction(false));
                 edit_mode.set(false);
             }            
-        })
-    };        
+        });
+    }        
+
+    // // ---- node-ref events
+    // {
+    //     use_effect_with(div_ref, |div_ref| {
+    //         let div = div_ref
+    //             .cast::<HtmlElement>()
+    //             .expect("div_ref not attached to div element");
+
+    //         let listener = Closure::<dyn Fn(MouseEvent)>::wrap(Box::new(|e: MouseEvent| {
+    //             log::debug!("clicked 0");
+    //             if let Some(target) = e.target() {
+    //                 if let Ok(elem) = target.dyn_into::<HtmlElement>() {
+    //                     log::debug!("clicked");
+    //                 }                       
+    //             }
+    //         }));
+
+    //         div.add_event_listener_with_callback("click", listener.as_ref().unchecked_ref()).unwrap();
+
+    //         move || {
+    //             div.remove_event_listener_with_callback( "click", listener.as_ref().unchecked_ref(), ).unwrap();
+    //         }
+    //     });
+    // }
+
 
     // let cell_type_apply = {
     //     let cell_state_dispatch = cell_state_dispatch.clone();
@@ -84,10 +115,10 @@ pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
     // };
 
     // let widget_apply = {
-    //     let cell_meta = cell_meta.clone();
+    //     let state_meta = state_meta.clone();
     //     Callback::from(move |widget_meta: WidgetMeta| {
     //         log::debug!("widget_apply {widget_meta:?}");
-    //         cell_meta.clone().reduce(cell_meta::Action::SetWidgetMeta(widget_meta));
+    //         state_meta.clone().reduce(state_meta::Action::SetWidgetMeta(widget_meta));
     //     })
     // };    
 
@@ -106,26 +137,30 @@ pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
 
     let details_vew = {
         let edit_mode = edit_mode.clone();
-        cell_meta.types.iter()
+        state_meta.types.iter()
             .map(|o| {
                 match o.clone() {
                     CellMetaVariant::Label(value) => {
-                        // log::debug!("cell as label: {cell_meta:?}");
+                        log::debug!("cell as label: {state_meta:?}");
                         let label_value_apply = cell_state_dispatch
                             .apply_callback(|value: LabelValueXml| ApplyLabelValueMetaAction(value));  
 
                         html!{ 
-                            <LabelValueComponent value={value.clone()} apply={label_value_apply} on_detals_apply={on_detals_apply.clone()}/> 
+                            <LabelValueComponent edit_mode={*edit_mode} 
+                                value={value.clone()} 
+                                apply={label_value_apply} 
+                                on_detals_apply={on_detals_apply.clone()}/> 
                         }
                     },
                     CellMetaVariant::Multystate(_) => {
-                        // log::debug!("cell as multystate: {cell_meta:?}");
+                        log::debug!("cell as multystate: {state_meta:?}");
                         html!{ 
-                            <MultystateComponent edit_mode={*edit_mode} on_detals_apply={on_detals_apply.clone()}/> 
+                            <MultystateComponent edit_mode={*edit_mode} 
+                                on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },
                     CellMetaVariant::WidgetContainer(_) => {
-                        // log::debug!("cell as widget: {cell_meta:?}");
+                        log::debug!("cell as widget: {state_meta:?}");
                         html!{
                             <WidgetComponent edit_mode={*edit_mode}/> 
                         }                    
@@ -136,7 +171,7 @@ pub fn CellDetailsComponent(DetailsProps { cell_id }: &DetailsProps) -> Html {
     };
 
     html! {
-        <div>
+        <div >
             { header }
             { details_vew }
         </div>
@@ -151,17 +186,19 @@ struct TypesItem {
     pub selected: bool,
 }
 
-#[derive(Properties, PartialEq, Debug)]
-pub struct SelectorProps {
-    pub cell_id: AttrValue,
-}
+// #[derive(Properties, PartialEq, Debug)]
+// pub struct SelectorProps {
+//     pub cell_id: AttrValue,
+// }
 
 #[function_component]
-pub fn CellTypeSelectorComponent(SelectorProps { cell_id }: &SelectorProps) -> Html 
+pub fn CellTypeSelectorComponent() -> Html 
 {
-    let (_, cell_state_dispatch) = use_store::<cell::State>();
-    // let cell_meta = use_selector(|cell_state: &cell::State| cell_state.meta.clone());
+    use_unmount(|| {
+        log::debug!("CellTypeSelectorComponent unmount");
+    });
 
+    let (_, cell_state_dispatch) = use_store::<cell::State>();
     let cell_types = use_mut_ref(|| {
             vec![
                 TypesItem {name: "value".into(), label: "Значение".into(), selected: false},
@@ -238,7 +275,6 @@ pub fn CellTypeSelectorComponent(SelectorProps { cell_id }: &SelectorProps) -> H
 
     html! {
         <div>
-            // <CellTypeSelectorHeader cell_types_apply={cell_types_apply} />
             <div class="flex-box-2 delim-label" >
                 <button onclick={cell_types_apply} disabled={!*is_checkable}><MdIcon icon={MdIconType::Check}/></button>
             </div>   
@@ -247,8 +283,6 @@ pub fn CellTypeSelectorComponent(SelectorProps { cell_id }: &SelectorProps) -> H
                 <legend>{"Выберите нужные функции:"}</legend>
                 { list_vew }
             </fieldset>                        
-
-            // { details_vew }
         </div>
     }
 }

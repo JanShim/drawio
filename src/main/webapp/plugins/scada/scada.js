@@ -12,7 +12,6 @@ function mxCssLink(href)
 	}
 };
 
-
 function setCellAttribute(cell, name, value) {
 	//cell.value = new NamedNodeMap();
 	cell.setAttribute(name, value);
@@ -195,7 +194,7 @@ function getGraphSvg(editor) {
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, renderCell, renderSchema, recreateModelMeta, openDialog, SchemaOptions} = await import('./lib/pkg/scada_lib.js');
+	const {initSync, renderCell, recreateModelMeta, openDialog, SchemaOptions, initSchemaRender, initCellRender} = await import('./lib/pkg/scada_lib.js');
 
 	async function initWasm() {
 		await fetch('plugins/scada/lib/pkg/scada_lib_bg.wasm')
@@ -213,27 +212,27 @@ Draw.loadPlugin(async function(ui) {
 	let cellDataWindow = null;
 
 	//--------------------------------------------------------
-	let div = document.createElement('div');
-	div.setAttribute("id", "container");
-	div.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
-	div.style.border = '1px solid gray';
-	div.style.opacity = '0.8';
-	div.style.padding = '10px';
-	div.style.paddingTop = '0px';
-	div.style.width = '20%';
+	let schemaDiv = document.createElement('div');
+	schemaDiv.setAttribute("id", "container");
+	schemaDiv.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
+	schemaDiv.style.border = '1px solid gray';
+	schemaDiv.style.opacity = '0.8';
+	schemaDiv.style.padding = '10px';
+	schemaDiv.style.paddingTop = '0px';
+	schemaDiv.style.width = '20%';
 
 	let graph = ui.editor.graph;
 
 	if (!ui.editor.isChromelessView())
 	{
-		div.style.boxSizing = 'border-box';
-		div.style.minHeight = '100%';
-		div.style.width = '100%';
+		schemaDiv.style.boxSizing = 'border-box';
+		schemaDiv.style.minHeight = '100%';
+		schemaDiv.style.width = '100%';
 
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		
 		// main window
-		diagramDataWindow = new mxWindow('DFlow diagram data', div, iiw - 320, 60, 300, 500, true, true);
+		diagramDataWindow = new mxWindow('DFlow diagram data', schemaDiv, iiw - 320, 60, 300, 500, true, true);
 		diagramDataWindow.destroyOnClose = false;
 		diagramDataWindow.setMaximizable(true);
 		diagramDataWindow.setResizable(true);
@@ -243,12 +242,12 @@ Draw.loadPlugin(async function(ui) {
 	}
 	else
 	{
-		div.style.position = 'absolute';
-		div.style.minWidth = '200px';
-		div.style.top = '40px';
-		div.style.right = '20px';
+		schemaDiv.style.position = 'absolute';
+		schemaDiv.style.minWidth = '200px';
+		schemaDiv.style.top = '40px';
+		schemaDiv.style.right = '20px';
 
-		document.body.appendChild(div);
+		document.body.appendChild(schemaDiv);
 	}
 	
 	// Highlights current cell
@@ -286,8 +285,8 @@ Draw.loadPlugin(async function(ui) {
 		{
 			highlight.highlight(null);
 			if (!isRendered) {
-				console.log("CALL renderSchema");
-				renderSchema(mxUtils, ui.editor, div, getAppOptions());
+				// console.log("CALL renderSchema");
+				// renderSchema(mxUtils, ui.editor, schemaDiv, getAppOptions());
 				isRendered = true;
 			}
 		}
@@ -525,35 +524,21 @@ Draw.loadPlugin(async function(ui) {
 	/**
 	 * Updates the DFlow data panel
 	 */
+	// let prevCellId = undefined;
 	function scadaCellClicked(cell)
 	{
 		// Gets the selection cell
 		if (cell != null && isScadaCell(cell))
 		{
 			highlight.highlight(graph.view.getState(cell));
-			// destroy window if exist
-			if (cellDataWindow != null) {
-				cellDataWindow.setVisible(false);
-				cellDataWindow.destroy();
-				console.log("cell window destroyed!");
-			}
-			// clear innerHtml
-			divScadaCellData.innerHTML = "";
 
-			cellDataWindow = newCellWindow(divScadaCellData);
+			renderCell(cell);
 			cellDataWindow.setVisible(true);
-
-			renderCell(ui.editor, mxUtils, cell, divScadaCellData, getAppOptions());
-
-			console.log("divScadaCellData", divScadaCellData.innerHTML);
 		} 
 		else {
 			highlight.highlight(null);
-			// destroy window if exist
 			if (cellDataWindow != null) {
 				cellDataWindow.setVisible(false);
-				cellDataWindow.destroy();
-				cellDataWindow = null;
 			}
 		}
 
@@ -621,6 +606,11 @@ Draw.loadPlugin(async function(ui) {
 	await initWasm();
 	// здесь натройки пдагина
 	let getAppOptions = function() {return new SchemaOptions("http://localhost:8091/api/v1"); }		
+
+	initSchemaRender(ui.editor, mxUtils, schemaDiv, getAppOptions());
+
+	cellDataWindow = newCellWindow(divScadaCellData);
+	initCellRender(ui.editor, mxUtils, divScadaCellData, getAppOptions());	
 
 
 	let DFlowItemsDialog = function(editorUi) 

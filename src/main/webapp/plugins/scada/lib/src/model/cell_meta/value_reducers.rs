@@ -29,15 +29,16 @@ impl Reducer<LabelValueXml> for ValueAction {
 pub struct ApplyLabelValueMetaAction(pub LabelValueXml);
 impl Reducer<cell::State> for ApplyLabelValueMetaAction {
     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        let position = state.meta.get_meta_position(super::CellType::LABEL);
+        let meta = state.meta.as_ref().unwrap();
+        let position = meta.get_meta_position(super::CellType::LABEL);
         if position.is_some() {
-            let mut new_data= state.meta.types.clone();
+            let mut new_data= meta.types.clone();
             let _ = std::mem::replace(&mut new_data[position.unwrap()], CellMetaVariant::Label(self.0).into());
             return cell::State {
-                meta: CellMeta {
+                meta: Some( CellMeta {
                     types: new_data,
-                    ..state.meta.clone()
-                }, 
+                    ..meta.clone()
+                }), 
                 ..(*state).clone()
             }.into();
         }

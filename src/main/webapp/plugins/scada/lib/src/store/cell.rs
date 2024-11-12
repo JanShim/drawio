@@ -5,21 +5,21 @@ use common_model::{
 };
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use yew::AttrValue;
 use yewdux::{store::Store, Reducer};
 
 use crate::model::{
     cell_meta::{ CellMeta, CellMetaVariant, CellType, }, 
-    mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
+    mx_cell::{CellValue, MxCell}
 };
+
+pub const NOT_CELL: &str = "not cell";
+pub const NOT_CELL_META: &str = "not cell meta";
+pub const NO_CONTEXT_FOUND: &str = "no ctx found";
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct State {
-    pub api_url: AttrValue,
-    pub cell: MxCell,
-    pub meta: CellMeta,
-    pub mx_utils: MxUtils,
-    pub mx_editor: MxEditor,    
+    pub cell: Option<Rc<MxCell>>,
+    pub meta: Option<CellMeta>,
     pub model_node: IString,
     pub start_apply: bool,
 }
@@ -84,28 +84,52 @@ impl State {
     //         })
     // } 
 
+    // pub fn get_cell_label(&self) -> Result<AttrValue, JsValue> {
+    //     let cell = self.cell.clone().ok_or(JsValue::from(NOTCELL))?;
+    //     Ok(cell.get_label().into())
+    // }
+
     pub fn get_cell_style(&self) -> Result<IString, JsValue> {
-        self.cell.get_style()
+        let cell = self.cell.clone().ok_or(JsValue::from(NOT_CELL))?;
+        cell.get_style()
             .map(|o| o.into())
-            .ok_or(JsValue::from("no cell"))
+            .ok_or(JsValue::from(NOT_CELL))
     }
 
     pub fn set_cell_style(&self, style: String) {
-        self.cell.set_style(style);
+        if let Some(mut cell) = self.cell.clone() {
+            Rc::make_mut(&mut cell).set_style(style);
+        }
     }    
+
+    pub fn get_state_meta(&self) -> CellMeta {
+        self.meta.clone().expect(NOT_CELL_META)
+    }
+
+//     pub fn set_cell_meta(&self, meta: &CellMeta) -> Result<CellMeta, JsValue> {
+//         let cell = self.cell.clone().ok_or(JsValue::from(NOT_CELL))?;
+//         if let Ok(CellValue::Object(el)) = cell.get_value() {
+//            el.set_attribute("label", meta.label.as_str()).ok();
+
+//            let inner_html = cell.get_meta_inner_html(&meta)?;
+//            log::debug!("set_inner_html {:#?}", inner_html);
+//            el.set_inner_html(inner_html.as_str());
+
+//            return cell.get_meta();
+//         }
+//         Err(JsValue::from_str("can't set cell meta data"))        
+//    }
 
     // pub fn set_multystate_state_style(&self, i: usize, style: IString) -> Result<(), JsValue> {
     //     log::debug!("set_multystate_state_style: multy {:?}", self.meta.multystate);
     //     if let Some(multy) = self.meta.multystate.clone() {
     //         let mut states = multy.states;
     //         if i < states.len() {
-
     //             let state = &mut states[i];
     //             state.set_style(style);
     //             return Ok(());
     //         }
     //         return Err(CellStateError::MultyStateStateIndexError{index: i, len: states.len()}.into());
-
     //     } 
     //     Err(CellStateError::NoMeta().into())
     //     // let multy = self.meta.multystate.clone().ok_or::<JsValue>(CellStateError::NoMeta().into())?;
@@ -116,11 +140,8 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self { 
-            api_url: Default::default(),
-            cell: Default::default(),
-            meta: Default::default(),
-            mx_utils: Default::default(),
-            mx_editor: Default::default(),
+            cell: None,
+            meta: None,
             model_node: Default::default(),
             start_apply: false,
         }
@@ -167,20 +188,21 @@ impl Reducer<State> for SetCellTypeAction {
             })
             .collect::<Vec<_>>();
 
+        let cell = state.cell.clone().ok_or(JsValue::from(NOT_CELL)).unwrap();
         let meta = CellMeta{ 
-                label: state.cell.get_label().into(), 
+                label: cell.get_label().into(), 
                 types: data 
             };
 
         // assigne meta to editor cell
-        let res = state.cell.set_meta(&meta);
+        let res = cell.set_meta(&meta);
         if res.is_err() {
             log::error!("{:?}", res.err().unwrap().as_string())
         }
         
         // return
         State {
-            meta,
+            meta: Some(meta),
             ..(*state).clone()
         }.into()
     }
@@ -202,9 +224,6 @@ impl Reducer<State> for SetCellModelAction {
 pub struct StartApplyAction(pub bool);
 impl Reducer<State> for StartApplyAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-
-        // log::debug!("start apply {}", self.0);
-
         State {
             start_apply: self.0,
             ..(*state).clone()
@@ -215,11 +234,13 @@ impl Reducer<State> for StartApplyAction {
 pub struct SetLabelAction(pub LabelValueXml);
 impl Reducer<State> for SetLabelAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut meta = state.meta.clone();
-        meta.set_label_meta(self.0);
+        let mut new_meta = state.meta.clone().unwrap();
+        new_meta.set_label_meta(self.0);
+
+        log::debug!("NEW LABEL {:?}", new_meta);            
 
         State {
-            meta,
+            meta: Some(new_meta),
             ..(*state).clone()
         }.into()
     }
@@ -228,11 +249,13 @@ impl Reducer<State> for SetLabelAction {
 pub struct SetMultystateAction(pub MultystateXml);
 impl Reducer<State> for SetMultystateAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut meta = state.meta.clone();
-        meta.set_multystate_meta(self.0);
+        let mut new_meta = state.meta.clone().unwrap();
+        new_meta.set_multystate_meta(self.0);
+
+        log::debug!("NEW MULTY {:?}", new_meta);
 
         State {
-            meta,
+            meta: Some(new_meta),
             ..(*state).clone()
         }.into()
     }
@@ -344,3 +367,7 @@ impl Reducer<State> for SetMultystateAction {
 //     }
 // }
 
+// #[derive(Clone, PartialEq, Debug)]
+// pub struct App {
+//     pub curr: AppHandle<CellComponent>,
+// }

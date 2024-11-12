@@ -1,7 +1,7 @@
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
 use yew::{
-    function_component, html, use_state, Callback, Html, MouseEvent, SubmitEvent
+    function_component, html, use_context, use_state, Callback, Html, MouseEvent, SubmitEvent
 };
 use yewdux::{use_selector, use_store};
 
@@ -9,11 +9,14 @@ use crate::{
     components::shared::{MdIcon, MdIconType}, model::{
         common::ModelForm, 
         widget::{form_meta::WidgetForm, WidgetDto}
-    }, store::diagram, utils::{cliped_model_box, post, put}
+    }, 
+    store::{cell::NO_CONTEXT_FOUND, diagram, mx_context::TMxGraphContext}, 
+    utils::{cliped_model_box, post, put}
 };
 
 #[function_component]
 pub fn WidgetInfoComponent() -> Html {
+    let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);    
     let (state, dispatch) = use_store::<diagram::State>();
     let model_meta = use_selector(|state: &diagram::State| {
         // log::debug!("selector: {:?}", state.model_meta);
@@ -41,6 +44,7 @@ pub fn WidgetInfoComponent() -> Html {
     };
 
     let on_apply = {
+        let mx_graph_context = mx_graph_context.clone();
         let edit_mode = edit_mode.clone();
         let state = state.clone();
         Callback::from(move |event: SubmitEvent| {
@@ -60,10 +64,11 @@ pub fn WidgetInfoComponent() -> Html {
 
                     // send to db
                     let dispatch = dispatch.clone();
+                    let mx_graph_context = mx_graph_context.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        if let Ok(node) = state.get_graph_xml() {
-                            if let Ok(Some(model_str)) = state.get_xml(node) {
-                                let svg = state.get_graph_svg();
+                        if let Ok(node) = mx_graph_context.get_graph_xml() {
+                            if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
+                                let svg = mx_graph_context.get_graph_svg();
 
                                 if form.is_new_item() {
                                     let item = WidgetDto::new(
@@ -76,7 +81,7 @@ pub fn WidgetInfoComponent() -> Html {
 
                                     // log::debug!("post: {item:?}");
 
-                                    let created = post(format!("{}/widget", state.api_url), item).await
+                                    let created = post(format!("{}/widget", mx_graph_context.api_url), item).await
                                         .and_then(|dto| {
                                             // log::debug!("created: {dto:?}");
                                             Ok(dto)
@@ -102,7 +107,7 @@ pub fn WidgetInfoComponent() -> Html {
                                         svg: Some(svg),
                                     };
 
-                                    put(format!("{}/widget/{}", state.api_url, form.uuid), item).await
+                                    put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await
                                         .and_then(|dto| {
                                             // log::debug!("saved:  {dto:?}");
                                             Ok(dto)

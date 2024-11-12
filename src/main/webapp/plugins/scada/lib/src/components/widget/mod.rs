@@ -1,19 +1,14 @@
-use common_model::widget::WidgetXml;
 use yew::prelude::*;
-use data_source::DataSourceComponent;
-use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use yewdux::{use_selector, use_store};
 use implicit_clone::unsync::IString;
 use svg_view::SvgViewComponent;
-use glyph::{WidgetGlyph, Props as GlyphProps};
 
 use crate::{
-	components::shared::{MdIcon, MdIconType}, errors::CellStateError, model::{cell_meta::{
-			widget_reducers:: WidgetUuidApplyAction, 
-			CellMetaVariant
-		}, 
-		widget::WidgetGlyphItem
-	}, store::cell::{self, SetCellModelAction}, utils::{fetch, fetch_string, NULL_UUID}
+	components::shared::{MdIcon, MdIconType}, 
+	model::cell_meta::widget_reducers:: WidgetUuidApplyAction, 
+	store::{cell::{self, SetCellModelAction, NO_CONTEXT_FOUND},
+	 mx_context::TMxGraphContext}, 
+	 utils::{fetch, fetch_string, NULL_UUID}
 };
 
 pub mod info_item;
@@ -31,16 +26,16 @@ pub struct Props {
 #[function_component(WidgetComponent)]
 pub fn component(Props { edit_mode }: &Props) -> Html {
     let (_, cell_store_dispatch) = use_store::<cell::State>();
-	let api_url = use_selector(|state: &cell::State| state.api_url.clone());
+	let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
 
-	todo!();
-    // let widget = use_selector(|cell_state: &cell::State| {
-	// 	if let CellMetaVariant::WidgetContainer(widget) = cell_state.meta.data.clone() {
-	// 		return widget;
-	// 	};
-	// 	log::error!("{}", CellStateError::NotWidget);
-	// 	WidgetXml::default()
-	// });  
+    let widget = use_selector(|cell_state: &cell::State| {
+		todo!()
+		// if let CellMetaVariant::WidgetContainer(widget) = cell_state.meta.data.clone() {
+		// 	return widget;
+		// };
+		// log::error!("{}", CellStateError::NotWidget);
+		// WidgetXml::default()
+	});  
 
     let type_edit_mode = use_state(|| false);
     let togle_type_edit = {
@@ -53,7 +48,7 @@ pub fn component(Props { edit_mode }: &Props) -> Html {
     let glyph_svg = use_state(|| IString::from("<span>???</span>"));
 	let widget_uuid = use_state(|| IString::from(NULL_UUID));
 	{
-		let url = api_url.clone();
+		let url = mx_graph_context.api_url.clone();
 		let cell_store_dispatch = cell_store_dispatch.clone();
 		use_effect_with((*widget_uuid).clone(), |uuid| {
 			let uuid = uuid.clone();

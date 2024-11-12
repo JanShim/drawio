@@ -2,14 +2,14 @@ use common_model::{data_source::DataSourceXml, multystate::{range::{RangeType, R
 use implicit_clone::unsync::IString;
 use state_predef::{StatePredefComponent, StatePredefEditComponent};
 use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties};
-use yew_hooks::use_list;
+use yew_hooks::{use_list, use_unmount};
 use yewdux::{use_selector, use_store};
 
 use data_source::DataSourceComponent;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    errors::CellStateError, model::cell_meta::CellType, store::cell::{self, SetMultystateAction}
+    errors::CellStateError, model::cell_meta::CellType, store::cell::{self, SetMultystateAction, NOT_CELL_META}
 };
 
 pub mod data_source;
@@ -24,13 +24,18 @@ pub struct Props {
 }
 
 #[function_component]
-pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html {
+pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html 
+{
+    use_unmount(|| {
+        log::debug!("MultystateComponent unmount");
+    });
+
     let (_, store_state_dispatch) = use_store::<cell::State>();
     let cell_state = use_selector(|cell_state: &cell::State| {
-        if let Ok(multystate) = cell_state.meta.get_multystate_meta() {
+        if let Ok(multystate) = cell_state.meta.clone().expect(NOT_CELL_META).get_multystate_meta() {
 			return multystate;
 		};
-        log::error!("{}", CellStateError::NotMultystate);
+        log::warn!("{}", CellStateError::NotMultystate);
         MultystateXml::default()
     });    
 
@@ -63,14 +68,12 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
         let states = states.clone();
         use_effect_with(*start_apply, move |start| {
             if *start {
-                log::debug!("multy apply");
                 let new_state = MultystateXml {
                     ds: (*data_source).clone(),
                     predef: (*predef_states).clone(),
                     states: states.current().clone(),
                     ..(*my_state).clone()
                 };
-
                 store_state_dispatch.apply(SetMultystateAction(new_state));
                 on_detals_apply.emit(CellType::MULTYSTATE);
             }
@@ -200,7 +203,6 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
     html! {
         <fieldset>
             <legend>{"Множественные состояния:"}</legend>
-
             { data_source_view }
         
             { default_state_view }

@@ -4,14 +4,18 @@ use web_sys::{FormData, HtmlFormElement};
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
-use crate::{components::shared::{MdIcon, MdIconType}, model::{
-    common::ModelForm, diagram::{form_meta::DiagramForm, DiagramDto}
-}};
+use crate::{components::shared::{MdIcon, MdIconType}, 
+    model::{
+        common::ModelForm, diagram::{form_meta::DiagramForm, DiagramDto}
+    }, 
+    store::{cell::NO_CONTEXT_FOUND, mx_context::TMxGraphContext}
+};
 use crate::store;
 use crate::utils::{post, put};
 
 #[function_component(DiagramInfoComponent)]
 pub fn scada_diagram_component() -> Html {
+    let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
     let (state, dispatch) = use_store::<store::diagram::State>();
     let model_meta = use_selector(|state: &store::diagram::State| {
         // log::debug!("selector: {:?}", state.model_meta);
@@ -44,6 +48,7 @@ pub fn scada_diagram_component() -> Html {
     };
 
     let on_apply = {
+        let mx_graph_context = mx_graph_context.clone();
         let edit_mode = edit_mode.clone();
         let state = state.clone();
         let dispatch = dispatch.clone();
@@ -64,13 +69,17 @@ pub fn scada_diagram_component() -> Html {
 
                     // send to db
                     let dispatch = dispatch.clone();
+                    let mx_graph_context = mx_graph_context.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        if let Ok(node) = state.get_graph_xml() {
-                            if let Ok(Some(model_str)) = state.get_xml(node) {
+
+                        log::debug!("mx_graph_context {:?}", mx_graph_context);
+
+                        if let Ok(node) = mx_graph_context.get_graph_xml() {
+                            if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
 
                                 // log::debug!("saving: {model_str}");
 
-                                let svg = state.get_graph_svg();
+                                let svg = mx_graph_context.get_graph_svg();
 
                                 if form.is_new_item() {
                                     let item = DiagramDto::new(
@@ -79,7 +88,7 @@ pub fn scada_diagram_component() -> Html {
                                         Some(svg),
                                     ); 
 
-                                    let created = post(format!("{}/diagram", state.api_url), item).await
+                                    let created = post(format!("{}/diagram", mx_graph_context.api_url), item).await
                                         .and_then(|dto| {
                                             // log::debug!("created: {dto:?}");
                                             Ok(dto)
@@ -101,7 +110,7 @@ pub fn scada_diagram_component() -> Html {
                                         svg: Some(svg),
                                     };
 
-                                    put(format!("{}/diagram/{}", state.api_url, form.uuid), item).await
+                                    put(format!("{}/diagram/{}", mx_graph_context.api_url, form.uuid), item).await
                                         .and_then(|dto| {
                                             // log::debug!("saved:  {dto:?}");
                                             Ok(dto)

@@ -144,7 +144,7 @@ impl MxCell {
          Err(JsValue::from_str("can't set cell meta data"))        
     }
 
-    fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
+    pub fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
         let inner_html = meta.types.iter()
             .map(|data| {
                 let outer_html = match data {

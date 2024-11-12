@@ -1,14 +1,16 @@
-use std::rc::Rc;
 use common_model::free_value::LabelValueXml;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_effect_with, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
+use yew_hooks::use_unmount;
 use yewdux::{use_selector, use_store};
 
 use crate::{components::shared::{MdIcon, MdIconType}, model::cell_meta::CellType, store::cell::{self, SetLabelAction}};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
+    #[prop_or_default]
+    pub edit_mode: bool,
     #[prop_or_default]
     pub value: LabelValueXml,
     #[prop_or_default]
@@ -17,8 +19,12 @@ pub struct Props {
 }
 
 #[function_component]
-pub fn LabelValueComponent(Props {value, apply, on_detals_apply}: &Props ) -> Html 
+pub fn LabelValueComponent(Props {edit_mode, value, apply, on_detals_apply}: &Props ) -> Html 
 {
+    use_unmount(|| {
+        log::debug!("LabelValueComponent unmount");
+    });    
+    
     let (_, store_state_dispatch) = use_store::<cell::State>();
 
     let start_apply = use_selector(|state: &cell::State | state.start_apply);
@@ -68,10 +74,12 @@ pub fn LabelValueComponent(Props {value, apply, on_detals_apply}: &Props ) -> Ht
     // item view
     let img_view = {
         let is_edit = is_edit.clone();
-        if *is_edit { 
+        if *edit_mode && *is_edit { 
            html! { <button onclick={togle_apply}><MdIcon icon={MdIconType::Check}/></button> }
-        } else {
+        } else if *edit_mode {
            html! { <button onclick={togle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
+        } else {
+           html! {  }
         }
     };    
 
