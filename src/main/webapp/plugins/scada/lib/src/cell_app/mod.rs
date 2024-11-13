@@ -21,13 +21,7 @@ pub struct CellComponentProps {
 #[styled_component]
 pub fn CellComponent(CellComponentProps { context }: &CellComponentProps) -> Html 
 {
-    let cell_types_num = use_selector(|st: &store::cell::State| {
-        if let Some(meta) = &st.meta {
-            return meta.types.len();
-        }
-        // return
-        0
-    });
+    let cell_types_num = use_selector(|st: &store::cell::State|  st.meta.types.len() );
 
     log::debug!("CellComponent run");
 
@@ -70,7 +64,7 @@ pub fn render_cell(cell: MxCell) {
 
     Dispatch::<store::cell::State>::global().set(store::cell::State {
         cell: Some(Rc::new(cell)), 
-        meta: Some(meta),
+        meta,
         ..Default::default()
     });
 }

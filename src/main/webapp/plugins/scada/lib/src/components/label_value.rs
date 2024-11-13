@@ -1,11 +1,14 @@
+use std::{cell::RefCell, rc::Rc};
+
 use common_model::free_value::LabelValueXml;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_effect_with, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
+use yew::{function_component, html, use_effect_with, use_state, Callback, Html, InputEvent, MouseEvent, Properties, UseStateHandle};
 use yew_hooks::use_unmount;
 use yewdux::{use_selector, use_store};
 
-use crate::{components::shared::{MdIcon, MdIconType}, model::cell_meta::CellType, store::cell::{self, SetLabelAction}};
+use crate::{components::shared::{MdIcon, MdIconType}, model::cell_meta::{value_reducers::ApplyLabelValueMetaAction, CellMeta, CellMetaVariant, CellType}, 
+store::cell};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -13,13 +16,17 @@ pub struct Props {
     pub edit_mode: bool,
     #[prop_or_default]
     pub value: LabelValueXml,
-    #[prop_or_default]
-    pub apply: Callback<LabelValueXml>,
-    pub on_detals_apply: Callback<CellType>,
+    pub on_detals_apply: Callback<CellMetaVariant>,
+    // pub meta: Rc<RefCell<CellMeta>>, // UseStateHandle<CellMeta>,
 }
 
 #[function_component]
-pub fn LabelValueComponent(Props {edit_mode, value, apply, on_detals_apply}: &Props ) -> Html 
+pub fn LabelValueComponent(Props {
+    edit_mode, 
+    value, 
+    on_detals_apply,
+    // meta,
+}: &Props ) -> Html 
 {
     use_unmount(|| {
         log::debug!("LabelValueComponent unmount");
@@ -34,9 +41,11 @@ pub fn LabelValueComponent(Props {edit_mode, value, apply, on_detals_apply}: &Pr
         let on_detals_apply = on_detals_apply.clone();
         use_effect_with(*start_apply, move |start| {
             if *start {
-                log::debug!("label appply");
-                store_state_dispatch.apply(SetLabelAction((*label_state).clone()));
-                on_detals_apply.emit(CellType::LABEL);
+                let new_variant = CellMetaVariant::Label((*label_state).clone());
+        
+                log::debug!("NEW LABEL {:?}", new_variant);      
+
+                on_detals_apply.emit(new_variant);
             }
         })
     };
@@ -48,15 +57,19 @@ pub fn LabelValueComponent(Props {edit_mode, value, apply, on_detals_apply}: &Pr
         Callback::from(move |_: MouseEvent| { edit.set(!*edit); })
     };  
 
+    let label_value_apply = store_state_dispatch.apply_callback(|value: LabelValueXml| ApplyLabelValueMetaAction(value));  
+
     let togle_apply = {
         let is_edit = is_edit.clone();
         let label_state = label_state.clone();
-        let apply = apply.clone();
+        // let apply = apply.clone();
+        let label_value_apply = label_value_apply.clone();
         Callback::from(move |_: MouseEvent| {
-            apply.emit((*label_state).clone());
+            label_value_apply.emit((*label_state).clone());
             is_edit.set(!*is_edit);     // togle is_edit
         })
     };        
+
 
     // tag name input
     let oninput = {

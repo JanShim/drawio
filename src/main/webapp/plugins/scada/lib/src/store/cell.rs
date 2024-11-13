@@ -9,17 +9,17 @@ use yewdux::{store::Store, Reducer};
 
 use crate::model::{
     cell_meta::{ CellMeta, CellMetaVariant, CellType, }, 
-    mx_cell::{CellValue, MxCell}
+    mx_cell::MxCell,
 };
 
 pub const NOT_CELL: &str = "not cell";
 pub const NOT_CELL_META: &str = "not cell meta";
 pub const NO_CONTEXT_FOUND: &str = "no ctx found";
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Store)]
 pub struct State {
     pub cell: Option<Rc<MxCell>>,
-    pub meta: Option<CellMeta>,
+    pub meta: CellMeta,
     pub model_node: IString,
     pub start_apply: bool,
 }
@@ -103,7 +103,7 @@ impl State {
     }    
 
     pub fn get_state_meta(&self) -> CellMeta {
-        self.meta.clone().expect(NOT_CELL_META)
+        self.meta.clone()
     }
 
 //     pub fn set_cell_meta(&self, meta: &CellMeta) -> Result<CellMeta, JsValue> {
@@ -141,32 +141,36 @@ impl Default for State {
     fn default() -> Self {
         Self { 
             cell: None,
-            meta: None,
+            meta: CellMeta::default(),
             model_node: Default::default(),
             start_apply: false,
         }
     }
 }
 
-impl Store for State {
-    fn new(_cx: &yewdux::Context) -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
+// impl Store for State {
+//     fn new(_cx: &yewdux::Context) -> Self {
+//         Self {
+//             ..Default::default()
+//         }
+//     }
     
-    fn should_notify(&self, old: &Self) -> bool {
-        // log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
-        // log::debug!("CellState  {:?}", self);
+//     fn should_notify(&self, old: &Self) -> bool {
+//         // log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
+//         // log::debug!("CellState  {:?}", self);
 
-        log::debug!("should_notify?");
+//         let tst = self != old
+//             || self.cell != old.cell
+//             || self.meta != old.meta;
 
-        self != old
-        || self.cell != old.cell
-        || self.meta != old.meta
+//         log::debug!("should_notify? {tst}");
+
+//         self != old
+//         || self.cell != old.cell
+//         || self.meta != old.meta
         
-    }
-}
+//     }
+// }
 
 pub fn cell_type_compare(a: &CellType, b: &CellType) -> Ordering {
     let a = (*a).clone() as u8;
@@ -202,7 +206,7 @@ impl Reducer<State> for SetCellTypeAction {
         
         // return
         State {
-            meta: Some(meta),
+            meta,
             ..(*state).clone()
         }.into()
     }
@@ -231,40 +235,44 @@ impl Reducer<State> for StartApplyAction {
     }
 }
 
-pub struct SetLabelAction(pub LabelValueXml);
-impl Reducer<State> for SetLabelAction {
-    fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut new_meta = state.meta.clone().unwrap();
-        new_meta.set_label_meta(self.0);
+// pub struct SetLabelAction(pub LabelValueXml);
+// impl Reducer<State> for SetLabelAction {
+//     fn apply(self, state: Rc<State>) -> Rc<State> {
+//         let mut new_meta = state.meta.clone();
+//         new_meta.set_label_meta(self.0);
 
-        log::debug!("NEW LABEL {:?}", new_meta);            
+//         log::debug!("NEW LABEL {:?}", new_meta);            
 
-        State {
-            meta: Some( CellMeta { ..new_meta } ),
-            ..(*state).clone()
-        }.into()
-    }
-}
+//         State {
+//             // meta: CellMeta { 
+//             //     label: new_meta.label.clone(), 
+//             //     types: new_meta.types.clone(),
+//             // },
+//             meta: new_meta,
+//             ..(*state).clone()
+//         }.into()
+//     }
+// }
 
-pub struct SetMultystateAction(pub MultystateXml);
-impl Reducer<State> for SetMultystateAction {
-    fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut new_meta = state.meta.clone().unwrap();
-        new_meta.set_multystate_meta(self.0);
+// pub struct SetMultystateAction(pub MultystateXml);
+// impl Reducer<State> for SetMultystateAction {
+//     fn apply(self, state: Rc<State>) -> Rc<State> {
+//         let mut new_meta = state.meta.clone();
+//         new_meta.set_multystate_meta(self.0);
 
-        log::debug!("NEW MULTY {:?}", new_meta);
+//         log::debug!("NEW MULTY {:?}", new_meta);
 
-        State {
-            meta: Some(new_meta),
-            ..(*state).clone()
-        }.into()
-    }
-}
+//         State {
+//             meta: new_meta,
+//             ..(*state).clone()
+//         }.into()
+//     }
+// }
 
 pub struct SetRangeTypeAction(pub RangeType);
 impl Reducer<State> for SetRangeTypeAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut meta =  state.meta.clone().expect(NOT_CELL_META);
+        let mut meta =  state.meta.clone();
         if let Ok(mut multystate) = meta.get_multystate_meta() {
             multystate.states = vec![];
             multystate.range_type = self.0;
@@ -273,7 +281,7 @@ impl Reducer<State> for SetRangeTypeAction {
             log::debug!("new range: {:?}", meta);
 
             return State { 
-                meta: Some(meta), 
+                meta, 
                 ..(*state).clone()
             }.into();
         };
