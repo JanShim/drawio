@@ -1,6 +1,7 @@
 use common_model::{data_source::DataSourceXml, multystate::{range::{RangeType, RangeValue}, state::StateXml, state_predef::StatePredefXml, MultystateXml}};
 use implicit_clone::unsync::IString;
 use state_predef::{StatePredefComponent, StatePredefEditComponent};
+use states::StatesSelector;
 use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties};
 use yew_hooks::{use_list, use_unmount};
 use yewdux::{use_selector, use_store};
@@ -9,10 +10,12 @@ use data_source::DataSourceComponent;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    errors::CellStateError, model::cell_meta::CellType, store::cell::{self, SetMultystateAction, NOT_CELL_META}
+    errors::CellStateError, model::cell_meta::CellType, store::cell::{self, SetMultystateAction, SetRangeTypeAction, NOT_CELL_META}
 };
 
 pub mod data_source;
+// pub mod type_selector;
+pub mod states;
 pub mod state;
 pub mod state_rect;
 pub mod state_predef;
@@ -32,6 +35,8 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
 
     let (_, store_state_dispatch) = use_store::<cell::State>();
     let cell_state = use_selector(|cell_state: &cell::State| {
+        log::debug!("cell_state selector");
+
         if let Ok(multystate) = cell_state.meta.clone().expect(NOT_CELL_META).get_multystate_meta() {
 			return multystate;
 		};
@@ -66,6 +71,7 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
         let data_source = data_source.clone();
         let predef_states = predef_states.clone();
         let states = states.clone();
+        let store_state_dispatch = store_state_dispatch.clone();
         use_effect_with(*start_apply, move |start| {
             if *start {
                 let new_state = MultystateXml {
@@ -97,41 +103,39 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
         })
     };
     
-    let on_state_add = {
-            let range_type = cell_state.range_type.clone();
-            let states = states.clone();
-            Callback::from(move |_| {
-                let index = states.current().len();
-                let name: IString = format!("state-{index}").into();            
-                let new_state = match range_type {
-                    RangeType::DISCRET => {
-                        let prev_val = states.current().last()
-                            .map(|o| o.value.get_value())
-                            .unwrap_or(0);
-                        StateXml { 
-                            pk: index, 
-                            name,
-                            value: RangeValue::DiscretConst { value: prev_val },
-                            ..Default::default() 
-                        }
-                    },
-                    RangeType::RANGE => {
-                        let prev_val = states.current().last()
-                            .map(|o| o.value.get_to())
-                            .unwrap_or(0.0);
-        
-                        StateXml { 
-                            pk: index, 
-                            name,
-                            value: RangeValue::RangeConst { from: prev_val, to: prev_val },
-                            ..Default::default() 
-                        }
-                    },            
-                };
-
-                states.insert(index, new_state);
-            })
-        };
+    // let on_state_add = {
+    //         let range_type = cell_state.range_type.clone();
+    //         let states = states.clone();
+    //         Callback::from(move |_| {
+    //             let index = states.current().len();
+    //             let name: IString = format!("state-{index}").into();            
+    //             let new_state = match range_type {
+    //                 RangeType::DISCRET => {
+    //                     let prev_val = states.current().last()
+    //                         .map(|o| o.value.get_value())
+    //                         .unwrap_or(0);
+    //                     StateXml { 
+    //                         pk: index, 
+    //                         name,
+    //                         value: RangeValue::DiscretConst { value: prev_val },
+    //                         ..Default::default() 
+    //                     }
+    //                 },
+    //                 RangeType::RANGE => {
+    //                     let prev_val = states.current().last()
+    //                         .map(|o| o.value.get_to())
+    //                         .unwrap_or(0.0);
+    //                     StateXml { 
+    //                         pk: index, 
+    //                         name,
+    //                         value: RangeValue::RangeConst { from: prev_val, to: prev_val },
+    //                         ..Default::default() 
+    //                     }
+    //                 },            
+    //             };
+   //             states.insert(index, new_state);
+    //         })
+    //     };
 
     let apply_ds = {
             let data_source = data_source.clone();
@@ -140,65 +144,74 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
             })
         };
 
+    let on_range_type_change = {
+            let store_state_dispatch = store_state_dispatch.clone();
+            let states = states.clone();
+            Callback::from(move |range_type: RangeType| {
+                states.clear();
+                store_state_dispatch.apply(SetRangeTypeAction(range_type));
+            })
+        };
+
     //====== View Items =====
     let data_source_view = {
-        let data_source = data_source.clone();
-        let apply_ds = apply_ds.clone();
-        let props = yew::props!(data_source::Props {
-            ds: (*data_source).clone(),
-            edit_mode: *edit_mode,
-            apply: apply_ds,
-        });
-        html! {<DataSourceComponent ..props/>}
-    };
+            let data_source = data_source.clone();
+            let apply_ds = apply_ds.clone();
+            let props = yew::props!(data_source::Props {
+                ds: (*data_source).clone(),
+                edit_mode: *edit_mode,
+                apply: apply_ds,
+            });
+            html! {<DataSourceComponent ..props/>}
+        };
 
     let default_state_view: Html = {
-        let default = (*predef_states)[0].clone();
-        html! {
-            if *edit_mode {
-                <StatePredefEditComponent<StatePredefXml> value={default} index={0} apply={predef_apply_callback.clone()}/>
-            } else {
-                <StatePredefComponent<StatePredefXml> value={default}/>
+            let default = (*predef_states)[0].clone();
+            html! {
+                if *edit_mode {
+                    <StatePredefEditComponent<StatePredefXml> value={default} index={0} apply={predef_apply_callback.clone()}/>
+                } else {
+                    <StatePredefComponent<StatePredefXml> value={default}/>
+                }
             }
-        }
-    };    
+        };    
 
     let bad_state_view: Html = {
-        let bad = (*predef_states)[1].clone();
-        html! {
-            if *edit_mode {
-                <StatePredefEditComponent<StatePredefXml> value={bad} index={1} apply={predef_apply_callback.clone()}/>
-            } else {
-                <StatePredefComponent<StatePredefXml> value={bad}/>
+            let bad = (*predef_states)[1].clone();
+            html! {
+                if *edit_mode {
+                    <StatePredefEditComponent<StatePredefXml> value={bad} index={1} apply={predef_apply_callback.clone()}/>
+                } else {
+                    <StatePredefComponent<StatePredefXml> value={bad}/>
+                }
             }
-        }
-    };       
+        };       
 
     let states_view = {
-        let edit_mode = edit_mode.clone();
-        let selected = selected_state.clone();
-        states.current().iter()
-            .map(move |item| {
-                if edit_mode {
-                    let props = yew::props!(state::MultystateStateEditProps {
-                            value: (*item).clone(),
-                            selected: if let Some(selected) = (*selected).clone() {
-                                // log::debug!("states: {selected:?}");
+            let edit_mode = edit_mode.clone();
+            let selected = selected_state.clone();
+            states.current().iter()
+                .map(move |item| {
+                    if edit_mode {
+                        let props = yew::props!(state::MultystateStateEditProps {
+                                value: (*item).clone(),
+                                selected: if let Some(selected) = (*selected).clone() {
+                                    // log::debug!("states: {selected:?}");
 
-                                selected.get_index() == item.get_index()
-                            } else {
-                                false
-                            },
-                            apply: state_apply_callback.clone(),
-                            select: state_select_callback.clone(),
-                        });
-                    html! { <MultystateStateEditComponent ..props/> }
-                } else {
-                    html!{ <MultystateStateComponent value={(*item).clone()}/> }
-                } 
-            })
-            .collect::<Vec<_>>()
-    };
+                                    selected.get_index() == item.get_index()
+                                } else {
+                                    false
+                                },
+                                apply: state_apply_callback.clone(),
+                                select: state_select_callback.clone(),
+                            });
+                        html! { <MultystateStateEditComponent ..props/> }
+                    } else {
+                        html!{ <MultystateStateComponent value={(*item).clone()}/> }
+                    } 
+                })
+                .collect::<Vec<_>>()
+        };
 
     html! {
         <fieldset>
@@ -208,12 +221,13 @@ pub fn MultystateComponent(Props { edit_mode , on_detals_apply}: &Props) -> Html
             { default_state_view }
             { bad_state_view }     
             
-            <div class="flex-box delim-label">
-                {"Состояния"}
-                if *edit_mode {
-                     <button onclick={on_state_add} title="Добавить">{"+"}</button> 
-                } 
-            </div>
+            <StatesSelector 
+                edit_mode={edit_mode} 
+                states={states.clone()} 
+                range_type={cell_state.range_type.clone()}
+                {on_range_type_change}
+            />
+
             { states_view }
         </fieldset>
     }

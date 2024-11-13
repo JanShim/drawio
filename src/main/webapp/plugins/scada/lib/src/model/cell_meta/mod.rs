@@ -1,13 +1,11 @@
-use std::{cell::{self, RefCell}, collections::HashSet, rc::Rc};
-
-use common_model::{free_value::LabelValueXml, multystate::MultystateXml, traits::ReplaceWith, widget::{WidgetContainerXml, WidgetXml}};
+use std::collections::HashSet;
+use common_model::{free_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use web_sys::{FormData, Position};
-use yew::Reducible;
+use web_sys::FormData;
 use serde::{Deserialize, Serialize};
 
-use crate::{errors::CellStateError, rrefcell};
+use crate::errors::CellStateError;
 
 pub mod data_source_reducers;
 pub mod widget_reducers;
@@ -203,25 +201,6 @@ impl Default for CellMeta {
     }
 }
 
-
-// /// reducer's Action
-// pub enum Action {
-//     SetWidgetMeta(WidgetXml),
-// }
-
-// impl Reducible for CellMeta {
-//     type Action = Action;
-    
-//     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
-//         let position = self.get_meta_position(CellType::WIDGETCONTAINER)
-//         match action {
-//             Action::SetWidgetMeta(meta) => Self {
-//                 label: self.label.clone(),
-//                 data: CellMetaVariant::WidgetContainer(meta),
-//             }.into(),
-//         }
-//     }
-// }
 
 // ==========================================================
 #[cfg(test)]

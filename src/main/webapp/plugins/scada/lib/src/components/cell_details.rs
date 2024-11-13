@@ -45,42 +45,67 @@ pub fn CellDetailsComponent() -> Html {
 
     let features_set = use_mut_ref(|| state_meta.get_cell_type());
     let on_detals_apply = {
+            let edit_mode = edit_mode.clone();
+            let cell_state_dispatch = cell_state_dispatch.clone();
+            let mx_graph_context = mx_graph_context.clone();
             let features_set = features_set.clone();
+            let cell_state = cell_state.clone();
             Callback::from(move |t: CellType| {
                 log::debug!("apply set: {:?} -{t:?}", features_set.borrow());
                 features_set.borrow_mut().remove(&t);      // remove from set
+
+                if features_set.borrow().len() == 0 {
+                    log::debug!("must apply!!! curr: {:?}", cell_state);
+
+                    let meta = cell_state.get_state_meta();
+                    log::debug!("apply meta to cell {meta:?}");
+    
+                    let cell = cell_state.cell.clone().expect(NOT_CELL);
+    
+                    //TODO: забыл зачем это?
+                    set_widget_model(mx_graph_context.mx_editor.clone(), (*cell).clone(), cell_state.model_node.to_string());
+    
+                    // let new_meta = (**meta).clone();
+                    let _ = cell.set_meta(&meta).ok();                
+    
+                    // reset apply counter
+                    *features_set.borrow_mut() = meta.get_cell_type();
+    
+                    cell_state_dispatch.apply(StartApplyAction(false));
+                    edit_mode.set(false);                    
+                }
           })
         };
 
-    // effect on state_meta changed
-    {
-        let features_set = features_set.clone(); 
-        let edit_mode = edit_mode.clone();
-        let cell_state = cell_state.clone();
-        let cell_state_dispatch = cell_state_dispatch.clone();
-        let mx_graph_context = mx_graph_context.clone();
-        use_effect_with(state_meta.clone(), move |meta| {
-            log::debug!("use_effect_with: apply meta to cell {meta:?}");
-            if features_set.borrow().len() == 0 {
-                let meta = cell_state.get_state_meta();
-                log::debug!("apply meta to cell {meta:?}");
+    // // effect on state_meta changed
+    // {
+    //     let features_set = features_set.clone(); 
+    //     let edit_mode = edit_mode.clone();
+    //     let cell_state = cell_state.clone();
+    //     let cell_state_dispatch = cell_state_dispatch.clone();
+    //     let mx_graph_context = mx_graph_context.clone();
+    //     use_effect_with(state_meta.clone(), move |meta| {
+    //         log::debug!("use_effect_with: apply meta to cell {meta:?}");
+    //         if features_set.borrow().len() == 0 {
+    //             let meta = cell_state.get_state_meta();
+    //             log::debug!("apply meta to cell {meta:?}");
 
-                let cell = cell_state.cell.clone().expect(NOT_CELL);
+    //             let cell = cell_state.cell.clone().expect(NOT_CELL);
 
-                //TODO: забыл зачем это?
-                set_widget_model(mx_graph_context.mx_editor.clone(), (*cell).clone(), cell_state.model_node.to_string());
+    //             //TODO: забыл зачем это?
+    //             set_widget_model(mx_graph_context.mx_editor.clone(), (*cell).clone(), cell_state.model_node.to_string());
 
-                // let new_meta = (**meta).clone();
-                let _ = cell.set_meta(&meta).ok();                
+    //             // let new_meta = (**meta).clone();
+    //             let _ = cell.set_meta(&meta).ok();                
 
-                // reset apply counter
-                *features_set.borrow_mut() = meta.get_cell_type();
+    //             // reset apply counter
+    //             *features_set.borrow_mut() = meta.get_cell_type();
 
-                cell_state_dispatch.apply(StartApplyAction(false));
-                edit_mode.set(false);
-            }            
-        });
-    }        
+    //             cell_state_dispatch.apply(StartApplyAction(false));
+    //             edit_mode.set(false);
+    //         }            
+    //     });
+    // }        
 
     // // ---- node-ref events
     // {
@@ -185,11 +210,6 @@ struct TypesItem {
     pub label: AttrValue,
     pub selected: bool,
 }
-
-// #[derive(Properties, PartialEq, Debug)]
-// pub struct SelectorProps {
-//     pub cell_id: AttrValue,
-// }
 
 #[function_component]
 pub fn CellTypeSelectorComponent() -> Html 

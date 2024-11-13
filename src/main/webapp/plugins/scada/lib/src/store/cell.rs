@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, collections::HashSet, rc::Rc};
 use common_model::{
     free_value::LabelValueXml, 
-    multystate::MultystateXml, 
+    multystate::{range::RangeType, MultystateXml}, 
 };
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
@@ -240,7 +240,7 @@ impl Reducer<State> for SetLabelAction {
         log::debug!("NEW LABEL {:?}", new_meta);            
 
         State {
-            meta: Some(new_meta),
+            meta: Some( CellMeta { ..new_meta } ),
             ..(*state).clone()
         }.into()
     }
@@ -258,6 +258,28 @@ impl Reducer<State> for SetMultystateAction {
             meta: Some(new_meta),
             ..(*state).clone()
         }.into()
+    }
+}
+
+pub struct SetRangeTypeAction(pub RangeType);
+impl Reducer<State> for SetRangeTypeAction {
+    fn apply(self, state: Rc<State>) -> Rc<State> {
+        let mut meta =  state.meta.clone().expect(NOT_CELL_META);
+        if let Ok(mut multystate) = meta.get_multystate_meta() {
+            multystate.states = vec![];
+            multystate.range_type = self.0;
+            meta.set_multystate_meta(multystate);
+            
+            log::debug!("new range: {:?}", meta);
+
+            return State { 
+                meta: Some(meta), 
+                ..(*state).clone()
+            }.into();
+        };
+
+        // else return
+        state
     }
 }
 
