@@ -95,8 +95,16 @@ pub fn MultystateComponent(Props {
     // ======== Events ==========
     let state_apply_callback = {
         let states = states.clone();
+        let range_type = range_type.clone();
         Callback::from(move |value: StateXml| {
-            states.update(value.pk, value);
+            match *range_type {
+                RangeType::DISCRET => states.update(value.pk, value),
+                RangeType::RANGE => {
+                    let len = states.current().len();
+                    let index = len - value.pk - 1;     // for range invers index
+                    states.update(index, value)
+                },
+            };
         })
     };
 
@@ -161,6 +169,7 @@ pub fn MultystateComponent(Props {
         };       
 
     let states_view = {
+            let range_type = range_type.clone();
             let edit_mode = edit_mode.clone();
             let selected = selected_state.clone();
             states.current().iter()
@@ -169,8 +178,6 @@ pub fn MultystateComponent(Props {
                         let props = yew::props!(state::MultystateStateEditProps {
                                 value: (*item).clone(),
                                 selected: if let Some(selected) = (*selected).clone() {
-                                    // log::debug!("states: {selected:?}");
-
                                     selected.get_index() == item.get_index()
                                 } else {
                                     false
@@ -180,7 +187,7 @@ pub fn MultystateComponent(Props {
                             });
                         html! { <MultystateStateEditComponent ..props/> }
                     } else {
-                        html!{ <MultystateStateComponent value={(*item).clone()}/> }
+                        html!{ <MultystateStateComponent value={(*item).clone()} range_type={(*range_type).clone()}/> }
                     } 
                 })
                 .collect::<Vec<_>>()

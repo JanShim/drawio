@@ -1,4 +1,7 @@
-use yew::{function_component, html, AttrValue, Html, Properties};
+use std::rc::Rc;
+use yew::{function_component, hook, html, AttrValue, Html, Properties};
+use yew::use_memo;
+use common_model::utils::{map_to_svg_style, map_to_svg_text_style, mx_style_to_map};
 
 
 #[derive(PartialEq, Debug, Clone)]
@@ -8,6 +11,7 @@ pub enum MdIconType {
     Back,
     Square,
     Cancel,
+    Add,
 }
 
 impl MdIconType {
@@ -18,6 +22,7 @@ impl MdIconType {
             MdIconType::Back => "Обратно".into(),
             MdIconType::Square => "-?-".into(),
             MdIconType::Cancel => "Отменить".into(),
+            MdIconType::Add => "Добавить".into(),
         }
     }
 }
@@ -36,6 +41,7 @@ impl Into<AttrValue> for MdIconType {
             MdIconType::Back => "arrow_back".into(),
             MdIconType::Square => "square".into(),
             MdIconType::Cancel => "cancel".into(),
+            MdIconType::Add => "add".into(),
         }
     }
 }
@@ -55,3 +61,12 @@ pub fn MdIcon(Props { icon }: &Props) -> Html
     }
 }
 
+#[hook]
+pub fn use_css_styles(mx_style: AttrValue) -> Rc<(AttrValue, AttrValue)> {
+    use_memo(mx_style, |style| {
+        let map = mx_style_to_map(style);
+        let style = map_to_svg_style(&map);
+        let text_style = map_to_svg_text_style(&map);
+        (AttrValue::from(style.to_string()), AttrValue::from(text_style.to_string()))
+    })
+}

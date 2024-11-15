@@ -49,7 +49,6 @@ table.prop-table td {
     vertical-align: middle;
 }
 table.prop-table td input {
-    width: 100%;
     height: 16px;
 }
 table.prop-table td.label {
@@ -66,10 +65,6 @@ table.prop-table td.img {
     height: 16px;
     padding: 0px;
 }
-
-form.input-form input {
-    margin: 0px 5px 0px 5px;
-}    
         
 div.svg-view {
     text-align: center;
@@ -88,7 +83,7 @@ div.value {
 }
 
 input.state-val {
-    width: 30px !important;
+    width: 45px !important;
 }
 
 .types-list label {
@@ -99,6 +94,9 @@ input.state-val {
   margin: 0.4rem;
 }
 
+.state-name {
+    width: 40px;
+}
         
         "#)} />
     }

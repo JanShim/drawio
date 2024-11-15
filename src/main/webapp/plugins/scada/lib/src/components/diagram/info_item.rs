@@ -110,11 +110,15 @@ pub fn scada_diagram_component() -> Html {
                                         svg: Some(svg),
                                     };
 
-                                    put(format!("{}/diagram/{}", mx_graph_context.api_url, form.uuid), item).await
+                                    let res = put(format!("{}/diagram/{}", mx_graph_context.api_url, form.uuid), item).await
                                         .and_then(|dto| {
-                                            // log::debug!("saved:  {dto:?}");
+                                            log::debug!("saved:  {dto:?}");
                                             Ok(dto)
-                                        }).unwrap();
+                                        });
+                                        
+                                    if res.is_err() {
+                                        log::error!("{:?}", res.err().unwrap())
+                                    }
 
                                 }
                             };

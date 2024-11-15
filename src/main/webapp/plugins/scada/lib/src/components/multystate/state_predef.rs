@@ -1,9 +1,9 @@
-use common_model::{traits::PredefStyle, utils::{filter_state_mxstyle, map_to_svg_style, merge_mx_styles, mx_style_to_map}};
+use common_model::{traits::PredefStyle, utils::{filter_state_mxstyle, map_to_svg_style, map_to_svg_text_style, merge_mx_styles, mx_style_to_map}};
 use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties};
 use yewdux::use_store;
 
 use crate::{
-    components::{multystate::state_rect:: StateSampleRect, shared::{MdIcon, MdIconType}}, 
+    components::{multystate::state_rect:: StateSampleRect, shared::{use_css_styles, MdIcon, MdIconType}}, 
     store,
 };
 
@@ -33,10 +33,13 @@ where
 
     let radio_id = use_memo(value.clone(),|v|AttrValue::from(v.get_radio_id().to_string()));
 
-    let css_string = use_memo(my_state.get_style(), |style| {
-            let map = mx_style_to_map(style);       
-            AttrValue::from(map_to_svg_style(map).to_string())
-        });
+    let css_string = use_css_styles(my_state.get_style());
+    // use_memo(my_state.get_style(), |style| {
+    //         let map = mx_style_to_map(style);
+    //         let style = map_to_svg_style(&map);
+    //         let text_style = map_to_svg_text_style(&map);
+    //         (AttrValue::from(style.to_string()), AttrValue::from(text_style.to_string()))
+    //     });
 
     // ================ events ========================
     let on_radio_click = {
@@ -57,7 +60,7 @@ where
             <table>
             <tr>
                 <td width="100%">{ my_state.get_name().as_str() }</td>
-                <td width="50"><StateSampleRect style={(*css_string).clone()}/></td>
+                <td width="50"><StateSampleRect style={(*css_string).0.clone()} text_style={(*css_string).1.clone()} /></td>
             </tr>
             </table>    
         };
@@ -99,10 +102,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
         });
     }
 
-    let css_string = use_memo(my_state.get_style(), |style| {
-        let map = mx_style_to_map(style);       
-        AttrValue::from(map_to_svg_style(map).to_string())
-    });
+    let css_string = use_css_styles(my_state.get_style());
 
     // =========== events ================
     let toggle_edit = {
@@ -149,7 +149,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
         <table>
         <tr>
             <td width="100%">{ my_state.get_name().as_str() }</td>
-            <td width="50"><StateSampleRect style={(*css_string).clone()}/></td>
+            <td width="50"><StateSampleRect style={(*css_string).0.clone()} text_style={(*css_string).0.clone()}/></td>
         </tr>
         </table>    
     };
@@ -159,7 +159,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
         <table>
         <tr>
             <td width="100%">{ my_state.get_name().as_str() }</td>
-            <td width="50"><StateSampleRect style={(*css_string).clone()}/></td>
+            <td width="50"><StateSampleRect style={(*css_string).0.clone()} text_style={(*css_string).0.clone()}/></td>
             <td width="20">
                 <button onclick={toggle_check}><MdIcon icon={MdIconType::Check}/></button>
             </td>
