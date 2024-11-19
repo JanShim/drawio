@@ -1,8 +1,5 @@
 use std::{cmp::Ordering, collections::HashSet, rc::Rc};
-use common_model::{
-    free_value::LabelValueXml, 
-    multystate::{range::RangeType, MultystateXml}, 
-};
+use common_model::multystate::range::RangeType;
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yewdux::{store::Store, Reducer};

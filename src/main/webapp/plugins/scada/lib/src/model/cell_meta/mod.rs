@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use common_model::{free_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
+use common_model::{label_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use web_sys::FormData;

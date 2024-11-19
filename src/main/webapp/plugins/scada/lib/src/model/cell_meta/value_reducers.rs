@@ -2,7 +2,7 @@ use std::rc::Rc;
 use implicit_clone::unsync::IString;
 use yewdux::Reducer;
 
-use common_model::{data_source::DataSourceXml, free_value::LabelValueXml};
+use common_model::{data_source::DataSourceXml, label_value::LabelValueXml};
 
 use crate::store::cell;
 
