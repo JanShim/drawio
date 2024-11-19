@@ -7,29 +7,49 @@ use yewdux::use_store;
 
 use crate::{
     components::{
-        label_value::LabelValueComponent, multystate::MultystateComponent, shared::{MdIcon, MdIconType}, widget::WidgetComponent
+        geom_value::GeomValueComponent, label_value::LabelValueComponent, 
+        multystate::MultystateComponent, shared::{MdIcon, MdIconType}, 
+        widget::WidgetComponent
     },
     model::cell_meta::{
-         CellMetaVariant, CellType
+         CellMetaVariant, CellType, CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY
     }, 
     store::cell::{self, SetCellTypeAction, StartApplyAction, NOT_CELL }, 
 };
 
 #[function_component]
-pub fn CellDetailsComponent() -> Html {
+pub fn CellDetails() -> Html {
     use_unmount(|| {
         log::debug!("CellDetailsComponent unmount");
     });    
 
     let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
+    log::debug!("cell_state: {cell_state:?}");
     let cell_meta = use_mut_ref(|| cell_state.meta.clone());
+    {
+        let cell_meta = cell_meta.clone();
+        use_effect_with(cell_state.clone(), move |meta| {
+            log::debug!("use_effect_with: {meta:?}");
+            *cell_meta.borrow_mut() = (*meta).meta.clone();
+        });
+    }
+
 
     let edit_mode = use_state(|| false);
 
-    let edit_mode_toggle = {
+    let on_edit_mode_set = {
             let edit_mode = edit_mode.clone();
-            Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
+            Callback::from(move |_: MouseEvent| { 
+                edit_mode.set(true); 
+            })
         };
+
+    let on_cancel = {
+            let edit_mode = edit_mode.clone();
+            Callback::from(move |_: MouseEvent| { 
+                edit_mode.set(false); 
+            })
+        };        
 
     let cell_details_start: Callback<MouseEvent> = {
             let cell_state_dispatch = cell_state_dispatch.clone();
@@ -48,6 +68,7 @@ pub fn CellDetailsComponent() -> Html {
                         CellMetaVariant::Label(_) => CellType::LABEL,
                         CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
                         CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
+                        CellMetaVariant::Geometry(_) => CellType::GEOM,
                     };
 
                 let mut new_meta = cell_meta.borrow().clone();
@@ -89,8 +110,9 @@ pub fn CellDetailsComponent() -> Html {
     let header = {
             let header_props = yew::props! { CellDetailsHeaderProps {
                 edit_mode: *edit_mode,
-                cell_details_apply: cell_details_start,
-                edit_mode_toggle,
+                on_cell_details_apply: cell_details_start,
+                on_edit_mode_set,
+                on_cancel,
             } };   
 
             html! {
@@ -100,32 +122,40 @@ pub fn CellDetailsComponent() -> Html {
 
     let details_vew = {
         let edit_mode = edit_mode.clone();
-        let state_meta = cell_meta.clone();
-        state_meta.clone().borrow().types.iter()
+        let cell_meta = cell_meta.clone();
+        cell_meta.clone().borrow().types.iter()
             .map(|o| {
                 match o.clone() {
                     CellMetaVariant::Label(value) => {
-                        log::debug!("cell as label: {:?}", state_meta);
+                        log::debug!("cell as label: {:?}; {value:?}", *cell_meta);
                         html!{ 
                             <LabelValueComponent edit_mode={*edit_mode} 
-                                value={ value.clone() } 
+                                cell_meta={ cell_meta.clone() }
                                 on_detals_apply={ on_detals_apply.clone() }/> 
                         }
                     },
                     CellMetaVariant::Multystate(_) => {
-                        log::debug!("cell as multystate: {:?}", *state_meta);
+                        log::debug!("cell as multystate: {:?}", *cell_meta);
                         html!{ 
                             <MultystateComponent edit_mode={*edit_mode} 
-                                cell_meta={ state_meta.clone() }
+                                cell_meta={ cell_meta.clone() }
                                 on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },
                     CellMetaVariant::WidgetContainer(_) => {
-                        log::debug!("cell as widget: {:?}", *state_meta);
+                        log::debug!("cell as widget: {:?}", *cell_meta);
                         html!{
                             <WidgetComponent edit_mode={*edit_mode}/> 
                         }                    
                     },
+                    CellMetaVariant::Geometry(value) => {
+                        log::debug!("cell as geometry: {:?}", cell_meta);
+                        html!{ 
+                            <GeomValueComponent edit_mode={*edit_mode} 
+                                value={ value.clone() } 
+                                on_detals_apply={ on_detals_apply.clone() }/> 
+                        }
+                    },                    
                 }
             })
             .collect::<Vec<_>>()
@@ -148,7 +178,7 @@ struct TypesItem {
 }
 
 #[function_component]
-pub fn CellTypeSelectorComponent() -> Html 
+pub fn CellTypeSelector() -> Html 
 {
     use_unmount(|| {
         log::debug!("CellTypeSelectorComponent unmount");
@@ -157,8 +187,9 @@ pub fn CellTypeSelectorComponent() -> Html
     let (_, cell_state_dispatch) = use_store::<cell::State>();
     let cell_types = use_mut_ref(|| {
             vec![
-                TypesItem {name: "value".into(), label: "Значение".into(), selected: false},
-                TypesItem {name: "multy".into(), label: "Множество состояний".into(), selected: false},
+                TypesItem {name: CELL_TYPE_LABEL.into(), label: "Значение".into(), selected: false},
+                TypesItem {name: CELL_TYPE_MULTY.into(), label: "Множество состояний".into(), selected: false},
+                TypesItem {name: CELL_TYPE_GEOM.into(), label: "Геометрия".into(), selected: false},
             ]            
         });
 
@@ -188,20 +219,27 @@ pub fn CellTypeSelectorComponent() -> Html
                 let checked = target.checked();
                 let id = target.id();
                 match id.clone() {
-                    val if val == "value" => {
+                    val if val == CELL_TYPE_LABEL => {
                         if checked {
                             cell_types_map.borrow_mut().insert(val, CellType::LABEL);
                         } else {
                             cell_types_map.borrow_mut().remove(&val);
                         }
                     },
-                    val if val == "multy" => {
+                    val if val == CELL_TYPE_MULTY => {
                         if checked {
                             cell_types_map.borrow_mut().insert(val, CellType::MULTYSTATE);
                         } else {
                             cell_types_map.borrow_mut().remove(&val);
                         }
                     },
+                    val if val == CELL_TYPE_GEOM => {
+                        if checked {
+                            cell_types_map.borrow_mut().insert(val, CellType::GEOM);
+                        } else {
+                            cell_types_map.borrow_mut().remove(&val);
+                        }
+                    },                    
                     _ => (),
                 };
                 is_checkable.set(cell_types_map.borrow().len() > 0);
@@ -247,20 +285,30 @@ pub fn CellTypeSelectorComponent() -> Html
 #[derive(Properties, PartialEq, Debug)]
 pub struct CellDetailsHeaderProps {
     pub edit_mode: bool,
-    pub cell_details_apply: Callback<MouseEvent>,
-    pub edit_mode_toggle: Callback<MouseEvent>,
+    pub on_cell_details_apply: Callback<MouseEvent>,
+    pub on_edit_mode_set: Callback<MouseEvent>,
+    pub on_cancel: Callback<MouseEvent>,
 }
 
 
 #[function_component]
-pub fn CellDetailsHeader(CellDetailsHeaderProps { edit_mode, cell_details_apply, edit_mode_toggle }: &CellDetailsHeaderProps) -> Html {
+pub fn CellDetailsHeader(CellDetailsHeaderProps { 
+    edit_mode, 
+    on_cell_details_apply, 
+    on_edit_mode_set,
+    on_cancel,
+}: &CellDetailsHeaderProps) -> Html {
+    
     html!{
         <div class="flex-box-2 delim-label" >
         // arrow_back
         if *edit_mode {
-            <button onclick={cell_details_apply}><MdIcon icon={MdIconType::Check}/></button>
+            <div style="width:64px"> 
+                <button onclick={on_cell_details_apply}><MdIcon icon={MdIconType::Check}/></button>
+                <button onclick={on_cancel}><MdIcon icon={MdIconType::Cancel}/></button>
+            </div>
         } else {
-            <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
+            <button onclick={on_edit_mode_set}><MdIcon icon={MdIconType::Edit}/></button>
         }
         </div>           
     }    

@@ -6,7 +6,7 @@ use stylist::yew::styled_component;
 use web_sys::HtmlDivElement;
 
 use crate::{
-    components::{cell_details::{CellDetailsComponent, CellTypeSelectorComponent}, get_global_css}, 
+    components::{cell_details::{CellDetails, CellTypeSelector}, get_global_css}, 
     model::{mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils}, 
     store::{self, mx_context::{MxGraphContext, TMxGraphContext}}, 
     utils::SchemaOptions
@@ -31,9 +31,9 @@ pub fn CellComponent(CellComponentProps { context }: &CellComponentProps) -> Htm
 
         <ContextProvider<TMxGraphContext> context={context.clone()}>
             if *cell_types_num > 0 {
-                <CellDetailsComponent />
+                <CellDetails />
             } else {
-                <CellTypeSelectorComponent />
+                <CellTypeSelector />
             }
         </ContextProvider<TMxGraphContext>>
     </>}    

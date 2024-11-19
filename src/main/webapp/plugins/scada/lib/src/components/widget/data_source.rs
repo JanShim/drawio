@@ -1,11 +1,11 @@
 use common_model::data_source::DataSourceXml;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_reducer, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
+use yew::{function_component, html, use_state, Callback, Html, InputEvent, MouseEvent, Properties};
 use yewdux::use_store;
 
 use crate::{
-    components::shared::{MdIcon, MdIconType}, model::cell_meta::data_source_reducers::WidgetApplyDsAction, store::cell 
+    components::shared::EditButtons, model::cell_meta::data_source_reducers::WidgetApplyDsAction, store::cell 
 };
 
 
@@ -44,6 +44,13 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
         })
     };        
 
+    let togle_cancel = {
+        let is_edit = is_edit.clone();
+        Callback::from(move |_: MouseEvent| {
+            is_edit.set(false);     // togle is_edit
+        })
+    };  
+
     // tag name input
     let on_tag_input = {
             let ds_state = ds_state.clone();
@@ -51,25 +58,25 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
                 e.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok())
                     .map(|input| {
                         let mut value = (*ds_state).clone();
-                        value.set_tag(input.value().into());
+                        value.tag = input.value().into();
                         ds_state.set(value);
                     });
             })
         };
 
     // item view
-    let img_view = {
-        let is_edit = is_edit.clone();
-        if *edit_mode {
-            if *is_edit { 
-                html! { <button onclick={togle_apply}><MdIcon icon={MdIconType::Check}/></button> }
-             } else {
-                html! { <button onclick={togle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
-             }
-        } else {
-            html! { <span/> }
-        }
-    };    
+    // let img_view = {
+    //     let is_edit = is_edit.clone();
+    //     if *edit_mode {
+    //         if *is_edit { 
+    //             html! { <button onclick={togle_apply}><MdIcon icon={MdIconType::Check}/></button> }
+    //          } else {
+    //             html! { <button onclick={togle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
+    //          }
+    //     } else {
+    //         html! { <span/> }
+    //     }
+    // };    
 
     let tag_view = {
         let ds = ds_state.clone();
@@ -87,7 +94,13 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
         <table class="prop-table">
         <td class="label" width="70">{"Тэг объекта"}</td>
         <td>{ tag_view }</td>
-        <td class="img">{ img_view }</td>
+        <td class="img">
+            <EditButtons edit_mode={*edit_mode} is_edit={is_edit.clone()}
+                on_apply={togle_apply.clone()}
+                on_edit={togle_edit.clone()}
+                on_cancel={togle_cancel.clone()}
+            />        
+        </td>
         </table>
     }
     

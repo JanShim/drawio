@@ -1,20 +1,17 @@
 use std::{cell::RefCell, rc::Rc};
-
 use common_model::{data_source::DataSourceXml, multystate::{range::RangeType, state::StateXml, state_predef::StatePredefXml, MultystateXml}};
 use state_predef::{StatePredefComponent, StatePredefEditComponent};
 use states::StatesSelector;
-use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties, UseStateHandle};
+use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties, };
 use yew_hooks::{use_list, use_unmount};
 use yewdux::use_selector;
 
-use data_source::DataSourceComponent;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, CellType}, store::cell
+    components::data_source::{self, DataSource}, errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, }, store::cell
 };
 
-pub mod data_source;
 // pub mod type_selector;
 pub mod states;
 pub mod state;
@@ -53,17 +50,17 @@ pub fn MultystateComponent(Props {
 
     /* #region selected_state */
     let selected_state = use_state(|| {
-        let value: Option<StateXml> = None;
-        value
-    });
+            let value: Option<StateXml> = None;
+            value
+        });
 
     let state_select_callback = {
-        let selected = selected_state.clone();
-        Callback::from(move |value: Option<StateXml>| {
-            // log::debug!("state_select_callback: {value:?}");
-            selected.set(value);  // change selected
-        })
-    };
+            let selected = selected_state.clone();
+            Callback::from(move |value: Option<StateXml>| {
+                // log::debug!("state_select_callback: {value:?}");
+                selected.set(value);  // change selected
+            })
+        };
     /* #endregion */
 
     // start apply process if true
@@ -84,9 +81,7 @@ pub fn MultystateComponent(Props {
                 };
 
                 let new_variant = CellMetaVariant::Multystate(new_state);
-
                 log::debug!("NEW MULTY {:?}", new_variant);      
-
                 on_detals_apply.emit(new_variant);
             }
         })
@@ -141,9 +136,9 @@ pub fn MultystateComponent(Props {
             let props = yew::props!(data_source::Props {
                 ds: (*data_source).clone(),
                 edit_mode: *edit_mode,
-                apply: apply_ds,
+                on_apply: apply_ds,
             });
-            html! {<DataSourceComponent ..props/>}
+            html! {<DataSource ..props/>}
         };
 
     let default_state_view: Html = {

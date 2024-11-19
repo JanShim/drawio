@@ -185,7 +185,8 @@ impl Reducer<State> for SetCellTypeAction {
             .map(|o| match o {
                 CellType::LABEL =>  CellMetaVariant::Label(Default::default()),
                 CellType::MULTYSTATE => CellMetaVariant::Multystate(Default::default()),
-                CellType::WIDGETCONTAINER =>  CellMetaVariant::WidgetContainer(Default::default()),
+                CellType::WIDGETCONTAINER => CellMetaVariant::WidgetContainer(Default::default()),
+                CellType::GEOM => CellMetaVariant::Geometry(Default::default()),
             })
             .collect::<Vec<_>>();
 

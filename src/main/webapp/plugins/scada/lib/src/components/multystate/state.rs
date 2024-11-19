@@ -1,7 +1,7 @@
-use common_model::{multystate::{range::RangeType, state::StateXml}, utils::{filter_state_mxstyle, map_to_svg_style, map_to_svg_text_style, mx_style_to_map}};
+use common_model::{multystate::{range::RangeType, state::StateXml}, utils::filter_state_mxstyle};
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
+use yew::{function_component, html, use_effect_with, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
 use yewdux::use_store;
 
 use crate::{components::{multystate::state_rect::StateSampleRect, shared::{use_css_styles, MdIcon, MdIconType}}, store};
@@ -23,13 +23,7 @@ pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
         });
     }
 
-    let style_string = use_memo(my_state.style.clone(), |style| {
-        let map = &mx_style_to_map(style); 
-        let style = map_to_svg_style(map);
-        let text_style = map_to_svg_text_style(map);
-        (AttrValue::from(style.to_string()), AttrValue::from(text_style.to_string()))
-    });
-
+    let css_strings = use_css_styles(my_state.style.clone());
 
     // --- view items
     let view_mode = html! {
@@ -52,7 +46,7 @@ pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
 
             }}
             </td>
-            <td><StateSampleRect style={(*style_string).0.clone()} text_style={(*style_string).1.clone()}/></td>
+            <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
         </tr>
         </table>    
     };
@@ -111,7 +105,7 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
             })
         };   
 
-    let css_string = use_css_styles(my_state.style.clone());
+    let css_strings = use_css_styles(my_state.style.clone());
 
     let form_onsubmit = {
             let cell_state = cell_state.clone();
@@ -156,14 +150,14 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
                 html! { <StateEdit 
                         range_type={(*range_type).clone()} 
                         state={(*my_state).clone()} 
-                        style={(*css_string).clone()} 
+                        css_strings={(*css_strings).clone()} 
                         {form_onsubmit}/>
                 }
             } else {
                 html! { <StateView 
                     range_type={(*range_type).clone()} 
                     state={(*my_state).clone()} 
-                    styles={(*css_string).clone()}/>   
+                    css_strings={(*css_strings).clone()}/>   
                 }
             }
          }</td>
@@ -181,11 +175,11 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
 pub struct StateViewProps {
     pub range_type: RangeType,
     pub state: StateXml,
-    pub styles: (AttrValue, AttrValue),
+    pub css_strings: (AttrValue, AttrValue),
 }
 
 #[function_component]
-pub fn StateView(StateViewProps {range_type, state, styles }: &StateViewProps) -> Html 
+pub fn StateView(StateViewProps {range_type, state, css_strings }: &StateViewProps) -> Html 
 {
     html!{
         <table class="prop-table">
@@ -208,7 +202,7 @@ pub fn StateView(StateViewProps {range_type, state, styles }: &StateViewProps) -
                 }
             }
             </td>
-            <td><StateSampleRect style={ (*styles).0.clone() } text_style={ (*styles).1.clone() }/></td>
+            <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
         </tr>
         </table>
     }
@@ -219,7 +213,7 @@ pub fn StateView(StateViewProps {range_type, state, styles }: &StateViewProps) -
 pub struct StateEditProps {
     pub range_type: RangeType,
     pub state: StateXml,
-    pub style: (AttrValue, AttrValue),
+    pub css_strings: (AttrValue, AttrValue),
     pub form_onsubmit: Callback<SubmitEvent>,
 }
 
@@ -227,7 +221,7 @@ pub struct StateEditProps {
 pub fn StateEdit(StateEditProps { 
     range_type, 
     state, 
-    style, 
+    css_strings, 
     form_onsubmit
 }: &StateEditProps) -> Html 
 {
@@ -260,7 +254,7 @@ pub fn StateEdit(StateEditProps {
                     },
                 }}
                 </td>
-                <td><StateSampleRect style={(*style).0.clone()} text_style={(*style).0.clone()}/></td>
+                <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
                 <td><button type="submit"><MdIcon icon={MdIconType::Check}/></button></td>
             </tr>
         </table>

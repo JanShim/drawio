@@ -12,8 +12,9 @@ pub mod widget;
 pub mod cell_details;
 pub mod multystate;
 pub mod label_value;
-pub mod undefiend;
+pub mod geom_value;
 pub mod shared;
+pub mod data_source;
 
 
 pub fn get_global_css() -> VNode {

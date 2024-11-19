@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use common_model::{label_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
+use common_model::{geom_value::GeomValueXml, label_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use web_sys::FormData;
@@ -11,24 +11,31 @@ pub mod data_source_reducers;
 pub mod widget_reducers;
 pub mod value_reducers;
 
+pub const CELL_TYPE_LABEL: &str = "value";
+pub const CELL_TYPE_MULTY: &str = "multy";
+pub const CELL_TYPE_GEOM: &str = "geom";
+
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CellType {
     LABEL,
     MULTYSTATE,
     WIDGETCONTAINER,
+    GEOM,
 }
 
-impl From<FormData> for CellType {
-    fn from(data: FormData) -> Self {
-        match data.get("cell-type").as_string() {
-            Some(value) => match value {
-                _ if value=="value" => CellType::LABEL,
-                _ => CellType::MULTYSTATE,
-            },
-            None => CellType::MULTYSTATE,
-        }
-    }
-}
+// impl From<FormData> for CellType {
+//     fn from(data: FormData) -> Self {
+//         match data.get("cell-type").as_string() {
+//             Some(value) => match value {
+//                 _ if value==CELL_TYPE_LABEL => CellType::LABEL,
+//                 _ if value==CELL_TYPE_GEOM => CellType::GEOM,
+//                 _ => CellType::MULTYSTATE,
+//             },
+//             None => CellType::MULTYSTATE,
+//         }
+//     }
+// }
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -41,6 +48,8 @@ pub enum CellMetaVariant {
     Multystate(MultystateXml),
     #[serde(rename = "widget-container")]
     WidgetContainer(WidgetContainerXml),
+    #[serde(rename = "geometry")]
+    Geometry(GeomValueXml),
 }
 
 impl CellMetaVariant {
@@ -127,6 +136,7 @@ impl CellMeta {
                 CellMetaVariant::Label(_) => CellType::LABEL,
                 CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
                 CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
+                CellMetaVariant::Geometry(_) => CellType::GEOM,
             })
             .collect::<HashSet<_>>()
     }
@@ -138,6 +148,7 @@ impl CellMeta {
                     CellType::LABEL => if let CellMetaVariant::Label(_) = *o { return true; },
                     CellType::MULTYSTATE => if let CellMetaVariant::Multystate(_) = *o { return true; },
                     CellType::WIDGETCONTAINER => if let CellMetaVariant::WidgetContainer(_) = *o { return true; },
+                    CellType::GEOM =>  if let CellMetaVariant::Geometry(_) = *o { return true; },
                 };
                 false
             })
@@ -149,6 +160,15 @@ impl CellMeta {
             let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Label(value));
         }
     }
+
+    pub fn get_label_meta(&self) -> Result<LabelValueXml, JsValue>{
+        let position = self.get_meta_position(CellType::LABEL);
+        if position.is_some()  {
+            let item = self.types[position.unwrap()].get_label().unwrap();
+            return Ok(item);
+        }
+        Err(CellStateError::NotLabel.into())
+    }      
 
     pub fn set_multystate_meta(&mut self, value: MultystateXml) {
         let position = self.get_meta_position(CellType::MULTYSTATE);

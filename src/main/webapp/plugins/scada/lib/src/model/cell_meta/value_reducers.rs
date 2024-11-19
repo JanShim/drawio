@@ -26,24 +26,24 @@ impl Reducer<LabelValueXml> for ValueAction {
 }
 
 
-pub struct ApplyLabelValueMetaAction(pub LabelValueXml);
-impl Reducer<cell::State> for ApplyLabelValueMetaAction {
-    fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
-        let meta = state.meta.clone();
-        let position = meta.get_meta_position(super::CellType::LABEL);
-        if position.is_some() {
-            let mut new_data= meta.types.clone();
-            let _ = std::mem::replace(&mut new_data[position.unwrap()], CellMetaVariant::Label(self.0).into());
-            return cell::State {
-                meta: CellMeta {
-                    types: new_data,
-                    ..meta.clone()
-                }, 
-                ..(*state).clone()
-            }.into();
-        }
-        // do nothing
-        state
-    }
-}
+// pub struct ApplyLabelValueMetaAction(pub LabelValueXml);
+// impl Reducer<cell::State> for ApplyLabelValueMetaAction {
+//     fn apply(self, state: Rc<cell::State>) -> Rc<cell::State> {
+//         let meta = state.meta.clone();
+//         let position = meta.get_meta_position(super::CellType::LABEL);
+//         if position.is_some() {
+//             let mut new_data= meta.types.clone();
+//             let _ = std::mem::replace(&mut new_data[position.unwrap()], CellMetaVariant::Label(self.0).into());
+//             return cell::State {
+//                 meta: CellMeta {
+//                     types: new_data,
+//                     ..meta.clone()
+//                 }, 
+//                 ..(*state).clone()
+//             }.into();
+//         }
+//         // do nothing
+//         state
+//     }
+// }
 

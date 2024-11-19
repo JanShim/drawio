@@ -151,6 +151,7 @@ impl MxCell {
                         CellMetaVariant::Label(value) => to_string(value),
                         CellMetaVariant::Multystate(multy) => to_string(multy),
                         CellMetaVariant::WidgetContainer(widget) => to_string(widget),
+                        CellMetaVariant::Geometry(geom) => to_string(geom),
                     }
                     .map_err(|err| JsValue::from(err.to_string().as_str()));
                 outer_html

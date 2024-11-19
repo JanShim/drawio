@@ -1,14 +1,12 @@
 use yew::prelude::*;
-// use implicit_clone::unsync::IString;
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
-    pub style: AttrValue,
-    pub text_style: AttrValue,
+    pub css_strings: (AttrValue, AttrValue),
 }
 
 #[function_component]
-pub fn StateSampleRect(Props {style, text_style }: &Props) -> Html {
+pub fn StateSampleRect(Props { css_strings: (style, text_style) }: &Props) -> Html {
     html! {
         <svg viewBox="0 0 60 30" width="40" height="20" xmlns="http://www.w3.org/2000/svg">
         <g style={style}>
