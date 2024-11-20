@@ -89,6 +89,29 @@ where
 }
 
 
+#[hook]
+pub fn use_list_selected<T>() -> (UseStateHandle<Option<T>>, Callback<Option<T>> )
+where T: 'static
+{
+    let selected = use_state(|| {
+        let value: Option<T> = None;
+        value
+    });
+
+    let select_callback = {
+        let selected = selected.clone();
+        Callback::from(move |value: Option<T>| {
+            selected.set(value);  // change selected
+        })
+    };
+
+    // result
+    (selected, select_callback)
+
+}
+
+
+
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct EditButtonsProps {

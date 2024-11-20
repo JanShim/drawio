@@ -4,7 +4,7 @@ use web_sys::{FormData, HtmlFormElement};
 use yew::{function_component, html, use_effect_with, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
 use yewdux::use_store;
 
-use crate::{components::{multystate::state_rect::StateSampleRect, shared::{use_css_styles, MdIcon, MdIconType}}, store};
+use crate::{components::{multystate::state_rect::StateSampleRect, shared::{use_css_styles, use_state_with, MdIcon, MdIconType}}, store};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -15,13 +15,14 @@ pub struct Props {
 #[function_component]
 pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html 
 {
-    let my_state = use_state(|| value.clone());
-    {
-        let my_state = my_state.clone();
-        use_effect_with(value.clone(), move |value | {
-            my_state.set((*value).clone());
-        });
-    }
+    // let my_state = use_state(|| value.clone());
+    // {
+    //     let my_state = my_state.clone();
+    //     use_effect_with(value.clone(), move |value | {
+    //         my_state.set((*value).clone());
+    //     });
+    // }
+    let my_state = use_state_with(value.clone());
 
     let css_strings = use_css_styles(my_state.style.clone());
 

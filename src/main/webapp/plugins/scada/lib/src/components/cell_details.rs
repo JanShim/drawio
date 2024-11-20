@@ -7,7 +7,7 @@ use yewdux::use_store;
 
 use crate::{
     components::{
-        geom_value::GeomValueComponent, label_value::LabelValueComponent, 
+        geom_value::GeomValue, label_value::LabelValueComponent, 
         multystate::MultystateComponent, shared::{MdIcon, MdIconType}, 
         widget::WidgetComponent
     },
@@ -150,7 +150,7 @@ pub fn CellDetails() -> Html {
                     CellMetaVariant::Geometry(value) => {
                         log::debug!("cell as geometry: {:?}", cell_meta);
                         html!{ 
-                            <GeomValueComponent edit_mode={*edit_mode} 
+                            <GeomValue edit_mode={*edit_mode} 
                                 value={ value.clone() } 
                                 on_detals_apply={ on_detals_apply.clone() }/> 
                         }

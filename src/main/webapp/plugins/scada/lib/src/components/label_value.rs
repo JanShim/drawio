@@ -27,13 +27,10 @@ pub fn LabelValueComponent(Props {
         log::debug!("LabelValueComponent unmount");
     });    
     
-    // let label_state = use_state(|| value.clone());
     let data_source = use_state(|| value.ds.clone());
     {
-        // let label_state = label_state.clone();
         let data_source = data_source.clone();
         use_effect_with(value.clone(), move |v| {
-            // label_state.set(v.clone());
             data_source.set(v.ds.clone());
         });
     }

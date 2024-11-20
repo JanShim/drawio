@@ -9,7 +9,7 @@ use yewdux::use_selector;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    components::{data_source::{self, DataSource}, shared::use_state_with}, errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, }, store::cell
+    components::{data_source::{self, DataSource}, shared::{use_list_selected, use_state_with}}, errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, }, store::cell
 };
 
 // pub mod type_selector;
@@ -54,21 +54,7 @@ pub fn MultystateComponent(Props {
         })
     }
 
-
-    /* #region selected_state */
-    let selected_state = use_state(|| {
-            let value: Option<StateXml> = None;
-            value
-        });
-
-    let state_select_callback = {
-            let selected = selected_state.clone();
-            Callback::from(move |value: Option<StateXml>| {
-                // log::debug!("state_select_callback: {value:?}");
-                selected.set(value);  // change selected
-            })
-        };
-    /* #endregion */
+    let (selected, select_callback) = use_list_selected::<StateXml>();
 
     // start apply process if true
     let start_apply = use_selector(|state: &cell::State | state.start_apply);
@@ -173,7 +159,7 @@ pub fn MultystateComponent(Props {
     let states_view = {
             let range_type = range_type.clone();
             let edit_mode = edit_mode.clone();
-            let selected = selected_state.clone();
+            let selected = selected.clone();
             states.current().iter()
                 .map(move |item| {
                     if edit_mode {
@@ -185,7 +171,7 @@ pub fn MultystateComponent(Props {
                                     false
                                 },
                                 apply: state_apply_callback.clone(),
-                                select: state_select_callback.clone(),
+                                select: select_callback.clone(),
                             });
                         html! { <MultystateStateEditComponent ..props/> }
                     } else {

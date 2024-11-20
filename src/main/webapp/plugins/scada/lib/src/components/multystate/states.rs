@@ -125,7 +125,5 @@ pub fn StatesSelector(Props {
              <button onclick={on_state_add}><MdIcon icon={MdIconType::Add}/></button> 
         } 
          </div>
-
-
     }
 }
