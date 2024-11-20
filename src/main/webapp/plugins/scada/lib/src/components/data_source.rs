@@ -1,9 +1,9 @@
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_memo, use_state, Callback, Html, InputEvent, MouseEvent, Properties, };
-use common_model::data_source::DataSourceXml;
+use yew::{function_component, html, use_effect_with, use_memo, use_state, Callback, Html, InputEvent, MouseEvent, Properties };
+use common_model::data_source::{self, DataSourceXml};
 
-use crate::components::shared::EditButtons;
+use crate::components::shared::{use_state_with, EditButtons};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -13,8 +13,10 @@ pub struct Props {
 }
 
 #[function_component]
-pub fn DataSource(Props {ds, edit_mode, on_apply}: &Props ) -> Html {
-    let data_source = use_state(|| ds.clone());
+pub fn DataSource(Props {ds, edit_mode, on_apply}: &Props ) -> Html 
+{
+    let data_source = use_state_with(ds.clone());
+
     let ds_original = use_memo(ds.clone(), |ds| ds.clone());
 
     let is_edit = use_state(|| false);
@@ -23,8 +25,6 @@ pub fn DataSource(Props {ds, edit_mode, on_apply}: &Props ) -> Html {
         let is_edit = is_edit.clone();
         Callback::from(move |_: MouseEvent| { is_edit.set(true); })
     };  
-
-    log::debug!("ds_original: {:?}", *ds_original);
 
     let on_cancel = {
             let is_edit = is_edit.clone();

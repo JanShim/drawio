@@ -53,6 +53,14 @@ pub enum CellMetaVariant {
 }
 
 impl CellMetaVariant {
+    pub fn get_cell_type(&self) -> CellType {
+        match self {
+            CellMetaVariant::Label(_) => CellType::LABEL,
+            CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
+            CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
+            CellMetaVariant::Geometry(_) => CellType::GEOM,
+        }
+    }
 
     pub fn create_state(&mut self) {
         if let Self::Multystate(multy) = self {

@@ -24,16 +24,15 @@ pub fn CellDetails() -> Html {
     });    
 
     let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
-    log::debug!("cell_state: {cell_state:?}");
     let cell_meta = use_mut_ref(|| cell_state.meta.clone());
+    let meta = use_state(|| cell_state.meta.clone());
     {
-        let cell_meta = cell_meta.clone();
-        use_effect_with(cell_state.clone(), move |meta| {
-            log::debug!("use_effect_with: {meta:?}");
-            *cell_meta.borrow_mut() = (*meta).meta.clone();
+        let meta = meta.clone();
+        use_effect_with(cell_state.clone(), move |st| {
+            log::debug!("use_effect_with cell meta: {:?}", st.meta);
+            meta.set(st.meta.clone());
         });
     }
-
 
     let edit_mode = use_state(|| false);
 
@@ -58,34 +57,34 @@ pub fn CellDetails() -> Html {
             })
         };
 
-    let features_set = use_mut_ref(|| cell_meta.borrow().get_cell_type());
+    let features_set = use_mut_ref(|| meta.get_cell_type());
     let on_detals_apply = {
             let edit_mode = edit_mode.clone();
             let features_set = features_set.clone();
             let cell_meta = cell_meta.clone();
+            let meta = meta.clone();
             Callback::from(move |variant: CellMetaVariant| {
-                let cell_type = match variant {
-                        CellMetaVariant::Label(_) => CellType::LABEL,
-                        CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
-                        CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
-                        CellMetaVariant::Geometry(_) => CellType::GEOM,
-                    };
+                let cell_type = variant.get_cell_type();
 
+                // let mut new_meta = (*meta).clone();
                 let mut new_meta = cell_meta.borrow().clone();
                 match variant {
                     CellMetaVariant::Label(value) => new_meta.set_label_meta(value),
                     CellMetaVariant::Multystate(value) => new_meta.set_multystate_meta(value),
                     _ => (),
                 }
-
-                *cell_meta.borrow_mut() = new_meta;
+                
+                *cell_meta.borrow_mut() = new_meta.clone();     // put to RefCell. Accumulate CellMetaVariant changes
+                // log::debug!("NEW_META: {:?}; CELL_META: {:?}", new_meta, cell_meta.borrow());
+                
+                meta.set(new_meta.clone());         // set for redrawing curr component
 
                 log::debug!("apply set: {:?} -{cell_type:?}", features_set.borrow());
                 features_set.borrow_mut().remove(&cell_type);      // remove from set
 
                 // try to set meta in cell
                 if features_set.borrow().len() == 0 {
-                    let meta = (*cell_meta.borrow()).clone();
+                    let meta = cell_meta.borrow();      // get accumulated CellMetaVariants
                     log::debug!("apply meta to cell {meta:?}");
     
                     let cell = cell_state.cell.clone().expect(NOT_CELL);
@@ -122,23 +121,23 @@ pub fn CellDetails() -> Html {
 
     let details_vew = {
         let edit_mode = edit_mode.clone();
-        let cell_meta = cell_meta.clone();
-        cell_meta.clone().borrow().types.iter()
+        let cell_meta = meta.clone();
+        cell_meta.clone().types.iter()
             .map(|o| {
                 match o.clone() {
                     CellMetaVariant::Label(value) => {
-                        log::debug!("cell as label: {:?}; {value:?}", *cell_meta);
+                        log::debug!("cell as label: {value:?}");
                         html!{ 
                             <LabelValueComponent edit_mode={*edit_mode} 
-                                cell_meta={ cell_meta.clone() }
+                                value={ value.clone() }
                                 on_detals_apply={ on_detals_apply.clone() }/> 
                         }
                     },
-                    CellMetaVariant::Multystate(_) => {
-                        log::debug!("cell as multystate: {:?}", *cell_meta);
+                    CellMetaVariant::Multystate(value) => {
+                        log::debug!("cell as multystate: {value:?}");
                         html!{ 
                             <MultystateComponent edit_mode={*edit_mode} 
-                                cell_meta={ cell_meta.clone() }
+                                value={ value.clone() }
                                 on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },

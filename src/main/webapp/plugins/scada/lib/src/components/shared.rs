@@ -2,6 +2,7 @@ use std::rc::Rc;
 use yew::{function_component, hook, html, AttrValue, Callback, Html, MouseEvent, Properties, UseStateHandle};
 use yew::use_memo;
 use common_model::utils::{map_to_svg_style, mx_style_to_map};
+use yew::{Hook, use_state, use_effect_with};
 
 
 #[derive(PartialEq, Debug, Clone)]
@@ -69,6 +70,25 @@ pub fn use_css_styles(mx_style: AttrValue) -> Rc<(AttrValue, AttrValue)> {
         (AttrValue::from(style.to_string()), AttrValue::from(text_style.to_string()))
     })
 }
+
+#[hook]
+pub fn use_state_with<T>(deps: T) -> UseStateHandle<T>
+where 
+    T: PartialEq + Clone + 'static,
+{
+    let state = use_state(|| deps.clone());
+    {
+        let state = state.clone();
+        use_effect_with(deps, move |deps| {
+            state.set(deps.clone());
+        })   
+    }
+
+    // result
+    state
+}
+
+
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct EditButtonsProps {

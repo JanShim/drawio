@@ -9,7 +9,7 @@ use yewdux::use_selector;
 use state::{MultystateStateComponent, MultystateStateEditComponent};
 
 use crate::{
-    components::data_source::{self, DataSource}, errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, }, store::cell
+    components::{data_source::{self, DataSource}, shared::use_state_with}, errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, }, store::cell
 };
 
 // pub mod type_selector;
@@ -21,32 +21,39 @@ pub mod state_predef;
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
-    pub cell_meta: Rc<RefCell<CellMeta>>,
+    pub value: MultystateXml,
     pub on_detals_apply: Callback<CellMetaVariant>,    // callback for applyed notification
 }
 
 #[function_component]
 pub fn MultystateComponent(Props { 
     edit_mode , 
+    value,
     on_detals_apply, 
-    cell_meta,
 }: &Props) -> Html 
 {
     use_unmount(|| {
         log::debug!("MultystateComponent unmount");
     });
 
-    let multy_meta = use_state(|| {
-            if let Ok(multystate) = cell_meta.borrow().get_multystate_meta() {
-                return multystate;
-            };
-            log::warn!("{}", CellStateError::NotMultystate);
-            MultystateXml::default()        
-        });
-    let range_type = use_state(|| multy_meta.range_type.clone());
-    let data_source = use_state(|| multy_meta.ds.clone());
-    let predef_states = use_state(|| multy_meta.predef.clone());
-    let states = use_list(multy_meta.states.clone());
+    let meta = use_state(|| value.clone());
+    let range_type = use_state(|| meta.range_type.clone());
+    let data_source = use_state(|| meta.ds.clone());
+    let predef_states = use_state(|| meta.predef.clone());
+    let states = use_list(meta.states.clone());
+    {
+        let range_type = range_type.clone();
+        let data_source = data_source.clone();
+        let predef_states = predef_states.clone();
+        let states = states.clone();
+        use_effect_with(value.clone(), move |m| {
+            range_type.set(m.range_type.clone());
+            data_source.set(m.ds.clone());
+            predef_states.set(m.predef.clone());
+            states.set(m.states.clone());
+        })
+    }
+
 
     /* #region selected_state */
     let selected_state = use_state(|| {
