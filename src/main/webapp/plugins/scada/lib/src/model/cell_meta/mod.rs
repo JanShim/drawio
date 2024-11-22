@@ -70,17 +70,26 @@ impl CellMetaVariant {
 
     pub fn get_label(&self) -> Option<LabelValueXml> {
         match self {
-            CellMetaVariant::Label(label) => Some(label.clone()),
+            CellMetaVariant::Label(vaue) => Some(vaue.clone()),
             _ => None
         }
     }
 
     pub fn get_multystate(&self) -> Option<MultystateXml> {
         match self {
-            CellMetaVariant::Multystate(multystate) => Some(multystate.clone()),
+            CellMetaVariant::Multystate(value) => Some(value.clone()),
             _ => None
         }
     }
+
+    pub fn get_geometry(&self) -> Option<GeomValueXml> {
+        match self {
+            CellMetaVariant::Geometry(value) => Some(value.clone()),
+            _ => None
+        }
+    }    
+
+        
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -193,6 +202,22 @@ impl CellMeta {
         }
         Err(CellStateError::NotMultystate.into())
     }  
+
+    pub fn set_geometry_meta(&mut self, value: GeomValueXml) {
+        let position = self.get_meta_position(CellType::GEOM);
+        if position.is_some()  {
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Geometry(value));
+        }
+    }    
+
+    pub fn get_geometry_meta(&self) -> Result<GeomValueXml, JsValue>{
+        let position = self.get_meta_position(CellType::GEOM);
+        if position.is_some()  {
+            let item = self.types[position.unwrap()].get_geometry().unwrap();
+            return Ok(item);
+        }
+        Err(CellStateError::NotGeometry.into())
+    }      
 
     pub fn set_widget_container_meta(&mut self, value: WidgetContainerXml) {
         let position = self.get_meta_position(CellType::WIDGETCONTAINER);

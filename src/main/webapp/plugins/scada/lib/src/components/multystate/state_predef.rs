@@ -62,8 +62,10 @@ where
     // item view
     html! {
         <table class="prop-table">
+        <tr>
             <td>{ view_mode }</td>
             <td class="img"><input type="radio" id={(*radio_id).clone()} name="style-selector" value={(*radio_id).clone()} onclick={on_radio_click}/></td>
+        </tr>
         </table>
     }
     
@@ -164,6 +166,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
     // item view
     html! {
         <table class="prop-table">
+        <tr>
             <td>
             if *selected {
                 { edit_mode }
@@ -172,6 +175,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
             }
             </td>
             <td class="img">{img}</td>
+        </tr>
         </table>
     }
     

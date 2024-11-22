@@ -55,8 +55,10 @@ pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
     // item view
     html! {
         <table class="prop-table">
-        <td>{ view_mode }</td>
-        <td class="img"></td>
+        <tr>
+            <td>{ view_mode }</td>
+            <td class="img"></td>
+        </tr>
         </table>
     }
     

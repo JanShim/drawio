@@ -71,6 +71,7 @@ pub fn CellDetails() -> Html {
                 match variant {
                     CellMetaVariant::Label(value) => new_meta.set_label_meta(value),
                     CellMetaVariant::Multystate(value) => new_meta.set_multystate_meta(value),
+                    CellMetaVariant::Geometry(value) => new_meta.set_geometry_meta(value),
                     _ => (),
                 }
                 

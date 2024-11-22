@@ -15,6 +15,7 @@ pub mod label_value;
 pub mod geom_value;
 pub mod shared;
 pub mod data_source;
+pub mod prop_table_tr;
 
 
 pub fn get_global_css() -> VNode {

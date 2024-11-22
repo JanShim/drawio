@@ -92,15 +92,17 @@ pub fn component(Props {ds, edit_mode}: &Props ) -> Html {
 
     html!{
         <table class="prop-table">
-        <td class="label" width="70">{"Тэг объекта"}</td>
-        <td>{ tag_view }</td>
-        <td class="img">
-            <EditButtons edit_mode={*edit_mode} is_edit={is_edit.clone()}
-                on_apply={togle_apply.clone()}
-                on_edit={togle_edit.clone()}
-                on_cancel={togle_cancel.clone()}
-            />        
-        </td>
+        <tr>
+            <td class="label" width="70">{"Тэг объекта"}</td>
+            <td>{ tag_view }</td>
+            <td class="img">
+                <EditButtons edit_mode={*edit_mode} is_edit={is_edit.clone()}
+                    on_apply={togle_apply.clone()}
+                    on_edit={togle_edit.clone()}
+                    on_cancel={togle_cancel.clone()}
+                />        
+            </td>
+        </tr>
         </table>
     }
     

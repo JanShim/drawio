@@ -33,6 +33,7 @@ pub enum CellStateError  {
     NotMultystate,
     NotLabel,
     NotWidget,
+    NotGeometry,
 }
 
 impl Display for CellStateError {
@@ -42,6 +43,7 @@ impl Display for CellStateError {
             CellStateError::NotMultystate => "not multistate cell".to_owned(),
             CellStateError::NotWidget => "not widget cell".to_owned(),
             CellStateError::NotLabel => "not label cell".to_owned(),
+            CellStateError::NotGeometry => "not geometry cell".to_owned(),
         };
         write!(f, "{msg}")
     }

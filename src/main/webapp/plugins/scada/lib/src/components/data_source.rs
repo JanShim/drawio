@@ -73,16 +73,18 @@ pub fn DataSource(Props {ds, edit_mode, on_apply}: &Props ) -> Html
 
     html!{
         <table class="prop-table">
-        <td class="label" width="20">{"Тэг"}</td>
-        <td>{ tag_view }</td>
-        <td class="img">
-            <EditButtons edit_mode={*edit_mode} 
-                {is_edit}
-                {on_apply}
-                {on_edit}
-                {on_cancel}
-            />
-        </td>
+        <tr>
+            <td class="label" width="20">{"Тэг"}</td>
+            <td>{ tag_view }</td>
+            <td class="img">
+                <EditButtons edit_mode={*edit_mode} 
+                    {is_edit}
+                    {on_apply}
+                    {on_edit}
+                    {on_cancel}
+                />
+            </td>
+        </tr>
         </table>
     }
     
