@@ -124,11 +124,8 @@ impl MxCell {
         match self.get_value() {
             Ok(CellValue::Object(el)) => {
                 log::debug!("ELEMENT:  {:#?}", el.outer_html());
-                let tst=  from_str(el.outer_html().as_str())
-                    .map_err(|err| JsValue::from(err.to_string().as_str()));
-
-                log::debug!("{tst:?}");
-                tst
+                from_str(el.outer_html().as_str())
+                    .map_err(|err| JsValue::from(err.to_string().as_str()))
             },
             _ => Err(CellStateError::NoMeta.into())
         }

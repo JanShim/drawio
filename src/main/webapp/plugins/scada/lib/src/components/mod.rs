@@ -104,8 +104,8 @@ input.state-val {
     }
 }
 
-#[function_component(InfoComponent)]
-pub fn diagram_info_component() -> Html {
+#[function_component]
+pub fn InfoComponent() -> Html {
     let model_meta = use_selector(|state: &store::diagram::State| {
         state.model_meta.clone()
     });

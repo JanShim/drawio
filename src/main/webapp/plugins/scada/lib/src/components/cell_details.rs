@@ -31,7 +31,7 @@ pub fn CellDetails() -> Html {
     {
         let meta = meta.clone();
         use_effect_with(cell_state.clone(), move |st| {
-            log::debug!("use_effect_with cell meta: {:?}", st.meta);
+            // log::debug!("use_effect_with cell meta: {:?}", st.meta);
             meta.set(st.meta.clone());
         });
     }

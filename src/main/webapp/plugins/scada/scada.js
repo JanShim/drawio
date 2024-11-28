@@ -75,6 +75,15 @@ function clipedModelBox(modelStr) {
 			let cells = graph2.model.cells;
 			let widgetCells = Object.entries(cells).map(( [k, v] ) => v);
 
+			// make all cells uneditable
+			// movable=0;resizable=0;rotatable=0;cloneable=0;deletable=0
+			let mxCells = widgetCells.filter((o) => o.id != "0" && o.id != "1");
+			graph2.setCellStyles("movable", 0, mxCells);
+			graph2.setCellStyles("resizable", 0, mxCells);
+			graph2.setCellStyles("rotatable", 0, mxCells);
+			graph2.setCellStyles("cloneable", 0, mxCells);
+			graph2.setCellStyles("deletable", 0, mxCells);
+
 			let box = graph2.getBoundingBox(widgetCells);
 			let x = box.x;
 			let y = box.y;
