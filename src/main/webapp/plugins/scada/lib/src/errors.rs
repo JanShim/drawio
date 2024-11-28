@@ -34,6 +34,7 @@ pub enum CellStateError  {
     NotLabel,
     NotWidget,
     NotGeometry,
+    NotWidgetContainer,
 }
 
 impl Display for CellStateError {
@@ -44,6 +45,7 @@ impl Display for CellStateError {
             CellStateError::NotWidget => "not widget cell".to_owned(),
             CellStateError::NotLabel => "not label cell".to_owned(),
             CellStateError::NotGeometry => "not geometry cell".to_owned(),
+            CellStateError::NotWidgetContainer => "not widget container cell".to_owned(),
         };
         write!(f, "{msg}")
     }

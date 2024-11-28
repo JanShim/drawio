@@ -4,7 +4,7 @@ use yew_hooks::use_unmount;
 use yewdux::use_selector;
 
 use crate::{
-    components::data_source::{self, DataSource}, 
+    components::{data_source::{self, DataSource}, shared::use_my_datasource}, 
     model::cell_meta::CellMetaVariant, 
     store::cell,
 };
@@ -27,13 +27,7 @@ pub fn LabelValueComponent(Props {
         log::debug!("LabelValueComponent unmount");
     });    
     
-    let data_source = use_state(|| value.ds.clone());
-    {
-        let data_source = data_source.clone();
-        use_effect_with(value.clone(), move |v| {
-            data_source.set(v.ds.clone());
-        });
-    }
+    let data_source = use_my_datasource(value.clone());
 
     let start_apply = use_selector(|state: &cell::State | state.start_apply);
     {    

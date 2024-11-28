@@ -124,8 +124,11 @@ impl MxCell {
         match self.get_value() {
             Ok(CellValue::Object(el)) => {
                 log::debug!("ELEMENT:  {:#?}", el.outer_html());
-                from_str(el.outer_html().as_str())
-                    .map_err(|err| JsValue::from(err.to_string().as_str()))
+                let tst=  from_str(el.outer_html().as_str())
+                    .map_err(|err| JsValue::from(err.to_string().as_str()));
+
+                log::debug!("{tst:?}");
+                tst
             },
             _ => Err(CellStateError::NoMeta.into())
         }
@@ -148,6 +151,7 @@ impl MxCell {
         let inner_html = meta.types.iter()
             .map(|data| {
                 let outer_html = match data {
+                        CellMetaVariant::Undefiend(value) => to_string(value),
                         CellMetaVariant::Label(value) => to_string(value),
                         CellMetaVariant::Multystate(multy) => to_string(multy),
                         CellMetaVariant::WidgetContainer(widget) => to_string(widget),

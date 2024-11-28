@@ -9,12 +9,12 @@ use crate::{
     components::{
         geom_value::GeomValue, label_value::LabelValueComponent, 
         multystate::MultystateComponent, shared::{MdIcon, MdIconType}, 
-        widget::WidgetComponent
+        widget::WidgetContainer
     },
     model::cell_meta::{
          CellMetaVariant, CellType, CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY
     }, 
-    store::cell::{self, SetCellTypeAction, StartApplyAction, NOT_CELL }, 
+    store::{cell::{self, SetCellTypeAction, StartApplyAction, NOT_CELL, NO_CONTEXT_FOUND }, mx_context::TMxGraphContext}, utils::set_widget_model, 
 };
 
 #[function_component]
@@ -22,6 +22,8 @@ pub fn CellDetails() -> Html {
     use_unmount(|| {
         log::debug!("CellDetailsComponent unmount");
     });    
+
+    let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
 
     let (cell_state, cell_state_dispatch) = use_store::<cell::State>();
     let cell_meta = use_mut_ref(|| cell_state.meta.clone());
@@ -66,17 +68,17 @@ pub fn CellDetails() -> Html {
             Callback::from(move |variant: CellMetaVariant| {
                 let cell_type = variant.get_cell_type();
 
-                // let mut new_meta = (*meta).clone();
                 let mut new_meta = cell_meta.borrow().clone();
                 match variant {
                     CellMetaVariant::Label(value) => new_meta.set_label_meta(value),
                     CellMetaVariant::Multystate(value) => new_meta.set_multystate_meta(value),
                     CellMetaVariant::Geometry(value) => new_meta.set_geometry_meta(value),
+                    CellMetaVariant::WidgetContainer(value) => new_meta.set_widget_container_meta(value),
                     _ => (),
                 }
                 
                 *cell_meta.borrow_mut() = new_meta.clone();     // put to RefCell. Accumulate CellMetaVariant changes
-                // log::debug!("NEW_META: {:?}; CELL_META: {:?}", new_meta, cell_meta.borrow());
+                log::debug!("NEW_META: {:?}; CELL_META: {:?}", new_meta, cell_meta.borrow());
                 
                 meta.set(new_meta.clone());         // set for redrawing curr component
 
@@ -85,19 +87,21 @@ pub fn CellDetails() -> Html {
 
                 // try to set meta in cell
                 if features_set.borrow().len() == 0 {
-                    let meta = cell_meta.borrow();      // get accumulated CellMetaVariants
-                    log::debug!("apply meta to cell {meta:?}");
+                    let cell_meta = cell_meta.borrow();      // get accumulated CellMetaVariants
     
                     let cell = cell_state.cell.clone().expect(NOT_CELL);
-    
-                    // //TODO: забыл зачем это?
-                    // set_widget_model(mx_graph_context.mx_editor.clone(), (*cell).clone(), cell_state.model_node.to_string());
-    
-                    // // let new_meta = (**meta).clone();
-                    let _ = cell.set_meta(&meta).ok();
+
+                    // for widget container. Set widget selected widget to mxGraphModel
+                    if cell_type == CellType::WIDGETCONTAINER {
+                        // log::debug!("{}", cell_state.model_node.to_string());
+                        set_widget_model(mx_graph_context.mx_editor.clone(), (*cell).clone(), cell_state.model_node.to_string());
+                    }
+
+                    log::debug!("set to cell: {cell_meta:?}");
+                    let _ = cell.set_meta(&cell_meta).ok();
     
                     // reset apply counter
-                    *features_set.borrow_mut() = meta.get_cell_type();
+                    *features_set.borrow_mut() = cell_meta.get_cell_type();
     
                     cell_state_dispatch.apply(StartApplyAction(false));
                     edit_mode.set(false);
@@ -126,6 +130,10 @@ pub fn CellDetails() -> Html {
         cell_meta.clone().types.iter()
             .map(|o| {
                 match o.clone() {
+                    CellMetaVariant::Undefiend(_) => {
+                        log::debug!("cell type undefiend");
+                        html!{ "Error cell type" }
+                    },
                     CellMetaVariant::Label(value) => {
                         log::debug!("cell as label: {value:?}");
                         html!{ 
@@ -142,10 +150,12 @@ pub fn CellDetails() -> Html {
                                 on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },
-                    CellMetaVariant::WidgetContainer(_) => {
+                    CellMetaVariant::WidgetContainer(value) => {
                         log::debug!("cell as widget: {:?}", *cell_meta);
                         html!{
-                            <WidgetComponent edit_mode={*edit_mode}/> 
+                            <WidgetContainer edit_mode={*edit_mode}
+                            value={ value.clone() }
+                            on_detals_apply={on_detals_apply.clone()}/> 
                         }                    
                     },
                     CellMetaVariant::Geometry(value) => {

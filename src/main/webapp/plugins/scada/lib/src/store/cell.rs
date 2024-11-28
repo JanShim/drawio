@@ -183,6 +183,7 @@ impl Reducer<State> for SetCellTypeAction {
 
         let data = cell_types.into_iter()
             .map(|o| match o {
+                CellType::UNDEFIEND => CellMetaVariant::Undefiend(Default::default()),
                 CellType::LABEL =>  CellMetaVariant::Label(Default::default()),
                 CellType::MULTYSTATE => CellMetaVariant::Multystate(Default::default()),
                 CellType::WIDGETCONTAINER => CellMetaVariant::WidgetContainer(Default::default()),

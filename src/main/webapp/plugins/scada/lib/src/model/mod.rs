@@ -1,4 +1,5 @@
 
+pub mod traits;
 pub mod common;
 pub mod diagram;
 pub mod widget;

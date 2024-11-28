@@ -4,14 +4,14 @@ use implicit_clone::unsync::IString;
 use crate::components::widget::glyph_svg::GlyphSvg;
 
 #[derive(Properties, PartialEq, Debug)]
-pub struct Props {
+pub struct GlyphProps {
     pub pk: AttrValue,
     pub on_select: Callback<(IString, IString)>,
     pub glyph: IString,
 }
 
 #[function_component(WidgetGlyph)]
-pub fn component(Props {pk, on_select, glyph }: &Props) -> Html {
+pub fn component(GlyphProps {pk, on_select, glyph }: &GlyphProps) -> Html {
 
     let on_click = {
         let on_select = on_select.clone();

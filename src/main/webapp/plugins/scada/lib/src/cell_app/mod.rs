@@ -7,7 +7,7 @@ use web_sys::HtmlDivElement;
 
 use crate::{
     components::{cell_details::{CellDetails, CellTypeSelector}, get_global_css}, 
-    model::{mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils}, 
+    model::{cell_meta::{get_cellmeta_types, CellType}, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils}, 
     store::{self, mx_context::{MxGraphContext, TMxGraphContext}}, 
     utils::SchemaOptions
 };
@@ -21,19 +21,31 @@ pub struct CellComponentProps {
 #[styled_component]
 pub fn CellComponent(CellComponentProps { context }: &CellComponentProps) -> Html 
 {
-    let cell_types_num = use_selector(|st: &store::cell::State|  st.meta.types.len() );
+    let cell_types = use_selector(|st: &store::cell::State|  {
+            get_cellmeta_types(&st.meta.types)
+        });
 
-    log::debug!("CellComponent run");
+    // let cell = use_selector(|st: &store::cell::State| {
+    //         let aa = st.cell.as_ref().map(|o| o.get_meta()).unwrap().unwrap();
+    //         log::debug!("{aa:?}");
+    //         aa
+    //     });
+
+    // let cell_meta = use_memo(cell.clone(), |c| {
+    //         c.map(|m| m.get_meta_xml()).unwrap()
+    //     });//  .get_meta().unwrap());
+
+    log::debug!("CellComponent run  {cell_types:?}");
 
     // === view items ====
     html! {<>
         { get_global_css() }
 
         <ContextProvider<TMxGraphContext> context={context.clone()}>
-            if *cell_types_num > 0 {
-                <CellDetails />
-            } else {
+            if cell_types.contains(&CellType::UNDEFIEND) {
                 <CellTypeSelector />
+            } else {
+                <CellDetails />
             }
         </ContextProvider<TMxGraphContext>>
     </>}    

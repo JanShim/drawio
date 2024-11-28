@@ -411,7 +411,7 @@ Draw.loadPlugin(async function(ui) {
 				let cotainer = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
 				cotainer.vertex = true;
 
-				let value = mxUtils.parseXml("<d-flow><widget uuid='00000000-0000-0000-0000-000000000000' group='valves'/></d-flow>").documentElement;
+				let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
 				value.setAttribute('label', cotainer.value || '');
 				cotainer.setValue(value);				
 

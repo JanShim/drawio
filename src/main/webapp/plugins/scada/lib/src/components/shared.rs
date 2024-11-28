@@ -1,10 +1,10 @@
+use yew::prelude::*;
 use std::rc::Rc;
-use yew::{function_component, hook, html, AttrValue, Callback, Html, MouseEvent, Properties, UseStateHandle};
-use yew::use_memo;
 use common_model::utils::{map_to_svg_style, mx_style_to_map};
-use yew::{Hook, use_state, use_effect_with};
+use common_model::traits::WithXmlDataSource;
+use common_model::data_source::DataSourceXml;
 
-
+// ===========================================
 #[derive(PartialEq, Debug, Clone)]
 pub enum MdIconType {
     Edit,
@@ -48,20 +48,7 @@ impl Into<AttrValue> for MdIconType {
 }
 
 
-#[derive(Properties, PartialEq, Debug)]
-pub struct Props {
-    #[prop_or_default]
-    pub icon: MdIconType,
-}
-
-#[function_component]
-pub fn MdIcon(Props { icon }: &Props) -> Html 
-{
-    html! {
-        <span class="material-icons md-18"  title={icon.get_title()}>{ Into::<AttrValue>::into((*icon).clone()) }</span>
-    }
-}
-
+// ============ hooks ======================
 #[hook]
 pub fn use_css_styles(mx_style: AttrValue) -> Rc<(AttrValue, AttrValue)> {
     use_memo(mx_style, |style| {
@@ -110,8 +97,39 @@ where T: 'static
 
 }
 
+#[hook]
+pub fn use_my_datasource<T>(value: T) -> UseStateHandle<DataSourceXml>
+where T: PartialEq +  Clone + WithXmlDataSource + 'static
+{
+    let data_source = use_state(|| value.get_ds().clone());
+    {
+        let data_source = data_source.clone();
+        use_effect_with(value.clone(), move |v| {
+            data_source.set(v.get_ds().clone());
+        });    
+
+    }
+
+    // result
+    data_source
+}
 
 
+// ========== common components ================
+
+#[derive(Properties, PartialEq, Debug)]
+pub struct Props {
+    #[prop_or_default]
+    pub icon: MdIconType,
+}
+
+#[function_component]
+pub fn MdIcon(Props { icon }: &Props) -> Html 
+{
+    html! {
+        <span class="material-icons md-18"  title={icon.get_title()}>{ Into::<AttrValue>::into((*icon).clone()) }</span>
+    }
+}
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct EditButtonsProps {
