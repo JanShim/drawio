@@ -68,8 +68,6 @@ pub fn WidgetContainer(Props {
 			let uuid = uuid.clone();
 			wasm_bindgen_futures::spawn_local(
 				async move { 
-					log::debug!("fetching uuid: {uuid}");
-
 					if uuid.eq(NULL_UUID) {
 						let model = fetch_string(format!("{url}/widget/{NULL_UUID}/model")).await.unwrap_or(NULL_MODEL.to_owned());
 						let glyph = fetch_string(format!("{url}/widget/{uuid}/glyph")).await.unwrap_or(NULL_GLYPH.to_owned());
