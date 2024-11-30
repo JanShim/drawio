@@ -4,16 +4,17 @@ use web_sys::{Node, SvgElement};
 use yew::prelude::*;
 use implicit_clone::unsync::IString;
 
+use crate::components::shared::get_document;
+
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
-    pub html: IString,
+    pub glyph: IString,
 }
 
-#[function_component(SvgViewComponent)]
-pub fn component(props: &Props) -> Html {
-    let div = use_memo(props.html.clone(), |html| {
-        let window = web_sys::window().expect("no global `window` exists");
-        let document = window.document().expect("should have a document on window");
+#[function_component]
+pub fn SvgViewComponent(Props {glyph}: &Props) -> Html {
+    let div = use_memo(glyph.clone(), |html| {
+        let document = get_document();
     
         let div = document.create_element("div").unwrap();   
         div.set_class_name("svg-view"); 
@@ -37,8 +38,7 @@ pub fn component(props: &Props) -> Html {
             };
         };
 
-        let node: Node = div.into();
-        node
+        Into::<Node>::into(div)
     });
 
     Html::VRef((*div).clone())

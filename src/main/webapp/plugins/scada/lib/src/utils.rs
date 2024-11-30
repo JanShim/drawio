@@ -11,6 +11,9 @@ use wasm_bindgen_futures::wasm_bindgen;
 use crate::{errors::FetchError, model::{mx_cell::MxCell, mx_editor::MxEditor}};
 
 pub const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
+pub const NULL_MODEL: &str = "<mxGraphModel/>";
+pub const NULL_GLYPH: &str = "<svg/>";
+
 
 #[wasm_bindgen]
 pub struct SchemaOptions {

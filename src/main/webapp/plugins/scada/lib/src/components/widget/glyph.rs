@@ -10,8 +10,8 @@ pub struct GlyphProps {
     pub glyph: IString,
 }
 
-#[function_component(WidgetGlyph)]
-pub fn component(GlyphProps {pk, on_select, glyph }: &GlyphProps) -> Html {
+#[function_component]
+pub fn WidgetGlyph(GlyphProps {pk, on_select, glyph }: &GlyphProps) -> Html {
 
     let on_click = {
         let on_select = on_select.clone();

@@ -1,3 +1,4 @@
+use common_model::dflow_cell::{CellType, DFlowVariant};
 use yew::prelude::*;
 use yew_hooks::use_unmount;
 use std::collections::{HashMap, HashSet};
@@ -11,10 +12,12 @@ use crate::{
         multystate::MultystateComponent, shared::{MdIcon, MdIconType}, 
         widget::WidgetContainer
     },
-    model::cell_meta::{
-         CellMetaVariant, CellType, CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY
+    model::cell_meta::{ CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY }, 
+    store::{
+        cell::{self, SetCellTypeAction, StartApplyAction, NOT_CELL, NO_CONTEXT_FOUND }, 
+        mx_context::TMxGraphContext
     }, 
-    store::{cell::{self, SetCellTypeAction, StartApplyAction, NOT_CELL, NO_CONTEXT_FOUND }, mx_context::TMxGraphContext}, utils::set_widget_model, 
+    utils::set_widget_model, 
 };
 
 #[function_component]
@@ -65,20 +68,22 @@ pub fn CellDetails() -> Html {
             let features_set = features_set.clone();
             let cell_meta = cell_meta.clone();
             let meta = meta.clone();
-            Callback::from(move |variant: CellMetaVariant| {
+            Callback::from(move |variant: DFlowVariant| {
                 let cell_type = variant.get_cell_type();
+
+                // log::debug!("my type: {cell_type:?}");
 
                 let mut new_meta = cell_meta.borrow().clone();
                 match variant {
-                    CellMetaVariant::Label(value) => new_meta.set_label_meta(value),
-                    CellMetaVariant::Multystate(value) => new_meta.set_multystate_meta(value),
-                    CellMetaVariant::Geometry(value) => new_meta.set_geometry_meta(value),
-                    CellMetaVariant::WidgetContainer(value) => new_meta.set_widget_container_meta(value),
+                    DFlowVariant::Label(value) => new_meta.set_label_meta(value),
+                    DFlowVariant::Multystate(value) => new_meta.set_multystate_meta(value),
+                    DFlowVariant::Geometry(value) => new_meta.set_geometry_meta(value),
+                    DFlowVariant::WidgetContainer(value) => new_meta.set_widget_container_meta(value),
                     _ => (),
                 }
                 
                 *cell_meta.borrow_mut() = new_meta.clone();     // put to RefCell. Accumulate CellMetaVariant changes
-                log::debug!("NEW_META: {:?}; CELL_META: {:?}", new_meta, cell_meta.borrow());
+                // log::debug!("NEW_META: {:?}; CELL_META: {:?}", new_meta, cell_meta.borrow());
                 
                 meta.set(new_meta.clone());         // set for redrawing curr component
 
@@ -130,11 +135,11 @@ pub fn CellDetails() -> Html {
         cell_meta.clone().types.iter()
             .map(|o| {
                 match o.clone() {
-                    CellMetaVariant::Undefiend(_) => {
+                    DFlowVariant::Undefiend(_) => {
                         log::debug!("cell type undefiend");
                         html!{ "Error cell type" }
                     },
-                    CellMetaVariant::Label(value) => {
+                    DFlowVariant::Label(value) => {
                         log::debug!("cell as label: {value:?}");
                         html!{ 
                             <LabelValueComponent edit_mode={*edit_mode} 
@@ -142,7 +147,7 @@ pub fn CellDetails() -> Html {
                                 on_detals_apply={ on_detals_apply.clone() }/> 
                         }
                     },
-                    CellMetaVariant::Multystate(value) => {
+                    DFlowVariant::Multystate(value) => {
                         log::debug!("cell as multystate: {value:?}");
                         html!{ 
                             <MultystateComponent edit_mode={*edit_mode} 
@@ -150,15 +155,15 @@ pub fn CellDetails() -> Html {
                                 on_detals_apply={on_detals_apply.clone()}/> 
                         }    
                     },
-                    CellMetaVariant::WidgetContainer(value) => {
-                        log::debug!("cell as widget: {:?}", *cell_meta);
+                    DFlowVariant::WidgetContainer(value) => {
+                        log::debug!("cell as widget container: {:?}", value);
                         html!{
                             <WidgetContainer edit_mode={*edit_mode}
                             value={ value.clone() }
                             on_detals_apply={on_detals_apply.clone()}/> 
                         }                    
                     },
-                    CellMetaVariant::Geometry(value) => {
+                    DFlowVariant::Geometry(value) => {
                         log::debug!("cell as geometry: {:?}", cell_meta);
                         html!{ 
                             <GeomValue edit_mode={*edit_mode} 

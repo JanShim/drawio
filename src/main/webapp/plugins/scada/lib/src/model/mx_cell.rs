@@ -1,3 +1,4 @@
+use common_model::dflow_cell::DFlowVariant;
 use wasm_bindgen::prelude::*;
 use web_sys::Element;
 use quick_xml::{
@@ -7,7 +8,7 @@ use quick_xml::{
 
 use crate::{errors::CellStateError, utils::get_pretty_xml,};
 
-use super::{cell_meta::{CellMeta, CellMetaVariant}, common,};
+use super::{cell_meta::CellMeta, common,};
 
 pub enum CellValue {
     Object(Element),
@@ -147,12 +148,13 @@ impl MxCell {
     pub fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
         let inner_html = meta.types.iter()
             .map(|data| {
-                let outer_html = match data {
-                        CellMetaVariant::Undefiend(value) => to_string(value),
-                        CellMetaVariant::Label(value) => to_string(value),
-                        CellMetaVariant::Multystate(multy) => to_string(multy),
-                        CellMetaVariant::WidgetContainer(widget) => to_string(widget),
-                        CellMetaVariant::Geometry(geom) => to_string(geom),
+                let outer_html = 
+                match data {
+                        DFlowVariant::Undefiend(value) => to_string(value),
+                        DFlowVariant::Label(value) => to_string(value),
+                        DFlowVariant::Multystate(multy) => to_string(multy),
+                        DFlowVariant::WidgetContainer(widget) => to_string(widget),
+                        DFlowVariant::Geometry(geom) => to_string(geom),
                     }
                     .map_err(|err| JsValue::from(err.to_string().as_str()));
                 outer_html

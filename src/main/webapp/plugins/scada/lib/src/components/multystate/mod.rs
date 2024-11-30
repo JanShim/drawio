@@ -1,15 +1,18 @@
-use std::{cell::RefCell, rc::Rc};
-use common_model::{data_source::DataSourceXml, multystate::{range::RangeType, state::StateXml, state_predef::StatePredefXml, MultystateXml}};
-use state_predef::{StatePredefComponent, StatePredefEditComponent};
-use states::StatesSelector;
-use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties, };
+use yew::prelude::*;
 use yew_hooks::{use_list, use_unmount};
 use yewdux::use_selector;
+use common_model::{
+    data_source::DataSourceXml, dflow_cell::DFlowVariant, 
+    multystate::{range::RangeType, state::StateXml, state_predef::StatePredefXml, MultystateXml}
+};
 
+use state_predef::{StatePredefComponent, StatePredefEditComponent};
 use state::{MultystateStateComponent, MultystateStateEditComponent};
+use states::StatesSelector;
 
 use crate::{
-    components::{data_source::{self, DataSource}, shared::{use_list_selected, use_state_with}}, errors::CellStateError, model::cell_meta::{CellMeta, CellMetaVariant, }, store::cell
+    components::{data_source::{self, DataSource}, shared::use_list_selected}, 
+    store::cell
 };
 
 // pub mod type_selector;
@@ -22,7 +25,7 @@ pub mod state_predef;
 pub struct Props {
     pub edit_mode: bool,
     pub value: MultystateXml,
-    pub on_detals_apply: Callback<CellMetaVariant>,    // callback for applyed notification
+    pub on_detals_apply: Callback<DFlowVariant>,    // callback for applyed notification
 }
 
 #[function_component]
@@ -73,7 +76,7 @@ pub fn MultystateComponent(Props {
                     states: states.current().clone(),
                 };
 
-                let new_variant = CellMetaVariant::Multystate(new_state);
+                let new_variant = DFlowVariant::Multystate(new_state);
                 log::debug!("NEW MULTY {:?}", new_variant);      
                 on_detals_apply.emit(new_variant);
             }

@@ -13,7 +13,7 @@ target = "wasm32-unknown-unknown"
 common-model = { path = "/home/janshim/projects/rust/scada_editor/common_model" }
 console_error_panic_hook = "0.1.7"
 # anyhow = "1.0.88"
-thiserror = "2.0.1"
+thiserror = "2.0.3"
 log = "0.4"
 reqwasm = { version = "0.5.0"}
 yew = { version="0.21.0", features=["csr"] }
@@ -22,14 +22,14 @@ yew-hooks = "0.3.2"
 # material-yew = {version = "0.3.0", features = ["icon", "icon-button", "icon-button-toggle", "button", "checkbox"]}
 implicit-clone = {version = "0.4.9", features = ["map", "serde"]}       #!!!!!! this version in yew
 wasm-logger = "0.2.0"
-web-sys = { version = "0.3.72", features = ["Document", "Window", "Element", "Node", 
+web-sys = { version = "0.3.74", features = ["Document", "Window", "Element", "Node", 
 "HtmlDivElement", "HtmlFormElement", "HtmlAnchorElement", "SvgElement", "HtmlSelectElement"] }
-wasm-bindgen = { version = "0.2.95", features = ["serde-serialize"] }
-wasm-bindgen-futures = "0.4.45"
-serde = { version = "1.0.214", features = ["derive"] }
+wasm-bindgen = { version = "0.2.97", features = ["serde-serialize"] }
+wasm-bindgen-futures = "0.4.47"
+serde = { version = "1.0.215", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
-serde_json = "1.0.132"
-quick-xml = {version = "0.37.0", features = ["serialize"]}
+serde_json = "1.0.133"
+quick-xml = {version = "0.37.1", features = ["serialize"]}
 stylist = {version = "0.13.0", features = ["yew"]}
 # lazy_static = "1.5.0"
 # yew_form = "0.1.7"
@@ -45,5 +45,5 @@ stylist = {version = "0.13.0", features = ["yew"]}
 # html_parser = "0.7.0"
 
 [dev-dependencies]
-mockall = "0.13.0"
-wasm-bindgen-test = "0.3.45"
+mockall = "0.13.1"
+wasm-bindgen-test = "0.3.47"

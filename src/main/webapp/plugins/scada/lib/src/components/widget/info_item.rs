@@ -107,11 +107,14 @@ pub fn WidgetInfoComponent() -> Html {
                                         svg: Some(svg),
                                     };
 
-                                    put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await
+                                    let res = put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await
                                         .and_then(|dto| {
-                                            // log::debug!("saved:  {dto:?}");
+                                            log::debug!("saved:  {dto:?}");
                                             Ok(dto)
-                                        }).unwrap();
+                                        });
+                                    if res.is_err() {
+                                        log::error!("{:?}", res.err());
+                                    }
 
                                 }
                             };

@@ -4,19 +4,16 @@ use yew_hooks::{use_async_with_options, use_unmount, UseAsyncOptions};
 use yewdux::{use_selector, use_store};
 use implicit_clone::unsync::IString;
 use svg_view::SvgViewComponent;
-use common_model::{data_source::DataSourceXml, widget::WidgetContainerXml};
+use common_model::{data_source::DataSourceXml, dflow_cell::DFlowVariant, widget::WidgetContainerXml};
 
 use crate::{
 	components::{data_source::{self, DataSource}, shared::{use_my_datasource, use_state_with, MdIcon, MdIconType}}, errors::CellStateError, 
-	model::{
-		cell_meta::CellMetaVariant, 
-		widget::WidgetGlyphItem
-	}, 
+	model::widget::WidgetGlyphItem, 
 	store::{
 		cell::{self, SetCellModelAction, NO_CONTEXT_FOUND},
 		mx_context::TMxGraphContext
 	}, 
-	utils::{fetch, fetch_string, NULL_UUID}
+	utils::{fetch, fetch_string, NULL_GLYPH, NULL_MODEL, NULL_UUID}
 };
 
 pub mod info_item;
@@ -29,7 +26,7 @@ pub mod glyph_svg;
 pub struct Props {
     pub edit_mode: bool,
     pub value: WidgetContainerXml,
-	pub on_detals_apply: Callback<CellMetaVariant>,
+	pub on_detals_apply: Callback<DFlowVariant>,
 }
 
 #[function_component]
@@ -49,14 +46,6 @@ pub fn WidgetContainer(Props {
     let (_, cell_store_dispatch) = use_store::<cell::State>();
 	let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
 
-    let widget = use_selector(|cell_state: &cell::State| {
-		if let Ok(widget) = cell_state.meta.get_widget_container_meta() {
-			return widget;
-		};
-		log::error!("{}", CellStateError::NotWidget);
-		WidgetContainerXml::default()
-	});  
-
     let type_edit_mode = use_state(|| false);
     let togle_type_edit = {
         let type_edit_mode = type_edit_mode.clone();
@@ -65,25 +54,58 @@ pub fn WidgetContainer(Props {
 		})
     };  
 
-    let glyph_svg = use_state(|| IString::from("<span>???</span>"));
-	let widget_uuid = use_state(|| IString::from(NULL_UUID));
+	let glyph_svg = use_state(|| IString::from(""));
+	let widget_uuid = {
+		let my_value = my_value.clone();
+		use_state(move || my_value.uuid.clone())
+	};
 	{
 		let url = mx_graph_context.api_url.clone();
 		let cell_store_dispatch = cell_store_dispatch.clone();
-		use_effect_with((*widget_uuid).clone(), |uuid| {
+		let my_value = my_value.clone();
+		let glyph_svg = glyph_svg.clone();
+		use_effect_with(my_value.uuid.clone(), |uuid| {
 			let uuid = uuid.clone();
 			wasm_bindgen_futures::spawn_local(
 				async move { 
-					let model = fetch_string(format!("{url}/widget/{uuid}/model")).await.unwrap();
-					cell_store_dispatch.apply(SetCellModelAction(model.into()));
+					log::debug!("fetching uuid: {uuid}");
+
+					if uuid.eq(NULL_UUID) {
+						let model = fetch_string(format!("{url}/widget/{NULL_UUID}/model")).await.unwrap_or(NULL_MODEL.to_owned());
+						let glyph = fetch_string(format!("{url}/widget/{uuid}/glyph")).await.unwrap_or(NULL_GLYPH.to_owned());
+						cell_store_dispatch.apply(SetCellModelAction(model.into()));
+						glyph_svg.set(AttrValue::from(glyph));
+						return;
+					}
+
+					// fetch model
+					match fetch_string(format!("{url}/widget/{uuid}/model")).await {
+						Ok(model) => cell_store_dispatch.apply(SetCellModelAction(model.into())),
+						Err(err) => log::error!("{err}"),
+					}
+
+					// fetch glyph
+					match fetch_string(format!("{url}/widget/{uuid}/glyph")).await {
+						Ok(glyph) => glyph_svg.set(AttrValue::from(glyph)),
+						Err(err) => log::error!("{err}"),
+					}
 				 }
 			);
 		}
 	)};
 
+    // let glyph_svg_init = {
+	// 	let url = mx_graph_context.api_url.clone();
+	// 	let uuid =  widget_uuid.clone();
+	// 	use_async_with_options(
+	// 		async move { fetch_string(format!("{url}/widget/{}/glyph", *uuid)).await },
+	// 		UseAsyncOptions::enable_auto(),
+	// 	)
+	// };
+
     let widget_list = {
 		let url = mx_graph_context.api_url.clone();
-		let group = (*widget).group.clone();
+		let group = my_value.group.clone();
 		use_async_with_options(
 			async move { fetch::<Vec::<WidgetGlyphItem>>(format!("{url}/widget/{group}/glyphs")).await },
 			UseAsyncOptions::enable_auto(),
@@ -96,10 +118,10 @@ pub fn WidgetContainer(Props {
 		let type_edit_mode = type_edit_mode.clone();
 		let widget_uuid = widget_uuid.clone();
         Callback::from(move |pk_glyph: (IString, IString)| {
-			let (pk, plyph) = pk_glyph;
+			let (pk, glyph) = pk_glyph;
 			if *type_edit_mode {
 				widget_uuid.set(pk);
-				glyph_svg.set(plyph);							
+				glyph_svg.set(glyph);							
 			}			
         })
     };
@@ -131,7 +153,7 @@ pub fn WidgetContainer(Props {
 
 				log::debug!("{new_value:?}");
 
-				let new_variant = CellMetaVariant::WidgetContainer(new_value);
+				let new_variant = DFlowVariant::WidgetContainer(new_value);
 				log::debug!("NEW WIDGET CONTAINER {:?}", new_variant);      
 				on_detals_apply.emit(new_variant);
 			}
@@ -147,14 +169,6 @@ pub fn WidgetContainer(Props {
 
 
     // ------------ View Items
-    // let data_source_view = {
-    //     let props = yew::props!(data_source::Props {
-    //         ds: widget.ds.clone(),
-    //         edit_mode: *edit_mode,
-    //     });
-    //     html! {<DataSourceComponent ..props/>}
-    // };    
-
     let data_source_view = {
 		let data_source = data_source.clone();
 		let apply_ds = apply_ds.clone();
@@ -165,12 +179,6 @@ pub fn WidgetContainer(Props {
 		});
 		html! {<DataSource ..props/>}
 	};	
-
-    let svg_view = {
-        let inner_svg = glyph_svg.clone();
-        let props = yew::props!(svg_view::Props { html: (*inner_svg).clone(), });
-        html! {<SvgViewComponent ..props/>}
-    };
 
     let img_view = {
         let edit_mode = edit_mode.clone();
@@ -185,6 +193,20 @@ pub fn WidgetContainer(Props {
             html! { <span/> }
         }
     };    	
+
+    // let glyph_view = {
+    //     if glyph_svg_init.loading {
+    //         html! { "Loading..." }
+    //     } else  {
+    //         glyph_svg_init.data.as_ref().map_or_else(
+    //             || html! {},        // default
+    //             |glyph| {
+	// 				let glyph: AttrValue = glyph.clone().into();
+	// 				html! { <SvgViewComponent {glyph}/> }
+	// 			}
+	// 		)      
+    //     }   
+    // };	
 
     let widgets_view = {
 		let on_item_select = on_item_select.clone();
@@ -212,25 +234,13 @@ pub fn WidgetContainer(Props {
         <hr/>
         { data_source_view }
         <hr/>
-        // <svg style="left: 1px; top: 1px; width: 124px; height: 120px; display: block; position: relative; overflow: hidden; pointer-events: none;"
-        // viewBox="0 0 32 30">
-        // <g style="pointer-events: none;">
-        //     <g style="pointer-events: none;">
-        //     </g>
-        //     <g style="pointer-events: none;">
-        //         <g transform="translate(0.5,0.5)" style="visibility: visible; pointer-events: none;">
-        //             <path d="M 1.5 6.3 L 16 15 L 1.5 23.7 Z M 30.5 6.3 L 16 15 L 30.5 23.7 Z" fill="rgb(241, 243, 244)" stroke="rgb(0, 0, 0)" stroke-width="1.3" stroke-linejoin="round" stroke-miterlimit="10" style="pointer-events: none;">
-        //             </path>
-        //         </g>
-        //     </g>
-        //     <g style="pointer-events: none;">
-        //     </g>
-        //     <g style="pointer-events: none;">
-        //     </g>
-        // </g>
-        // </svg>
-        <div class="flex-box delim-label">{"Тип объекта"}  {img_view} </div>
-        { svg_view }
+
+		<div class="flex-box delim-label">{"Тип объекта"} 
+			{img_view} 
+		</div>
+			// { glyph_view }
+			// <hr/>
+		<SvgViewComponent glyph={(*glyph_svg).clone()}/>
         <hr/>
 
         <div style="display: block;">

@@ -5,7 +5,7 @@ use yewdux::Reducer;
 
 use crate::store::cell;
 
-use super::{CellMeta, CellMetaVariant};
+use super::{CellMeta, DFlowVariant};
 
 // pub struct WidgetUuidApplyAction(pub IString);
 // impl Reducer<cell::State> for WidgetUuidApplyAction {

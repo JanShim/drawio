@@ -6,7 +6,7 @@ use common_model::{data_source::DataSourceXml, label_value::LabelValueXml};
 
 use crate::store::cell;
 
-use super::{CellMeta, CellMetaVariant};
+use super::{CellMeta, DFlowVariant};
 
 /// reducer's Action
 pub enum ValueAction {

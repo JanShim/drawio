@@ -1,11 +1,11 @@
 use std::{cmp::Ordering, collections::HashSet, rc::Rc};
-use common_model::multystate::range::RangeType;
+use common_model::{dflow_cell::{CellType, DFlowVariant}, multystate::range::RangeType};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use yewdux::{store::Store, Reducer};
 
 use crate::model::{
-    cell_meta::{ CellMeta, CellMetaVariant, CellType, }, 
+    cell_meta::CellMeta, 
     mx_cell::MxCell,
 };
 
@@ -182,13 +182,7 @@ impl Reducer<State> for SetCellTypeAction {
         cell_types.sort_by(cell_type_compare);
 
         let data = cell_types.into_iter()
-            .map(|o| match o {
-                CellType::UNDEFIEND => CellMetaVariant::Undefiend(Default::default()),
-                CellType::LABEL =>  CellMetaVariant::Label(Default::default()),
-                CellType::MULTYSTATE => CellMetaVariant::Multystate(Default::default()),
-                CellType::WIDGETCONTAINER => CellMetaVariant::WidgetContainer(Default::default()),
-                CellType::GEOM => CellMetaVariant::Geometry(Default::default()),
-            })
+            .map(|o| Into::<DFlowVariant>::into(o) )
             .collect::<Vec<_>>();
 
         let cell = state.cell.clone().ok_or(JsValue::from(NOT_CELL)).unwrap();

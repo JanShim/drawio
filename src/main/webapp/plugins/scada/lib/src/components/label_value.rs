@@ -1,11 +1,10 @@
-use common_model::{data_source::DataSourceXml, label_value::LabelValueXml};
+use common_model::{data_source::DataSourceXml, dflow_cell::DFlowVariant, label_value::LabelValueXml};
 use yew::{function_component, html, use_effect_with, use_state, Callback, Html, Properties };
 use yew_hooks::use_unmount;
 use yewdux::use_selector;
 
 use crate::{
     components::{data_source::{self, DataSource}, shared::use_my_datasource}, 
-    model::cell_meta::CellMetaVariant, 
     store::cell,
 };
 
@@ -13,7 +12,7 @@ use crate::{
 pub struct Props {
     pub edit_mode: bool,
     pub value: LabelValueXml,
-    pub on_detals_apply: Callback<CellMetaVariant>,
+    pub on_detals_apply: Callback<DFlowVariant>,
 }
 
 #[function_component]
@@ -40,7 +39,7 @@ pub fn LabelValueComponent(Props {
 
                 log::debug!("NEW LABEL {new_label:?}");
 
-                let new_variant = CellMetaVariant::Label(new_label);
+                let new_variant = DFlowVariant::Label(new_label);
                 on_detals_apply.emit(new_variant);
             }
         })

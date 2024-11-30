@@ -1,9 +1,13 @@
 use std::collections::HashSet;
-use common_model::{geom_value::GeomValueXml, label_value::LabelValueXml, multystate::MultystateXml, undefiend::UndefiendXml, widget::WidgetContainerXml};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
-use web_sys::FormData;
 use serde::{Deserialize, Serialize};
+use common_model::{
+    dflow_cell::{CellType, DFlowVariant}, 
+    geom_value::GeomValueXml, label_value::LabelValueXml,
+     multystate::MultystateXml, undefiend::UndefiendXml, 
+     widget::WidgetContainerXml
+    };
 
 use crate::errors::CellStateError;
 
@@ -16,14 +20,14 @@ pub const CELL_TYPE_MULTY: &str = "multy";
 pub const CELL_TYPE_GEOM: &str = "geom";
 
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub enum CellType {
-    UNDEFIEND,
-    LABEL,
-    MULTYSTATE,
-    WIDGETCONTAINER,
-    GEOM,
-}
+// #[derive(Debug, PartialEq, Eq, Hash, Clone)]
+// pub enum CellType {
+//     UNDEFIEND,
+//     LABEL,
+//     MULTYSTATE,
+//     WIDGETCONTAINER,
+//     GEOM,
+// }
 
 // impl From<FormData> for CellType {
 //     fn from(data: FormData) -> Self {
@@ -39,68 +43,68 @@ pub enum CellType {
 // }
 
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub enum CellMetaVariant {
-    #[serde(rename = "undefiend")]
-    Undefiend(UndefiendXml),
-    #[serde(rename = "label")]
-    Label(LabelValueXml),
-    #[serde(rename = "multystate")]
-    Multystate(MultystateXml),
-    #[serde(rename = "widget-container")]
-    WidgetContainer(WidgetContainerXml),
-    #[serde(rename = "geometry")]
-    Geometry(GeomValueXml),
-}
+// #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+// pub enum DFlowVariant {
+//     #[serde(rename = "undefiend")]
+//     Undefiend(UndefiendXml),
+//     #[serde(rename = "label")]
+//     Label(LabelValueXml),
+//     #[serde(rename = "multystate")]
+//     Multystate(MultystateXml),
+//     #[serde(rename = "widget-container")]
+//     WidgetContainer(WidgetContainerXml),
+//     #[serde(rename = "geometry")]
+//     Geometry(GeomValueXml),
+// }
 
-impl CellMetaVariant {
-    pub fn get_cell_type(&self) -> CellType {
-        match self {
-            CellMetaVariant::Undefiend(_) => CellType::UNDEFIEND,
-            CellMetaVariant::Label(_) => CellType::LABEL,
-            CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
-            CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
-            CellMetaVariant::Geometry(_) => CellType::GEOM,
-        }
-    }
+// impl DFlowVariant {
+//     pub fn get_cell_type(&self) -> CellType {
+//         match self {
+//             DFlowVariant::Undefiend(_) => CellType::UNDEFIEND,
+//             DFlowVariant::Label(_) => CellType::LABEL,
+//             DFlowVariant::Multystate(_) => CellType::MULTYSTATE,
+//             DFlowVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
+//             DFlowVariant::Geometry(_) => CellType::GEOM,
+//         }
+//     }
 
-    pub fn create_state(&mut self) {
-        if let Self::Multystate(multy) = self {
-            multy.create_state();
-        }
-    }
+//     pub fn create_state(&mut self) {
+//         if let Self::Multystate(multy) = self {
+//             multy.create_state();
+//         }
+//     }
 
-    pub fn get_label(&self) -> Option<LabelValueXml> {
-        match self {
-            CellMetaVariant::Label(vaue) => Some(vaue.clone()),
-            _ => None
-        }
-    }
+//     pub fn get_label(&self) -> Option<LabelValueXml> {
+//         match self {
+//             DFlowVariant::Label(vaue) => Some(vaue.clone()),
+//             _ => None
+//         }
+//     }
 
-    pub fn get_multystate(&self) -> Option<MultystateXml> {
-        match self {
-            CellMetaVariant::Multystate(value) => Some(value.clone()),
-            _ => None
-        }
-    }
+//     pub fn get_multystate(&self) -> Option<MultystateXml> {
+//         match self {
+//             DFlowVariant::Multystate(value) => Some(value.clone()),
+//             _ => None
+//         }
+//     }
 
-    pub fn get_widget_container(&self) -> Option<WidgetContainerXml> {
-        match self {
-            CellMetaVariant::WidgetContainer(value) => Some(value.clone()),
-            _ => None
-        }
-    }
+//     pub fn get_widget_container(&self) -> Option<WidgetContainerXml> {
+//         match self {
+//             DFlowVariant::WidgetContainer(value) => Some(value.clone()),
+//             _ => None
+//         }
+//     }
 
-    pub fn get_geometry(&self) -> Option<GeomValueXml> {
-        match self {
-            CellMetaVariant::Geometry(value) => Some(value.clone()),
-            _ => None
-        }
-    }    
-}
+//     pub fn get_geometry(&self) -> Option<GeomValueXml> {
+//         match self {
+//             DFlowVariant::Geometry(value) => Some(value.clone()),
+//             _ => None
+//         }
+//     }    
+// }
 
 
-pub fn get_cellmeta_types(variants: &Vec<CellMetaVariant>) -> HashSet<CellType> {
+pub fn get_cellmeta_types(variants: &Vec<DFlowVariant>) -> HashSet<CellType> {
     variants.iter()
         .map(|o| o.get_cell_type())
         .collect::<HashSet<_>>()
@@ -114,7 +118,7 @@ pub struct CellMeta {
     pub label: IString,
 
     #[serde(rename = "$value", default)]
-    pub types: Vec<CellMetaVariant>,
+    pub types: Vec<DFlowVariant>,
 }
 
 impl CellMeta {
@@ -125,11 +129,11 @@ impl CellMeta {
     pub fn get_cell_type(&self) -> HashSet<CellType> {
         self.types.iter()
             .map(|o| match *o {
-                CellMetaVariant::Undefiend(_) => CellType::UNDEFIEND,
-                CellMetaVariant::Label(_) => CellType::LABEL,
-                CellMetaVariant::Multystate(_) => CellType::MULTYSTATE,
-                CellMetaVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
-                CellMetaVariant::Geometry(_) => CellType::GEOM,
+                DFlowVariant::Undefiend(_) => CellType::UNDEFIEND,
+                DFlowVariant::Label(_) => CellType::LABEL,
+                DFlowVariant::Multystate(_) => CellType::MULTYSTATE,
+                DFlowVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
+                DFlowVariant::Geometry(_) => CellType::GEOM,
             })
             .collect::<HashSet<_>>()
     }
@@ -138,11 +142,11 @@ impl CellMeta {
         self.types.iter()
             .position(|o| {
                 match cell_type {
-                    CellType::UNDEFIEND => if let CellMetaVariant::Undefiend(_) = *o { return true; },
-                    CellType::LABEL => if let CellMetaVariant::Label(_) = *o { return true; },
-                    CellType::MULTYSTATE => if let CellMetaVariant::Multystate(_) = *o { return true; },
-                    CellType::GEOM =>  if let CellMetaVariant::Geometry(_) = *o { return true; },
-                    CellType::WIDGETCONTAINER => if let CellMetaVariant::WidgetContainer(_) = *o {  log::debug!("FOUND!");  return true; },
+                    CellType::UNDEFIEND => if let DFlowVariant::Undefiend(_) = *o { return true; },
+                    CellType::LABEL => if let DFlowVariant::Label(_) = *o { return true; },
+                    CellType::MULTYSTATE => if let DFlowVariant::Multystate(_) = *o { return true; },
+                    CellType::GEOM =>  if let DFlowVariant::Geometry(_) = *o { return true; },
+                    CellType::WIDGETCONTAINER => if let DFlowVariant::WidgetContainer(_) = *o {  log::debug!("FOUND!");  return true; },
                 };
                 false
             })
@@ -151,7 +155,7 @@ impl CellMeta {
     pub fn set_label_meta(&mut self, value: LabelValueXml) {
         let position = self.get_meta_position(CellType::LABEL);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Label(value));
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], DFlowVariant::Label(value));
         }
     }
 
@@ -167,7 +171,7 @@ impl CellMeta {
     pub fn set_multystate_meta(&mut self, value: MultystateXml) {
         let position = self.get_meta_position(CellType::MULTYSTATE);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Multystate(value));
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], DFlowVariant::Multystate(value));
         }
     }
 
@@ -183,7 +187,7 @@ impl CellMeta {
     pub fn set_geometry_meta(&mut self, value: GeomValueXml) {
         let position = self.get_meta_position(CellType::GEOM);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::Geometry(value));
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], DFlowVariant::Geometry(value));
         }
     }    
 
@@ -199,9 +203,9 @@ impl CellMeta {
     pub fn set_widget_container_meta(&mut self, value: WidgetContainerXml) {
         let position = self.get_meta_position(CellType::WIDGETCONTAINER);
         if position.is_some()  {
-            let _ = std::mem::replace(&mut self.types[position.unwrap()], CellMetaVariant::WidgetContainer(value));
+            let _ = std::mem::replace(&mut self.types[position.unwrap()], DFlowVariant::WidgetContainer(value));
         } else {
-            self.types.insert(0, CellMetaVariant::WidgetContainer(value));
+            self.types.insert(0, DFlowVariant::WidgetContainer(value));
         }
     }
 
@@ -273,7 +277,7 @@ mod tests {
 
         let item = CellMeta {
             label: "widget".into(),
-            types: vec![CellMetaVariant::WidgetContainer(widget.into())],
+            types: vec![DFlowVariant::WidgetContainer(widget.into())],
         };
 
         let str = to_string(&item).unwrap();
@@ -302,7 +306,7 @@ mod tests {
 
         let item = CellMeta {
             label: "multy".into(),
-            types: vec![CellMetaVariant::Multystate(multy)],
+            types: vec![DFlowVariant::Multystate(multy)],
         };
 
         let str = to_string(&item).unwrap();
@@ -320,7 +324,7 @@ mod tests {
 
         let item = CellMeta {
             label: "value".into(),
-            types: vec![CellMetaVariant::Label(value)],
+            types: vec![DFlowVariant::Label(value)],
         };
 
         let str = to_string(&item).unwrap();
@@ -338,7 +342,7 @@ mod tests {
 
         let meta = CellMeta { 
             label: Default::default(), 
-            types: vec![CellMetaVariant::Label(label_meta)],
+            types: vec![DFlowVariant::Label(label_meta)],
         };
 
         let tst = meta.get_cell_type();
@@ -353,7 +357,7 @@ mod tests {
 
         let mut meta = CellMeta { 
             label: Default::default(), 
-            types: vec![CellMetaVariant::Label(label_meta)],
+            types: vec![DFlowVariant::Label(label_meta)],
         };
 
         let str = to_string(&meta).unwrap();
@@ -387,7 +391,7 @@ mod tests {
 
         let mut meta = CellMeta { 
             label: Default::default(), 
-            types: vec![CellMetaVariant::Multystate(multy_meta)],
+            types: vec![DFlowVariant::Multystate(multy_meta)],
         };
 
         meta.create_state();

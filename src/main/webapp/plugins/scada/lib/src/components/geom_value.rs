@@ -1,14 +1,13 @@
 use yew::{function_component, html, use_effect_with, Callback, Html, Properties };
 use yew_hooks::use_unmount;
 use yewdux::use_selector;
-use common_model::{data_source::DataSourceXml, geom_value::GeomValueXml};
+use common_model::{data_source::DataSourceXml, dflow_cell::DFlowVariant, geom_value::GeomValueXml};
 
 use crate::{ 
     components::{
         data_source::{self, DataSource}, prop_table_tr::PropTableTr, shared::{use_my_datasource, use_state_with}
     }, 
-    model::cell_meta::CellMetaVariant, 
-    store::cell::{self, NOT_CELL}
+    store::cell
 };
 
 
@@ -17,7 +16,7 @@ pub struct Props {
     #[prop_or_default]
     pub edit_mode: bool,
     pub value: GeomValueXml,
-    pub on_detals_apply: Callback<CellMetaVariant>,
+    pub on_detals_apply: Callback<DFlowVariant>,
 }
 
 #[function_component]
@@ -54,7 +53,7 @@ pub fn GeomValue(Props {
 
                 log::debug!("{new_value:?}");
 
-                let new_variant = CellMetaVariant::Geometry(new_value);
+                let new_variant = DFlowVariant::Geometry(new_value);
                 log::debug!("NEW GEOM {:?}", new_variant);      
                 on_detals_apply.emit(new_variant);
             }
