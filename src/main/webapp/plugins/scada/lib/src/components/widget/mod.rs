@@ -92,15 +92,6 @@ pub fn WidgetContainer(Props {
 		}
 	)};
 
-    // let glyph_svg_init = {
-	// 	let url = mx_graph_context.api_url.clone();
-	// 	let uuid =  widget_uuid.clone();
-	// 	use_async_with_options(
-	// 		async move { fetch_string(format!("{url}/widget/{}/glyph", *uuid)).await },
-	// 		UseAsyncOptions::enable_auto(),
-	// 	)
-	// };
-
     let widget_list = {
 		let url = mx_graph_context.api_url.clone();
 		let group = my_value.group.clone();
@@ -192,20 +183,6 @@ pub fn WidgetContainer(Props {
         }
     };    	
 
-    // let glyph_view = {
-    //     if glyph_svg_init.loading {
-    //         html! { "Loading..." }
-    //     } else  {
-    //         glyph_svg_init.data.as_ref().map_or_else(
-    //             || html! {},        // default
-    //             |glyph| {
-	// 				let glyph: AttrValue = glyph.clone().into();
-	// 				html! { <SvgViewComponent {glyph}/> }
-	// 			}
-	// 		)      
-    //     }   
-    // };	
-
     let widgets_view = {
 		let on_item_select = on_item_select.clone();
         if widget_list.loading {
@@ -228,7 +205,6 @@ pub fn WidgetContainer(Props {
 
     html! {
         <>
-        // <pre>{ format!("{:?}", *multy_state) }</pre>
         <hr/>
         { data_source_view }
         <hr/>
@@ -236,18 +212,13 @@ pub fn WidgetContainer(Props {
 		<div class="flex-box delim-label">{"Тип объекта"} 
 			{img_view} 
 		</div>
-			// { glyph_view }
-			// <hr/>
+		
 		<SvgViewComponent glyph={(*glyph_svg).clone()}/>
         <hr/>
 
-        <div style="display: block;">
-	<div class="geSidebar" style="touch-action: none; display: block; transform-origin: left top;">
-		{ widgets_view }
-	</div>
-</div>
-
-        
+		<div class="geSidebar" style="touch-action: none; display: block; transform-origin: left top;">
+			{ widgets_view }
+		</div>
         </>
     }
 }    

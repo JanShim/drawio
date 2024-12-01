@@ -111,14 +111,13 @@ function clipedModelBox(modelStr) {
 
 function setWidgetModel(editor, cellP, modelStr) {
 	let node = mxUtils.parseXml(modelStr).documentElement;
-	if (!!node && node.nodeName === 'mxGraphModel') {
-		// console.log("setWidgetModel", cellP, node);
-
+	if (node && node.nodeName === 'mxGraphModel') {
 		let container = document.createElement("div");
 		let graph2 = new mxGraph(container);
 		let codec = new mxCodec(node);
 
 		let widgetCells = [];
+
 		graph2.model.beginUpdate();
 		try
 		{
@@ -161,6 +160,11 @@ function setWidgetModel(editor, cellP, modelStr) {
 		// merge into cellP
 		editor.graph.model.beginUpdate();
 		try {
+			// let glyph = cellP.remove(0);  // remove glyph cell
+			let childs = cellP.children;
+			editor.graph.removeCells(childs);
+			// editor.graph.removeStateForCell(glyph);			
+
 			let cells = graph2.model.cells;
 			editor.graph.model.mergeChildren(cells["1"], cellP, false);
 		}
@@ -169,7 +173,7 @@ function setWidgetModel(editor, cellP, modelStr) {
 			container.remove();
 		}
 
-		editor.fireEvent(new mxEventObject('resetGraphView'));
+		editor.graph.refresh(cellP);
 	}
 }
 
@@ -231,6 +235,7 @@ Draw.loadPlugin(async function(ui) {
 	schemaDiv.style.width = '20%';
 
 	let graph = ui.editor.graph;
+	// graph.setExtendParentsOnAdd(true);
 
 	if (!ui.editor.isChromelessView())
 	{
@@ -411,28 +416,26 @@ Draw.loadPlugin(async function(ui) {
 	// ================== SIDEBAR ===================
 	// Adds sidebar entries
 	let sb = ui.sidebar;
-	function addPalette()
-	{
-		sb.addPalette('dflow', 'DFlow items', false, function(content)
-		{
-			(function()
-			{
-				let cotainer = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
-				cotainer.vertex = true;
+	function addPalette() {
+		sb.addPalette('dflow', 'DFlow items', true, mxUtils.bind(sb, function(content) {
 
-				let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
-				value.setAttribute('label', cotainer.value || '');
-				cotainer.setValue(value);				
+			let container = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
+			container.vertex = true;
 
-				let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
-					'shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDExMiA3MyIgaGVpZ2h0PSI3M3B4IiB3aWR0aD0iMTEycHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0yIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4MS4zOSwwKXNjYWxlKC0xLDEpdHJhbnNsYXRlKC04MS4zOSwwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZT0iIzAwMDAwMCIgZmlsbD0iIzk5OTk5OSIgZD0iTSA1NC43OSAyIEwgMTA4IDM2IEwgNTQuNzkgNzAgWiIvPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSJnTGFUMDk1UEJzMVowd2FzcVNmLS0zIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjMDAwMDAwIiBmaWxsPSIjODA4MDgwIiBkPSJNIDEuNTggMiBMIDU0Ljc5IDM2IEwgMS41OCA3MCBaIi8+PC9nPjwvZz48L2c+PC9nPjwvZz48L3N2Zz4=;');
-				glyph.vertex = true;
-				glyph.setParent(cotainer);
-				
-				content.appendChild(sb.createVertexTemplateFromCells([cotainer], 100, 40, 'Valve'));
-			})();
+			let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
+			value.setAttribute('label', container.value || '');
+			container.setValue(value);				
 
-		});
+			let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
+				'shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDEwNSA2OSIgaGVpZ2h0PSI2OXB4IiB3aWR0aD0iMTA1cHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0xIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjNjY2NjY2IiBmaWxsPSIjZjVmNWY1IiBkPSJNIDIgMiBMIDUyIDMyIEwgMiA2MiBaIE0gMTAyIDIgTCA1MiAzMiBMIDEwMiA2MiBaIi8+PC9nPjxnPjxnIGZvbnQtc2l6ZT0iNTJweCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtZmFtaWx5PSImcXVvdDtIZWx2ZXRpY2EmcXVvdDsiIGZpbGw9IiNGRjAwMDAiPjx0ZXh0IHk9IjU2LjUiIHg9IjUxLjUiPj88L3RleHQ+PC9nPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0zIi8+PC9nPjwvZz48L2c+PC9zdmc+;'
+				// 'shape=mxgraph.pid2valves.valve;valveType=gate;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;'
+			);
+			glyph.vertex = true;
+
+			container.insert(glyph);
+			
+			content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, 'Задвижки'));
+		}));
 	}
 	addPalette();
 

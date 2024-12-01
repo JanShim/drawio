@@ -70,6 +70,7 @@ table.prop-table td.img {
         
 div.svg-view {
     text-align: center;
+    padding: 5px;
 }
 
 .input-100 {
