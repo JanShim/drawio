@@ -23,7 +23,7 @@ use crate::{
         mx_utils::MxUtils, 
     }, 
     store::diagram, 
-    utils::{fetch, fetch_string, load_scada_model, post, SchemaOptions} 
+    utils::{fetch, fetch_string, load_scada_model, SchemaOptions} 
 };
 
 #[derive(Properties, PartialEq)]
@@ -34,8 +34,8 @@ pub struct Props {
     pub editor_ui: Rc<EditorUi>,
 }
 
-#[styled_component(App)]
-pub fn app(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
+#[styled_component]
+pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     // let editor = mx_editor.clone();
     let (diagram_state, diagram_dispatch) = use_store::<diagram::State>();
 

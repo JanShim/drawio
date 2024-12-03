@@ -1,17 +1,16 @@
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::{
-    function_component, html, use_context, use_state, Callback, Html, MouseEvent, SubmitEvent
-};
+use yew::prelude::*;
+use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use yewdux::{use_selector, use_store};
 
 use crate::{
     components::shared::{MdIcon, MdIconType}, model::{
         common::ModelForm, 
-        widget::{form_meta::WidgetForm, WidgetDto}
+        widget::{form_meta::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
     }, 
     store::{cell::NO_CONTEXT_FOUND, diagram, mx_context::TMxGraphContext}, 
-    utils::{cliped_model_box, post, put}
+    utils::{cliped_model_box, fetch, post, put}
 };
 
 #[function_component]
@@ -31,6 +30,13 @@ pub fn WidgetInfoComponent() -> Html {
 
     let edit_mode = use_state(|| false);
 
+    let url = mx_graph_context.api_url.clone();
+    let widget_groups_list = use_async_with_options(
+        async move { fetch::<Vec::<WidgetGroupListItemDto>>(format!("{url}/widget-group/list")).await },
+        UseAsyncOptions::enable_auto(),
+    );
+
+    // ============= events ====================
     let edit_mode_toggle = {
         let edit_mode = edit_mode.clone();
         Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
@@ -55,7 +61,7 @@ pub fn WidgetInfoComponent() -> Html {
 
             if let Some(form) = form {
                 if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
-                    let state = state.clone();       
+                    // let state = state.clone();       
 
                     // appy to store
                     dispatch.reduce_mut(|state| {
@@ -136,6 +142,25 @@ pub fn WidgetInfoComponent() -> Html {
         </div>           
     };
         
+    let wgroups_select = {
+            if widget_groups_list.loading {
+                html! {  }
+            } else  {
+                let selected_group =  model_meta.group.clone();
+                widget_groups_list.data.as_ref().map_or_else(
+                    || html! {},        // default
+                    |data| html! { 
+                        <select name="group" class="input-100">
+                            <option value="undef"></option>
+                            {for data.iter().map(|item| {
+                                let selected = item.pk == selected_group;
+                                html!{ <option value={ item.pk.clone() }  {selected}>{ item.name.clone() }</option> }
+                            })}
+                        </select>
+                })      
+            }   
+        };
+
     html! {
         <>
             {header}
@@ -148,7 +173,9 @@ pub fn WidgetInfoComponent() -> Html {
                 <div class="label"><label for="name">{ "name: " }</label></div>
                 <input name="name" value={ format!("{}", model_meta.name) } class="input-100"/><br/>
                 <div class="label"><label for="group">{ "group: " }</label></div>
-                <input name="group" value={ format!("{}", model_meta.group) } class="input-100"/><br/>
+
+                // <input name="group" value={ format!("{}", model_meta.group) } class="input-100"/><br/>
+                { wgroups_select }
 
                 <div class="flex-box-2" >
                     <button type="button" onclick={on_cancel}>{"Cancel"}</button>

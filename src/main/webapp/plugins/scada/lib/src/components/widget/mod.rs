@@ -76,6 +76,8 @@ pub fn WidgetContainer(Props {
 						return;
 					}
 
+					log::debug!("my_value : {:?}", *my_value);
+
 					// fetch model
 					match fetch_string(format!("{url}/widget/{uuid}/model")).await {
 						Ok(model) => cell_store_dispatch.apply(SetCellModelAction(model.into())),
@@ -92,14 +94,20 @@ pub fn WidgetContainer(Props {
 		}
 	)};
 
-    let widget_list = {
+	let widget_list = use_state(|| Vec::<WidgetGlyphItem>::new());
+	{
 		let url = mx_graph_context.api_url.clone();
-		let group = my_value.group.clone();
-		use_async_with_options(
-			async move { fetch::<Vec::<WidgetGlyphItem>>(format!("{url}/widget/{group}/glyphs")).await },
-			UseAsyncOptions::enable_auto(),
-		)
-	};
+		let widget_list = widget_list.clone();
+		use_effect_with(my_value.group.clone(), |group| {
+			let group = group.clone();
+			wasm_bindgen_futures::spawn_local(async move {
+				match fetch::<Vec::<WidgetGlyphItem>>(format!("{url}/widget/{group}/glyphs")).await {
+					Ok(list) => widget_list.set(list),
+					Err(err) => log::error!("{err}"),
+				};
+			});  
+		});
+	}
 
 	// ======= events =============
     let on_item_select = {
@@ -184,23 +192,16 @@ pub fn WidgetContainer(Props {
     };    	
 
     let widgets_view = {
-		let on_item_select = on_item_select.clone();
-        if widget_list.loading {
-            html! { "Loading, wait a sec..." }
-        } else  {
-            widget_list.data.as_ref().map_or_else(
-                || html! {},        // default
-                |repo| html! { 
-                    for repo.iter().map(|item: &WidgetGlyphItem| {
-						let props = yew::props! {GlyphProps {
-							pk: item.uuid.to_string(),
-							on_select: on_item_select.clone(),
-							glyph: item.glyph.clone(),
-						}};
-                        html!{ <WidgetGlyph ..props /> }
-					})
-            })      
-        }   
+		html! {
+			for widget_list.iter().map(|item| {
+				let props = yew::props! {GlyphProps {
+					pk: item.uuid.to_string(),
+					on_select: on_item_select.clone(),
+					glyph: item.glyph.clone(),
+				}};
+				html!{ <WidgetGlyph ..props /> }
+			})
+		}
     };	
 
     html! {

@@ -162,8 +162,10 @@ function setWidgetModel(editor, cellP, modelStr) {
 		try {
 			// let glyph = cellP.remove(0);  // remove glyph cell
 			let childs = cellP.children;
+			editor.graph.setCellStyles("deletable", 1, childs);
+			// childs.forEach((_, i) => cellP.remove(i))
 			editor.graph.removeCells(childs);
-			// editor.graph.removeStateForCell(glyph);			
+			// childs.forEach(o => editor.graph.removeStateForCell(o));
 
 			let cells = graph2.model.cells;
 			editor.graph.model.mergeChildren(cells["1"], cellP, false);
@@ -202,6 +204,22 @@ function getGraphSvg(editor) {
 		let svg = editor.graph.getSvg();
 		return mxUtils.getXml(svg, '');
 }
+
+async function getPaletteData(apiUrl) {
+	try {
+	  const response = await fetch(`${apiUrl}/widget-group/all`);
+	  if (!response.ok) {
+		throw new Error(`Response status: ${response.status}`);
+	  }
+  
+	  const json = await response.json();
+	  return json;
+	} catch (error) {
+	  console.error(error.message);
+	}
+}
+  
+const API_URL = "http://localhost:8091/api/v1";
 
 /**
  * Sample plugin.
@@ -416,35 +434,56 @@ Draw.loadPlugin(async function(ui) {
 	// ================== SIDEBAR ===================
 	// Adds sidebar entries
 	let sb = ui.sidebar;
-	function addPalette() {
+	async function addPalette() {
+
+		const widgetGroups = await getPaletteData(API_URL);
+		console.log(widgetGroups);
+
 		sb.addPalette('dflow', 'DFlow items', true, mxUtils.bind(sb, function(content) {
 
-			let container = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
-			container.vertex = true;
+			widgetGroups.forEach(group => {
+				let container = new mxCell('', new mxGeometry(0, 0, 100, 100), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
+				container.vertex = true;
 
-			let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
-			value.setAttribute('label', container.value || '');
-			container.setValue(value);				
+				let value = mxUtils.parseXml(group.model).documentElement;
+				value.setAttribute('label', container.value || '');
+				container.setValue(value);				
 
-			let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
-				'shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDEwNSA2OSIgaGVpZ2h0PSI2OXB4IiB3aWR0aD0iMTA1cHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0xIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjNjY2NjY2IiBmaWxsPSIjZjVmNWY1IiBkPSJNIDIgMiBMIDUyIDMyIEwgMiA2MiBaIE0gMTAyIDIgTCA1MiAzMiBMIDEwMiA2MiBaIi8+PC9nPjxnPjxnIGZvbnQtc2l6ZT0iNTJweCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtZmFtaWx5PSImcXVvdDtIZWx2ZXRpY2EmcXVvdDsiIGZpbGw9IiNGRjAwMDAiPjx0ZXh0IHk9IjU2LjUiIHg9IjUxLjUiPj88L3RleHQ+PC9nPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0zIi8+PC9nPjwvZz48L2c+PC9zdmc+;'
-				// 'shape=mxgraph.pid2valves.valve;valveType=gate;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;'
-			);
-			glyph.vertex = true;
+				let glyph = new mxCell('', new mxGeometry(3, 3, 94, 94),
+					`shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=${group.image};movable=0;rotatable=0;cloneable=0;connectable=0;resizable=0;allowArrows=0;`
+				);
+				glyph.vertex = true;
+				container.insert(glyph);
+				content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, group.name));
+			});
+	
 
-			container.insert(glyph);
+			// let container = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
+			// container.vertex = true;
+
+			// let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
+			// value.setAttribute('label', container.value || '');
+			// container.setValue(value);				
+
+			// let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
+			// 	'shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDEwNSA2OSIgaGVpZ2h0PSI2OXB4IiB3aWR0aD0iMTA1cHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0xIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjNjY2NjY2IiBmaWxsPSIjZjVmNWY1IiBkPSJNIDIgMiBMIDUyIDMyIEwgMiA2MiBaIE0gMTAyIDIgTCA1MiAzMiBMIDEwMiA2MiBaIi8+PC9nPjxnPjxnIGZvbnQtc2l6ZT0iNTJweCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtZmFtaWx5PSImcXVvdDtIZWx2ZXRpY2EmcXVvdDsiIGZpbGw9IiNGRjAwMDAiPjx0ZXh0IHk9IjU2LjUiIHg9IjUxLjUiPj88L3RleHQ+PC9nPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0zIi8+PC9nPjwvZz48L2c+PC9zdmc+;'
+			// 	// 'shape=mxgraph.pid2valves.valve;valveType=gate;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;'
+			// );
+			// glyph.vertex = true;
+
+			// container.insert(glyph);
 			
-			content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, 'Задвижки'));
+			// content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, 'Задвижки'));
 		}));
 	}
-	addPalette();
+	await addPalette();
 
 	// Handles reload of sidebar after dark mode change
 	let init = sb.init;
-	sb.init = function()
+	sb.init = async function()
 	{
 		init.apply(this, arguments);
-		addPalette();
+		await addPalette();
 	};
 
 
@@ -617,7 +656,7 @@ Draw.loadPlugin(async function(ui) {
 	// init rust wasm
 	await initWasm();
 	// здесь натройки пдагина
-	let getAppOptions = function() {return new SchemaOptions("http://localhost:8091/api/v1"); }		
+	let getAppOptions = function() {return new SchemaOptions(API_URL); }		
 
 	initSchemaRender(ui.editor, mxUtils, schemaDiv, getAppOptions());
 
