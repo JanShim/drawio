@@ -32,7 +32,7 @@ pub fn SvgViewComponent(Props {glyph}: &Props) -> Html {
                     svg.set_attribute("style", &style).ok();
                 };  
 
-                svg.set_attribute("viewBox", "-0.5 -0.5 33 33").ok();
+                // svg.set_attribute("viewBox", "-0.5 -0.5 33 33").ok();
                 svg.set_attribute("width", "128").ok();
                 svg.set_attribute("height", "120").ok();
             };
