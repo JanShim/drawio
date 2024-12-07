@@ -4,7 +4,7 @@ use yew::{function_component, html, Html, Properties};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ScadaObject {
+pub struct DFlowObject {
     id: i32,
     name: String,
     label: String,
@@ -23,7 +23,7 @@ pub struct ScadaObject {
 
 #[derive(PartialEq, Properties)]
 pub struct ScadaObjectComponentProps {
-    pub item: ScadaObject,
+    pub item: DFlowObject,
 }
 
 #[function_component(ScadaObjectComponent)]

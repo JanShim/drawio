@@ -8,7 +8,7 @@ mod model;
 mod cell_app;
 mod schema_app;
 mod open_dialog_app;
-mod scada_object;
+mod dflow_object;
 mod components;
 mod store;
 
@@ -23,4 +23,3 @@ pub fn main_js() -> Result<(), JsValue> {
     log::info!("wasm loaded");
     Ok(())
 }
-

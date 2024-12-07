@@ -4,7 +4,7 @@ function mxCssLink(href)
 	var s = document.createElement('link');
 	s.setAttribute('rel', 'stylesheet');
 	s.setAttribute('href', href);
-	
+
 	var t = document.getElementsByTagName('link')[0];
 	if (t != null)
 	{
@@ -17,11 +17,11 @@ function setCellAttribute(cell, name, value) {
 	cell.setAttribute(name, value);
 }
 
-function loadScadaModel(editor, xmlStr) {
+function loadDFlowModel(editor, xmlStr) {
 	const node = mxUtils.parseXml(xmlStr).documentElement;
 	if (!!node) {
 		let dec = new mxCodec(node.ownerDocument);
-	
+
 		if (node.nodeName == 'mxGraphModel')
 		{
 			editor.graph.model.beginUpdate();
@@ -37,9 +37,9 @@ function loadScadaModel(editor, xmlStr) {
 			{
 				editor.graph.model.endUpdate();
 			}
-	
+
 			editor.fireEvent(new mxEventObject('resetGraphView'));
-		}	
+		}
 	}
 }
 
@@ -93,12 +93,12 @@ function clipedModelBox(modelStr) {
 					geom.x -= x;
 					geom.y -= y;
 				}
-			});	
+			});
 		}
 		finally {
 			graph2.model.endUpdate();
 		}
-		
+
 		let encoder = new mxCodec();
 		let result = encoder.encode(graph2.model);
 		let res =  mxUtils.getXml(result, '');
@@ -151,7 +151,7 @@ function setWidgetModel(editor, cellP, modelStr) {
 				}
 				let newId =idp + '#' + c.getId();
 				c.setId(newId);
-			});	
+			});
 		}
 		finally {
 			graph2.model.endUpdate();
@@ -190,13 +190,13 @@ function getGraphSvg(editor) {
 		ignoreSelection, --optional bool
 		showText, --optional bool
 		imgExport,  --null
-		linkTarget, 
-		hasShadow, 
+		linkTarget,
+		hasShadow,
 		incExtFonts,
-		theme, 
-		exportType, 
-		cells, 
-		noCssClass, 
+		theme,
+		exportType,
+		cells,
+		noCssClass,
 		disableLinks --true
 		)
 		*/
@@ -211,32 +211,32 @@ async function getPaletteData(apiUrl) {
 	  if (!response.ok) {
 		throw new Error(`Response status: ${response.status}`);
 	  }
-  
+
 	  const json = await response.json();
 	  return json;
 	} catch (error) {
 	  console.error(error.message);
 	}
 }
-  
+
 const API_URL = "http://localhost:8091/api/v1";
 
 /**
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, renderCell, recreateModelMeta, openDialog, SchemaOptions, initSchemaRender, initCellRender} = await import('./lib/pkg/scada_lib.js');
+	const {initSync, renderCell, recreateModelMeta, openDialog, SchemaOptions, initSchemaRender, initCellRender} = await import('./lib/pkg/dflow_lib.js');
 
 	async function initWasm() {
-		await fetch('plugins/scada/lib/pkg/scada_lib_bg.wasm')
+		await fetch('plugins/dflow/lib/pkg/dflow_lib_bg.wasm')
 			.then(r => r.arrayBuffer())
 			.then(o => {
 				initSync(o);
-			});				
+			});
 	}
 	// ============= CSS =====================
-	mxCssLink("plugins/scada/css/styles.css");
-	// mxCssLink("plugins/scada/css/iconfont/material-icons.css");
+	mxCssLink("plugins/dflow/css/styles.css");
+	// mxCssLink("plugins/dflow/css/iconfont/material-icons.css");
 
 	// ============= windows ==================
 	let diagramDataWindow = null;
@@ -262,7 +262,7 @@ Draw.loadPlugin(async function(ui) {
 		schemaDiv.style.width = '100%';
 
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		
+
 		// main window
 		diagramDataWindow = new mxWindow('DFlow diagram data', schemaDiv, iiw - 320, 60, 300, 500, true, true);
 		diagramDataWindow.destroyOnClose = false;
@@ -281,13 +281,13 @@ Draw.loadPlugin(async function(ui) {
 
 		document.body.appendChild(schemaDiv);
 	}
-	
+
 	// Highlights current cell
 	const highlight = new mxCellHighlight(graph, '#00ff00', 2);
 	// const ignored = ['label', 'tooltip', 'placeholders'];
 
 	// register_conteiner(ui.editor, div);	// for wasm app
-	
+
 	// init wasm application
 	// const app = new AppApi(ui.editor, div);
 
@@ -328,7 +328,7 @@ Draw.loadPlugin(async function(ui) {
 			{
 				highlight.highlight(graph.view.getState(cell));
 			}
-	
+
 			// console.log("compare prev", prevcell===cell);
 
 			if (modelChanged) {
@@ -349,7 +349,7 @@ Draw.loadPlugin(async function(ui) {
 			// if (attrs != null)
 			// {
 			// 	let label = Graph.sanitizeHtml(graph.getLabel(cell));
-				
+
 			// 	if (label != null && label.length > 0)
 			// 	{
 			// 		div.innerHTML = '<h1>' + label + '</h1>';
@@ -358,7 +358,7 @@ Draw.loadPlugin(async function(ui) {
 			// 	{
 			// 		div.innerText = '';
 			// 	}
-				
+
 			// 	for (let i = 0; i < attrs.length; i++)
 			// 	{
 			// 		if (mxUtils.indexOf(ignored, attrs[i].nodeName) < 0 &&
@@ -379,7 +379,7 @@ Draw.loadPlugin(async function(ui) {
 			// else
 			// {
 			// 	let label = graph.convertValueToString(cell);
-				
+
 			// 	if (label != '')
 			// 	{
 			// 		div.innerHTML = '<h1>' + Graph.sanitizeHtml(label) + '</h1>';
@@ -413,7 +413,7 @@ Draw.loadPlugin(async function(ui) {
 		{
 			cellClicked(graph.getSelectionCell(), false);
 		});
-		
+
 		graph.model.addListener(mxEvent.CHANGE, function(sender, evt)
 		{
 			cellClicked(graph.getSelectionCell(), true);
@@ -447,7 +447,7 @@ Draw.loadPlugin(async function(ui) {
 
 				let value = mxUtils.parseXml(group.model).documentElement;
 				value.setAttribute('label', container.value || '');
-				container.setValue(value);				
+				container.setValue(value);
 
 				let glyph = new mxCell('', new mxGeometry(3, 3, 94, 94),
 					`shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=${group.image};movable=0;rotatable=0;cloneable=0;connectable=0;resizable=0;allowArrows=0;`
@@ -456,14 +456,14 @@ Draw.loadPlugin(async function(ui) {
 				container.insert(glyph);
 				content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, group.name));
 			});
-	
+
 
 			// let container = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
 			// container.vertex = true;
 
 			// let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
 			// value.setAttribute('label', container.value || '');
-			// container.setValue(value);				
+			// container.setValue(value);
 
 			// let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
 			// 	'shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDEwNSA2OSIgaGVpZ2h0PSI2OXB4IiB3aWR0aD0iMTA1cHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0xIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjNjY2NjY2IiBmaWxsPSIjZjVmNWY1IiBkPSJNIDIgMiBMIDUyIDMyIEwgMiA2MiBaIE0gMTAyIDIgTCA1MiAzMiBMIDEwMiA2MiBaIi8+PC9nPjxnPjxnIGZvbnQtc2l6ZT0iNTJweCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtZmFtaWx5PSImcXVvdDtIZWx2ZXRpY2EmcXVvdDsiIGZpbGw9IiNGRjAwMDAiPjx0ZXh0IHk9IjU2LjUiIHg9IjUxLjUiPj88L3RleHQ+PC9nPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0zIi8+PC9nPjwvZz48L2c+PC9zdmc+;'
@@ -472,7 +472,7 @@ Draw.loadPlugin(async function(ui) {
 			// glyph.vertex = true;
 
 			// container.insert(glyph);
-			
+
 			// content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, 'Задвижки'));
 		}));
 	}
@@ -493,19 +493,19 @@ Draw.loadPlugin(async function(ui) {
 	mxResources.parse('createWidget=New Widget');
 	mxResources.parse('openItem=Open...');
 	mxResources.parse('dflow=DFlow');
-	mxResources.parse('scadaData=DFlow Data');
+	mxResources.parse('dflowData=DFlow Data');
 
-	
+
     ui.actions.addAction('createDiagram', function()
     {
-		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
+		loadDFlowModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
 		recreateModelMeta("diagram");
 		diagramDataWindow.setVisible(true);
     });
 
     ui.actions.addAction('createWidget', function()
     {
-		loadScadaModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget object-type=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
+		loadDFlowModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget object-type=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
 		recreateModelMeta("widget");
 		diagramDataWindow.setVisible(true);
     });
@@ -513,21 +513,21 @@ Draw.loadPlugin(async function(ui) {
     ui.actions.addAction('openItem', function()
     {
 		ui.showDialog(new DFlowItemsDialog(ui).container, 500, 400, true, false);
-    });	
+    });
 
 	ui.actions.addAction('dflow', function()
 	{
 		diagramDataWindow.setVisible(!diagramDataWindow.isVisible());
 	});
 
-	ui.actions.addAction('scadaData', function()
+	ui.actions.addAction('dflowData', function()
 	{
 		cellDataWindow.setVisible(!cellDataWindow.isVisible());
-	});	
+	});
 
 	ui.menus.put('dflow', new Menu(function(menu, parent)
 	{
-		ui.menus.addMenuItems(menu, ['createDiagram', 'createWidget', '-', 'openItem', '-', 'dflow', 'scadaData']);
+		ui.menus.addMenuItems(menu, ['createDiagram', 'createWidget', '-', 'openItem', '-', 'dflow', 'dflowData']);
 	}));
 
     if (ui.menubar != null)
@@ -537,18 +537,18 @@ Draw.loadPlugin(async function(ui) {
     }
 
 	// -----------------------------------------------------------------
-	let divScadaCellData = document.createElement('div');
-	divScadaCellData.setAttribute("id", "cell-container");
-	divScadaCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
-	divScadaCellData.style.border = '1px solid gray';
-	divScadaCellData.style.opacity = '0.8';
-	divScadaCellData.style.width = '20%';
+	let divDFlowCellData = document.createElement('div');
+	divDFlowCellData.setAttribute("id", "cell-container");
+	divDFlowCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
+	divDFlowCellData.style.border = '1px solid gray';
+	divDFlowCellData.style.opacity = '0.8';
+	divDFlowCellData.style.width = '20%';
 
-	divScadaCellData.style.boxSizing = 'border-box';
-	divScadaCellData.style.minHeight = '100%';
-	divScadaCellData.style.width = '100%';
+	divDFlowCellData.style.boxSizing = 'border-box';
+	divDFlowCellData.style.minHeight = '100%';
+	divDFlowCellData.style.width = '100%';
 
-	
+
 	// cell window
 	function newCellWindow(div) {
 		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -559,10 +559,10 @@ Draw.loadPlugin(async function(ui) {
 		wnd.setScrollable(true);
 		wnd.setClosable(true);
 		wnd.contentWrapper.style.overflowY = 'scroll';
-		return wnd;	
+		return wnd;
 	}
 
-	function isScadaCell(cell)
+	function isDFlowCell(cell)
 	{
 		if (!!cell && !!cell.value && typeof cell.value !== 'string')
 		{
@@ -576,16 +576,16 @@ Draw.loadPlugin(async function(ui) {
 	 * Updates the DFlow data panel
 	 */
 	// let prevCellId = undefined;
-	function scadaCellClicked(cell)
+	function dflowCellClicked(cell)
 	{
 		// Gets the selection cell
-		if (cell != null && isScadaCell(cell))
+		if (cell != null && isDFlowCell(cell))
 		{
 			highlight.highlight(graph.view.getState(cell));
 
 			renderCell(cell);
 			cellDataWindow.setVisible(true);
-		} 
+		}
 		else {
 			highlight.highlight(null);
 			if (cellDataWindow != null) {
@@ -593,32 +593,32 @@ Draw.loadPlugin(async function(ui) {
 			}
 		}
 
-	}	
+	}
 
 	if (!ui.editor.isChromelessView())
 	{
 		graph.selectionModel.addListener(mxEvent.CHANGE, function(sender, evt)
 		{
-			scadaCellClicked(graph.getSelectionCell());
+			dflowCellClicked(graph.getSelectionCell());
 		});
-	}	
+	}
 
 	// Adds resources for actions
-	mxResources.parse('scadaItem=DFlow item');
+	mxResources.parse('dflowItem=DFlow item');
 
 	// Adds actions
-	ui.actions.addAction('scadaItem', function()
+	ui.actions.addAction('dflowItem', function()
 	{
 		if (graph.isEnabled() && graph.getSelectionCount() == 1)
 		{
 			let cell = graph.getSelectionCell();
-			if (!isScadaCell(cell)) {
+			if (!isDFlowCell(cell)) {
 				let value = mxUtils.parseXml("<d-flow><undefiend/></d-flow>").documentElement;
 				value.setAttribute('label', cell.value || '');
 				cell.setValue(value);
-				scadaCellClicked(cell);
+				dflowCellClicked(cell);
 			}
-		}		
+		}
 	}, null, null, 'Alt+Shift+W');
 
 	// -----------------------------------------------------------------
@@ -629,21 +629,21 @@ Draw.loadPlugin(async function(ui) {
 
 		menu.addSeparator();
 		// let cell = graph.getSelectionCell();
-		if (!isScadaCell(cell)) {
-			this.addMenuItems(menu, ['scadaItem'], null, evt);
+		if (!isDFlowCell(cell)) {
+			this.addMenuItems(menu, ['dflowItem'], null, evt);
 		}
 
-		if (isScadaCell(cell) && graph.getSelectionCount() == 1)
+		if (isDFlowCell(cell) && graph.getSelectionCount() == 1)
 		{
-			this.addMenuItems(menu, ['scadaData'], null, evt);
+			this.addMenuItems(menu, ['dflowData'], null, evt);
 
 			// if (sib != null && sib.length > 0)
 			// {
 			// 	this.addMenuItems(menu, ['selectChildren', 'selectSubtree'], null, evt);
 			// }
-			
+
 			// menu.addSeparator();
-			
+
 			// if (cell.getAttribute('treeRoot') != '1')
 			// {
 			// 	this.addMenuItems(menu, ['selectSiblings', 'selectParent'], null, evt);
@@ -656,38 +656,38 @@ Draw.loadPlugin(async function(ui) {
 	// init rust wasm
 	await initWasm();
 	// здесь натройки пдагина
-	let getAppOptions = function() {return new SchemaOptions(API_URL); }		
+	let getAppOptions = function() {return new SchemaOptions(API_URL); }
 
 	initSchemaRender(ui.editor, mxUtils, schemaDiv, getAppOptions());
 
-	cellDataWindow = newCellWindow(divScadaCellData);
-	initCellRender(ui.editor, mxUtils, divScadaCellData, getAppOptions());	
+	cellDataWindow = newCellWindow(divDFlowCellData);
+	initCellRender(ui.editor, mxUtils, divDFlowCellData, getAppOptions());
 
 
-	let DFlowItemsDialog = function(editorUi) 
+	let DFlowItemsDialog = function(editorUi)
 	{
 		var div = document.createElement('div');
 		// var inner = document.createElement('div');
-		
+
 		// // inner.style.width = '600px';
 		// inner.style.height = '300px';
 		// inner.style.overflow = 'auto';
-	
+
 		// var changed = false;
-						
+
 		// open schema items dialod
 		openDialog(mxUtils, editorUi, editorUi.editor, div, getAppOptions());
-		
+
 		// // div.appendChild(inner);
 		// changed = false;
-		
+
 		// var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
 		// {
 		// 	editorUi.hideDialog();
 		// });
-		
+
 		// cancelBtn.className = 'geBtn';
-		
+
 		// var openBtn = mxUtils.button(closeOnly? mxResources.get('close') : mxResources.get('open'), function()
 		// {
 		// 	if (changed)
@@ -698,23 +698,23 @@ Draw.loadPlugin(async function(ui) {
 		// 	else
 		// 	{
 		// 		editorUi.hideDialog();
-		// 	}	
+		// 	}
 		// });
-		
+
 		// openBtn.className = 'geBtn gePrimaryBtn';
-	
+
 		// var buttons = document.createElement('div');
 		// buttons.style.marginTop = '14px';
 		// buttons.style.textAlign = 'right';
-	
-		
+
+
 		// if (editorUi.editor.cancelFirst)
 		// {
 		// 	if (!closeOnly)
 		// 	{
 		// 		buttons.appendChild(cancelBtn);
 		// 	}
-	
+
 		// 		buttons.appendChild(openBtn);
 		// }
 		// else
@@ -725,10 +725,10 @@ Draw.loadPlugin(async function(ui) {
 		// 		buttons.appendChild(cancelBtn);
 		// 	}
 		// }
-	
+
 		// div.appendChild(buttons);
 		this.container = div;
-	};	
+	};
 
 
 });

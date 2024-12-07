@@ -1,5 +1,5 @@
 [package]
-name = "scada-lib"
+name = "dflow-lib"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,19 +13,18 @@ target = "wasm32-unknown-unknown"
 common-model = { path = "/home/janshim/projects/rust/scada_editor/common_model" }
 console_error_panic_hook = "0.1.7"
 # anyhow = "1.0.88"
-thiserror = "2.0.3"
+thiserror = "2.0.4"
 log = "0.4"
 reqwasm = { version = "0.5.0"}
 yew = { version="0.21.0", features=["csr"] }
 yewdux = {version = "0.10.0", features = ["doctests"]}
-yew-hooks = "0.3.2"
+yew-hooks = "0.3.3"
 # material-yew = {version = "0.3.0", features = ["icon", "icon-button", "icon-button-toggle", "button", "checkbox"]}
 implicit-clone = {version = "0.4.9", features = ["map", "serde"]}       #!!!!!! this version in yew
 wasm-logger = "0.2.0"
-web-sys = { version = "0.3.74", features = ["Document", "Window", "Element", "Node", 
-"HtmlDivElement", "HtmlFormElement", "HtmlAnchorElement", "SvgElement", "HtmlSelectElement"] }
-wasm-bindgen = { version = "0.2.97", features = ["serde-serialize"] }
-wasm-bindgen-futures = "0.4.47"
+web-sys = { version = "0.3.76", features = ["Document", "Window", "Element", "Node", "HtmlDivElement", "HtmlFormElement", "HtmlAnchorElement", "SvgElement", "HtmlSelectElement"] }
+wasm-bindgen = { version = "0.2.99", features = ["serde-serialize"] }
+wasm-bindgen-futures = "0.4.49"
 serde = { version = "1.0.215", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
 serde_json = "1.0.133"
