@@ -456,24 +456,6 @@ Draw.loadPlugin(async function(ui) {
 				container.insert(glyph);
 				content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, group.name));
 			});
-
-
-			// let container = new mxCell('', new mxGeometry(0, 0, 112, 73), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
-			// container.vertex = true;
-
-			// let value = mxUtils.parseXml("<d-flow><widget-container uuid='00000000-0000-0000-0000-000000000000' group='valves'><ds tag='' path=''/></widget-container></d-flow>").documentElement;
-			// value.setAttribute('label', container.value || '');
-			// container.setValue(value);
-
-			// let glyph = new mxCell('', new mxGeometry(0, 0, 112, 73),
-			// 	'shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=data:image/svg+xml,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyIgdmlld0JveD0iLTAuNSAtMC41IDEwNSA2OSIgaGVpZ2h0PSI2OXB4IiB3aWR0aD0iMTA1cHgiIHZlcnNpb249IjEuMSI+PGRlZnMvPjxyZWN0IHk9IjAiIHg9IjAiIGhlaWdodD0iMTAwJSIgd2lkdGg9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz48Zz48ZyBkYXRhLWNlbGwtaWQ9IjAiPjxnIGRhdGEtY2VsbC1pZD0iMSI+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0xIj48Zz48cGF0aCBwb2ludGVyLWV2ZW50cz0iYWxsIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjNjY2NjY2IiBmaWxsPSIjZjVmNWY1IiBkPSJNIDIgMiBMIDUyIDMyIEwgMiA2MiBaIE0gMTAyIDIgTCA1MiAzMiBMIDEwMiA2MiBaIi8+PC9nPjxnPjxnIGZvbnQtc2l6ZT0iNTJweCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtZmFtaWx5PSImcXVvdDtIZWx2ZXRpY2EmcXVvdDsiIGZpbGw9IiNGRjAwMDAiPjx0ZXh0IHk9IjU2LjUiIHg9IjUxLjUiPj88L3RleHQ+PC9nPjwvZz48L2c+PGcgZGF0YS1jZWxsLWlkPSI2ZlBMLWlkRUdNWm9YZ0RRWWZwci0zIi8+PC9nPjwvZz48L2c+PC9zdmc+;'
-			// 	// 'shape=mxgraph.pid2valves.valve;valveType=gate;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;'
-			// );
-			// glyph.vertex = true;
-
-			// container.insert(glyph);
-
-			// content.appendChild(sb.createVertexTemplateFromCells([container], 100, 40, 'Задвижки'));
 		}));
 	}
 	await addPalette();
