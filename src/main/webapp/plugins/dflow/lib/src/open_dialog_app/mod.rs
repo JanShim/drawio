@@ -10,20 +10,20 @@ use stylist::yew::{styled_component, Global};
 
 use crate::{
     components::{
-        diagram::list_item::DiagramListItemComponent, 
+        diagram::list_item::DiagramListItemComponent,
         widget::list_item::WidgetListItemComponent
-    }, 
-    // errors::FetchError, 
+    },
+    // errors::FetchError,
     model::{
-        common::ModelForm, 
-        diagram::{form_meta::DiagramForm, DiagramListItem}, 
-        widget::{form_meta::WidgetForm, WidgetListItem},   
-        editor_ui::EditorUi, 
-        mx_editor::MxEditor, 
-        mx_utils::MxUtils, 
-    }, 
-    store::diagram, 
-    utils::{fetch, fetch_string, load_scada_model, SchemaOptions} 
+        common::ModelForm,
+        diagram::{form_meta::DiagramForm, DiagramListItem},
+        widget::{form_meta::WidgetForm, WidgetListItem},
+        editor_ui::EditorUi,
+        mx_editor::MxEditor,
+        mx_utils::MxUtils,
+    },
+    store::diagram,
+    utils::{fetch, fetch_string, load_dflow_model, SchemaOptions}
 };
 
 #[derive(Properties, PartialEq)]
@@ -66,9 +66,9 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
             // let editor = editor.clone();
             // let url = url.clone();
             // wasm_bindgen_futures::spawn_local(async move {
-            //     fetch_string(format!("{url}/diagram/{pk}/model")).await  
+            //     fetch_string(format!("{url}/diagram/{pk}/model")).await
             //     .map(|model| {
-            //         load_scada_model(&editor, model.as_str());
+            //         load_dflow_model(&editor, model.as_str());
             //     }).unwrap();
             // });
         })
@@ -99,20 +99,20 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     //         wasm_bindgen_futures::spawn_local(async move {
     //             if let Ok(node) = editor.get_graph_xml() {
     //                 if let Ok(Some(model_str)) = utils.get_xml(node) {
-    //                     let item = ScadaDiagramDto::new("insert proba".to_owned(), model_str);
+    //                     let item = DFlowDiagramDto::new("insert proba".to_owned(), model_str);
     //                     post(format!("{url}/diagram"), item).await
     //                         .and_then(|o| Ok(o.uuid))
     //                         .map(|pk| {
     //                             wasm_bindgen_futures::spawn_local(async move {
     //                                 fetch_string(format!("{url}/diagram/{pk}/model")).await
     //                                     .map(|model| {
-    //                                         load_scada_model(&editor, model.as_str());
+    //                                         load_dflow_model(&editor, model.as_str());
     //                                     }).unwrap();
     //                             })
     //                         })
     //                         .unwrap();
-    //                 } 
-    //             } 
+    //                 }
+    //             }
     //         });
     //     })
     // };
@@ -121,9 +121,9 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
         let editor_ui = editor_ui.clone();
         Callback::from(move |_: MouseEvent| {
             editor_ui.hide_dialog();
-        })        
+        })
     };
-    
+
     let on_open = {
         let editor = mx_editor.clone();
         let url = api_url.clone();
@@ -145,14 +145,14 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                     dispatch.reduce_mut(move |state| {
                         state.model_meta = ModelForm::Widget(WidgetForm { uuid, name, group });
                     });
-                });            
+                });
             } else {
                 wasm_bindgen_futures::spawn_local(async move {
                     let DiagramListItem { uuid, name } = fetch::<DiagramListItem>(meta_req).await.unwrap();
                     dispatch.reduce_mut(move |state| {
                         state.model_meta = ModelForm::Diagram(DiagramForm {uuid, name});
                     });
-                });            
+                });
             }
 
             // fill graph model
@@ -161,11 +161,11 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
             wasm_bindgen_futures::spawn_local(async move {
                 fetch_string(format!("{url}/{}/{}/model", *tab_tag, *selected)).await
                     .map(|model| {
-                        load_scada_model(&editor, model.as_str());
+                        load_dflow_model(&editor, model.as_str());
                         editor_ui.hide_dialog();
                     }).unwrap();
             });
-        })   
+        })
     };
 
 
@@ -176,16 +176,16 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
         } else  {
             diagram_list.data.as_ref().map_or_else(
                 || html! {},        // default
-                |repo| html! { 
-                    for repo.iter().map(|item| 
-                        html!{ <DiagramListItemComponent 
-                            item={item.clone()} 
-                            select={on_select.clone()} 
-                            selected={(*selected).clone()}/> 
+                |repo| html! {
+                    for repo.iter().map(|item|
+                        html!{ <DiagramListItemComponent
+                            item={item.clone()}
+                            select={on_select.clone()}
+                            selected={(*selected).clone()}/>
                         }
                     )
-            })      
-        }    
+            })
+        }
     };
 
     let widgets_view = {
@@ -194,16 +194,16 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
         } else  {
             widget_list.data.as_ref().map_or_else(
                 || html! {},        // default
-                |repo| html! { 
-                    for repo.iter().map(|item| 
-                        html!{ <WidgetListItemComponent 
-                            item={item.clone()} 
+                |repo| html! {
+                    for repo.iter().map(|item|
+                        html!{ <WidgetListItemComponent
+                            item={item.clone()}
                             select={on_select.clone()}
-                            selected={(*selected).clone()} /> 
+                            selected={(*selected).clone()} />
                         }
                     )
-            })      
-        }   
+            })
+        }
     };
 
     let tab_content_view = {
@@ -250,7 +250,7 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-top: none;
-}  
+}
 
 div.selectable {
     cursor: pointer;
@@ -260,18 +260,18 @@ div.selected {
     background-color: #4d90fe;
     color: white;
 }
-        
+
         "#)} />
         <div style="height: 340px; overflow: auto;">
             <div class="tab">
-            <button tag="diagram" 
-                class={classes!("tablinks", (*tab_tag == "diagram").then(||Some("active")))} 
+            <button tag="diagram"
+                class={classes!("tablinks", (*tab_tag == "diagram").then(||Some("active")))}
                 onclick={on_tab_select.clone()}>{"Diagrams"}</button>
-            <button tag="widget" 
-                class={classes!("tablinks", (*tab_tag == "widget").then(||Some("active")))} 
+            <button tag="widget"
+                class={classes!("tablinks", (*tab_tag == "widget").then(||Some("active")))}
                 onclick={on_tab_select.clone()}>{"Widgets"}</button>
             </div>
-            
+
             <div class="tabcontent">
                 { tab_content_view }
             </div>
@@ -291,7 +291,7 @@ div.selected {
         </div>
 
         </>
-    }    
+    }
 }
 
 
@@ -306,7 +306,3 @@ pub fn open_dialog(mx_utils: MxUtils, editor_ui: EditorUi, mx_editor: MxEditor, 
     yew::Renderer::<App>::with_root_and_props(div.into(), props).render();
     log::info!("schema loaded");
 }
-
-
-
-

@@ -21,12 +21,8 @@ fn pass() {
 //     mock! {
 //         MxCell {}
 //         impl Clone for MxCell {
-//             fn get_diagram_meta(&self) -> scada_diagram::meta::Meta  // Result<scada_diagram::meta::Meta, JsValue>;
+//             fn get_diagram_meta(&self) -> dflow_diagram::meta::Meta  // Result<dflow_diagram::meta::Meta, JsValue>;
 //         }
 //     }
 //     assert_eq!(1, 2);
 // }
-
-
-
-

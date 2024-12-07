@@ -5,7 +5,7 @@ use wasm_bindgen::JsValue;
 use yewdux::{store::Store, Reducer};
 
 use crate::model::{
-    cell_meta::CellMeta, 
+    cell_meta::CellMeta,
     mx_cell::MxCell,
 };
 
@@ -35,12 +35,12 @@ impl State {
     //     if let Some(cell) = &self.cell {
     //         let meta = &self.meta;
     //         cell.set_meta(meta).ok();
-    //     }        
+    //     }
     // }
 
     // pub fn get_ref_meta(&self) -> Result<&CellMeta, JsValue> {
     //     Ok(&self.meta)
-    // }   
+    // }
 
     // pub fn get_multystate_state<'a>(&'a self, index: usize) -> Result<&'a StateMeta, JsValue> {
     //     log::debug!("get_multystate_state index = {index}");
@@ -79,7 +79,7 @@ impl State {
     //         .map(|ms| {
     //             ms.set_data_source(ds);
     //         })
-    // } 
+    // }
 
     // pub fn get_cell_label(&self) -> Result<AttrValue, JsValue> {
     //     let cell = self.cell.clone().ok_or(JsValue::from(NOTCELL))?;
@@ -97,11 +97,11 @@ impl State {
         if let Some(mut cell) = self.cell.clone() {
             Rc::make_mut(&mut cell).set_style(style);
         }
-    }    
-
-    pub fn get_state_meta(&self) -> CellMeta {
-        self.meta.clone()
     }
+
+    // pub fn get_state_meta(&self) -> CellMeta {
+    //     self.meta.clone()
+    // }
 
 //     pub fn set_cell_meta(&self, meta: &CellMeta) -> Result<CellMeta, JsValue> {
 //         let cell = self.cell.clone().ok_or(JsValue::from(NOT_CELL))?;
@@ -114,7 +114,7 @@ impl State {
 
 //            return cell.get_meta();
 //         }
-//         Err(JsValue::from_str("can't set cell meta data"))        
+//         Err(JsValue::from_str("can't set cell meta data"))
 //    }
 
     // pub fn set_multystate_state_style(&self, i: usize, style: IString) -> Result<(), JsValue> {
@@ -127,7 +127,7 @@ impl State {
     //             return Ok(());
     //         }
     //         return Err(CellStateError::MultyStateStateIndexError{index: i, len: states.len()}.into());
-    //     } 
+    //     }
     //     Err(CellStateError::NoMeta().into())
     //     // let multy = self.meta.multystate.clone().ok_or::<JsValue>(CellStateError::NoMeta().into())?;
     // }
@@ -136,7 +136,7 @@ impl State {
 
 impl Default for State {
     fn default() -> Self {
-        Self { 
+        Self {
             cell: None,
             meta: CellMeta::default(),
             model_node: Default::default(),
@@ -151,7 +151,7 @@ impl Default for State {
 //             ..Default::default()
 //         }
 //     }
-    
+
 //     fn should_notify(&self, old: &Self) -> bool {
 //         // log::debug!("check changed {} {} {}", self != old, self.cell != old.cell, self.meta != old.meta);
 //         // log::debug!("CellState  {:?}", self);
@@ -165,7 +165,7 @@ impl Default for State {
 //         self != old
 //         || self.cell != old.cell
 //         || self.meta != old.meta
-        
+
 //     }
 // }
 
@@ -186,9 +186,9 @@ impl Reducer<State> for SetCellTypeAction {
             .collect::<Vec<_>>();
 
         let cell = state.cell.clone().ok_or(JsValue::from(NOT_CELL)).unwrap();
-        let meta = CellMeta{ 
-                label: cell.get_label().into(), 
-                types: data 
+        let meta = CellMeta{
+                label: cell.get_label().into(),
+                types: data
             };
 
         // assigne meta to editor cell
@@ -196,7 +196,7 @@ impl Reducer<State> for SetCellTypeAction {
         if res.is_err() {
             log::error!("{:?}", res.err().unwrap().as_string())
         }
-        
+
         // return
         State {
             meta,
@@ -214,7 +214,7 @@ impl Reducer<State> for SetCellModelAction {
         State {
             model_node: self.0,
             ..(*state).clone()
-        }.into()        
+        }.into()
     }
 }
 
@@ -234,11 +234,11 @@ impl Reducer<State> for StartApplyAction {
 //         let mut new_meta = state.meta.clone();
 //         new_meta.set_label_meta(self.0);
 
-//         log::debug!("NEW LABEL {:?}", new_meta);            
+//         log::debug!("NEW LABEL {:?}", new_meta);
 
 //         State {
-//             // meta: CellMeta { 
-//             //     label: new_meta.label.clone(), 
+//             // meta: CellMeta {
+//             //     label: new_meta.label.clone(),
 //             //     types: new_meta.types.clone(),
 //             // },
 //             meta: new_meta,
@@ -270,11 +270,11 @@ impl Reducer<State> for SetRangeTypeAction {
             multystate.states = vec![];
             multystate.range_type = self.0;
             meta.set_multystate_meta(multystate);
-            
+
             log::debug!("new range: {:?}", meta);
 
-            return State { 
-                meta, 
+            return State {
+                meta,
                 ..(*state).clone()
             }.into();
         };
@@ -290,15 +290,15 @@ impl Reducer<State> for SetRangeTypeAction {
 //         todo!();
 
 //         // if let CellMetaVariant::Multystate(multystate) = &mut state.meta.data.clone()  {
-//         //     let new_state = self.0;            
+//         //     let new_state = self.0;
 //         //     let index = new_state.get_index();
 //         //     let states = &mut multystate.states;
 //         //     states[index] = StateXml { ..new_state };
 
 //         //     return  State {
-//         //             meta: CellMeta { 
-//         //                 data: CellMetaVariant::Multystate(multystate.clone()), 
-//         //                 ..state.meta.clone() 
+//         //             meta: CellMeta {
+//         //                 data: CellMetaVariant::Multystate(multystate.clone()),
+//         //                 ..state.meta.clone()
 //         //             },
 //         //             ..(*state).clone()
 //         //         }
@@ -309,7 +309,7 @@ impl Reducer<State> for SetRangeTypeAction {
 // }
 
 // pub struct ApplyPredefStateStyleAction {
-//     pub r#type: StatePredefType, 
+//     pub r#type: StatePredefType,
 //     pub style: IString,
 // }
 // impl Reducer<State> for ApplyPredefStateStyleAction {
@@ -320,7 +320,7 @@ impl Reducer<State> for SetRangeTypeAction {
 //         //     let mut curr_predef_item = match self.r#type {
 //         //             StatePredefType::Default => curr.predef[0].clone(),
 //         //             StatePredefType::Bad => curr.predef[1].clone(),
-//         //         };  
+//         //         };
 //         //     curr_predef_item.set_style(self.style);
 
 //         //     let predef = match self.r#type {
@@ -352,10 +352,10 @@ impl Reducer<State> for SetRangeTypeAction {
 //                         .map(|o| o.value.get_value())
 //                         .unwrap_or(0);
 
-//                     let state = StateXml { 
+//                     let state = StateXml {
 //                         pk, name,
 //                         value: RangeValue::DiscretConst { value: prev },
-//                         ..Default::default() 
+//                         ..Default::default()
 //                     };
 //                     multystate.push_state(state);
 //                 },
@@ -363,22 +363,22 @@ impl Reducer<State> for SetRangeTypeAction {
 //                     let prev = multystate.states.last()
 //                         .map(|o| o.value.get_to())
 //                         .unwrap_or(0.0);
-    
-//                     let state = StateXml { 
+
+//                     let state = StateXml {
 //                         pk, name,
 //                         value: RangeValue::RangeConst { from: prev, to: prev },
-//                         ..Default::default() 
+//                         ..Default::default()
 //                     };
 //                     multystate.push_state(state);
-//                 },            
+//                 },
 //             };
-    
+
 //             // state.meta.borrow_mut().set_multystate_meta(multystate);
 
 //             return State {
-//                meta: CellMeta { 
+//                meta: CellMeta {
 //                     // types: CellMetaVariant::Multystate(multystate.clone()),
-//                     ..state.meta.clone() 
+//                     ..state.meta.clone()
 //                 },
 //                 ..(*state).clone()
 //             }

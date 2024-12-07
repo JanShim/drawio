@@ -1,8 +1,6 @@
 use wasm_bindgen::prelude::*;
 use web_sys::Node;
 
-use crate::utils;
-
 #[wasm_bindgen]
 extern "C" {
     pub fn name() -> String;
@@ -22,7 +20,7 @@ extern "C" {
 }
 
 impl MxEditor {
-    pub fn get_graph_xml(&self) -> Result<Node, JsValue> 
+    pub fn get_graph_xml(&self) -> Result<Node, JsValue>
     {
         let node = self.mx_get_graph_xml();
         match node {
@@ -31,7 +29,7 @@ impl MxEditor {
         }
     }
 
-    // pub fn get_diagram_bounding_box(&self) -> Result<JsValue, JsValue> 
+    // pub fn get_diagram_bounding_box(&self) -> Result<JsValue, JsValue>
     // {
     //     let rect = utils::get_diagram_bounding_box(self);
     //     if rect.is_object() {
@@ -64,4 +62,3 @@ impl std::fmt::Debug for MxEditor {
         f.debug_struct("MxEditor").field("obj", &self.obj).finish()
     }
 }
-

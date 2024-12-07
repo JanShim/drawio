@@ -13,22 +13,22 @@ pub struct DFlowObject {
     has_children: bool,
 }
 
-// impl Into<Html> for ScadaObject {
+// impl Into<Html> for DFlowObject {
 //     fn into(self) -> Html {
 //        html! {
-//             <ScadaObjectComponent item={self}/>
+//             <DFlowObjectComponent item={self}/>
 //        }
 //     }
 // }
 
 #[derive(PartialEq, Properties)]
-pub struct ScadaObjectComponentProps {
+pub struct DFlowObjectComponentProps {
     pub item: DFlowObject,
 }
 
-#[function_component(ScadaObjectComponent)]
-pub fn scada_object_component(props: &ScadaObjectComponentProps) -> Html {
-    let ScadaObjectComponentProps { item } = props;
+#[function_component(DFlowObjectComponent)]
+pub fn dflow_object_component(props: &DFlowObjectComponentProps) -> Html {
+    let DFlowObjectComponentProps { item } = props;
     html! {
         <p>{ serde_json::to_string(&item).unwrap() }</p>
     }

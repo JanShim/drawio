@@ -6,16 +6,16 @@ use yewdux::{use_selector, use_store};
 
 use crate::{
     components::shared::{MdIcon, MdIconType}, model::{
-        common::ModelForm, 
+        common::ModelForm,
         widget::{form_meta::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
-    }, 
-    store::{cell::NO_CONTEXT_FOUND, diagram, mx_context::TMxGraphContext}, 
+    },
+    store::{cell::NO_CONTEXT_FOUND, diagram, mx_context::TMxGraphContext},
     utils::{cliped_model_box, fetch, post, put}
 };
 
 #[function_component]
 pub fn WidgetInfoComponent() -> Html {
-    let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);    
+    let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
     let (state, dispatch) = use_store::<diagram::State>();
     let model_meta = use_selector(|state: &diagram::State| {
         // log::debug!("selector: {:?}", state.model_meta);
@@ -26,7 +26,7 @@ pub fn WidgetInfoComponent() -> Html {
                 Default::default()
             },
         }
-    });    
+    });
 
     let edit_mode = use_state(|| false);
 
@@ -40,19 +40,19 @@ pub fn WidgetInfoComponent() -> Html {
     let edit_mode_toggle = {
         let edit_mode = edit_mode.clone();
         Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
-    };    
-  
+    };
+
     let on_cancel = {
         let edit_mode = edit_mode.clone();
         Callback::from(move |_: MouseEvent| {
             edit_mode.set(false);
-        }) 
+        })
     };
 
     let on_apply = {
         let mx_graph_context = mx_graph_context.clone();
         let edit_mode = edit_mode.clone();
-        let state = state.clone();
+        // let state = state.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
 
@@ -61,7 +61,7 @@ pub fn WidgetInfoComponent() -> Html {
 
             if let Some(form) = form {
                 if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
-                    // let state = state.clone();       
+                    // let state = state.clone();
 
                     // appy to store
                     dispatch.reduce_mut(|state| {
@@ -78,12 +78,12 @@ pub fn WidgetInfoComponent() -> Html {
 
                                 if form.is_new_item() {
                                     let item = WidgetDto::new(
-                                        form.group.to_string(), 
+                                        form.group.to_string(),
                                         form.name.to_string(),
-                                        cliped_model_box(model_str).into(), 
+                                        cliped_model_box(model_str).into(),
                                         vec![],
                                         Some(svg)
-                                    ); 
+                                    );
 
                                     // log::debug!("post: {item:?}");
 
@@ -96,10 +96,10 @@ pub fn WidgetInfoComponent() -> Html {
 
                                     // set model meta
                                     dispatch.reduce_mut(|state| {
-                                        state.model_meta = ModelForm::Widget(WidgetForm { 
-                                            uuid: created.uuid.into(), 
-                                            name: created.name.into(),  
-                                            group: created.group.into(),  
+                                        state.model_meta = ModelForm::Widget(WidgetForm {
+                                            uuid: created.uuid.into(),
+                                            name: created.name.into(),
+                                            group: created.group.into(),
                                         });
                                     });
 
@@ -107,9 +107,9 @@ pub fn WidgetInfoComponent() -> Html {
                                     let item = WidgetDto {
                                         uuid: form.uuid.to_string(),
                                         group: form.group.to_string(),
-                                        name: form.name.to_string(), 
-                                        model: cliped_model_box(model_str).into(), 
-                                        types: vec!["ZDV2".to_owned()],  
+                                        name: form.name.to_string(),
+                                        model: cliped_model_box(model_str).into(),
+                                        types: vec!["ZDV2".to_owned()],
                                         svg: Some(svg),
                                     };
 
@@ -124,14 +124,14 @@ pub fn WidgetInfoComponent() -> Html {
 
                                 }
                             };
-                        } 
+                        }
                     }
                 );
 
                 edit_mode.set(false);
             }
-        }        
-    })};    
+        }
+    })};
 
     // ================= views =====================
     let header = html!{
@@ -139,9 +139,9 @@ pub fn WidgetInfoComponent() -> Html {
         if !*edit_mode {
             <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
         }
-        </div>           
+        </div>
     };
-        
+
     let wgroups_select = {
             if widget_groups_list.loading {
                 html! {  }
@@ -149,7 +149,7 @@ pub fn WidgetInfoComponent() -> Html {
                 let selected_group =  model_meta.group.clone();
                 widget_groups_list.data.as_ref().map_or_else(
                     || html! {},        // default
-                    |data| html! { 
+                    |data| html! {
                         <select name="group" class="input-100">
                             <option value="undef"></option>
                             {for data.iter().map(|item| {
@@ -157,8 +157,8 @@ pub fn WidgetInfoComponent() -> Html {
                                 html!{ <option value={ item.pk.clone() }  {selected}>{ item.name.clone() }</option> }
                             })}
                         </select>
-                })      
-            }   
+                })
+            }
         };
 
     html! {
@@ -190,9 +190,8 @@ pub fn WidgetInfoComponent() -> Html {
                 <div class="value">{ format!("{}", model_meta.name) }</div>
                 <div class="label">{ "group: " }</div>
                 <div class="value">{ format!("{}", model_meta.group) }</div>
-            </div>    
+            </div>
             }
         </>
     }
 }
-

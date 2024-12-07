@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 target = "wasm32-unknown-unknown"
 
 [dependencies]
-common-model = { path = "/home/janshim/projects/rust/scada_editor/common_model" }
+common-model = { path = "/home/janshim/projects/rust/dflow_editor/common_model" }
 console_error_panic_hook = "0.1.7"
 # anyhow = "1.0.88"
 thiserror = "2.0.4"

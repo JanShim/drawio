@@ -4,17 +4,17 @@ use web_sys::{FormData, HtmlFormElement};
 use yew::prelude::*;
 use yewdux::{use_selector, use_store};
 
-use crate::{components::shared::{MdIcon, MdIconType}, 
+use crate::{components::shared::{MdIcon, MdIconType},
     model::{
         common::ModelForm, diagram::{form_meta::DiagramForm, DiagramDto}
-    }, 
+    },
     store::{cell::NO_CONTEXT_FOUND, mx_context::TMxGraphContext}
 };
 use crate::store;
 use crate::utils::{post, put};
 
 #[function_component(DiagramInfoComponent)]
-pub fn scada_diagram_component() -> Html {
+pub fn dflow_diagram_component() -> Html {
     let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
     let (state, dispatch) = use_store::<store::diagram::State>();
     let model_meta = use_selector(|state: &store::diagram::State| {
@@ -32,7 +32,7 @@ pub fn scada_diagram_component() -> Html {
     let edit_mode_toggle = {
         let edit_mode = edit_mode.clone();
         Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
-    };    
+    };
 
     let on_cancel = {
         // let state = state.clone();
@@ -42,9 +42,9 @@ pub fn scada_diagram_component() -> Html {
 
             // let bounding_box = state.get_diagram_bounding_box().unwrap();
             // log::debug!("get_diagram_bounding_box : {bounding_box:?}");
-            
+
             edit_mode.set(false);
-        }) 
+        })
     };
 
     let on_apply = {
@@ -60,7 +60,7 @@ pub fn scada_diagram_component() -> Html {
 
             if let Some(form) = form {
                 if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<DiagramForm>::into(data)) {
-                    let state = state.clone();       
+                    let state = state.clone();
 
                     // appy to store
                     dispatch.reduce_mut(|state| {
@@ -86,18 +86,18 @@ pub fn scada_diagram_component() -> Html {
                                         form.name.to_string(),
                                         model_str,
                                         Some(svg),
-                                    ); 
+                                    );
 
                                     let created = post(format!("{}/diagram", mx_graph_context.api_url), item).await
                                         .and_then(|dto| {
                                             // log::debug!("created: {dto:?}");
                                             Ok(dto)
                                         }).unwrap();
-                                    
+
                                     // set model meta
                                     dispatch.reduce_mut(|state| {
-                                        state.model_meta = ModelForm::Diagram(DiagramForm { 
-                                            uuid: created.uuid.into(), 
+                                        state.model_meta = ModelForm::Diagram(DiagramForm {
+                                            uuid: created.uuid.into(),
                                             name: created.name.into(),
                                         });
                                     });
@@ -105,8 +105,8 @@ pub fn scada_diagram_component() -> Html {
                                 } else {
                                     let item = DiagramDto {
                                         uuid: form.uuid.to_string(),
-                                        name: form.name.to_string(), 
-                                        model: model_str, 
+                                        name: form.name.to_string(),
+                                        model: model_str,
                                         svg: Some(svg),
                                     };
 
@@ -115,28 +115,28 @@ pub fn scada_diagram_component() -> Html {
                                             log::debug!("saved:  {dto:?}");
                                             Ok(dto)
                                         });
-                                        
+
                                     if res.is_err() {
                                         log::error!("{:?}", res.err().unwrap())
                                     }
 
                                 }
                             };
-                        } 
+                        }
                     }
                 );
 
                 edit_mode.set(false);
             }
-        }        
-    })};   
+        }
+    })};
 
     let header = html!{
         <div class="flex-box-2 delim-label" >
         if !*edit_mode {
             <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
         }
-        </div>           
+        </div>
     };
 
     html! {
@@ -162,9 +162,8 @@ pub fn scada_diagram_component() -> Html {
             <div class="value">{ format!("{}", model_meta.uuid) }</div>
             <div class="label">{ "name: " }</div>
             <div class="value">{ format!("{}", model_meta.name) }</div>
-        </div>    
+        </div>
         }
     </>
     }
 }
-

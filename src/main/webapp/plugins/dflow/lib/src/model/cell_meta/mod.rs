@@ -3,9 +3,9 @@ use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
 use serde::{Deserialize, Serialize};
 use common_model::{
-    dflow_cell::{CellType, DFlowVariant}, 
+    dflow_cell::{CellType, DFlowVariant},
     geom_value::GeomValueXml, label_value::LabelValueXml,
-     multystate::MultystateXml, undefiend::UndefiendXml, 
+     multystate::MultystateXml,
      widget::WidgetContainerXml
     };
 
@@ -100,7 +100,7 @@ pub const CELL_TYPE_GEOM: &str = "geom";
 //             DFlowVariant::Geometry(value) => Some(value.clone()),
 //             _ => None
 //         }
-//     }    
+//     }
 // }
 
 
@@ -166,7 +166,7 @@ impl CellMeta {
             return Ok(item);
         }
         Err(CellStateError::NotLabel.into())
-    }      
+    }
 
     pub fn set_multystate_meta(&mut self, value: MultystateXml) {
         let position = self.get_meta_position(CellType::MULTYSTATE);
@@ -182,14 +182,14 @@ impl CellMeta {
             return Ok(item);
         }
         Err(CellStateError::NotMultystate.into())
-    }  
+    }
 
     pub fn set_geometry_meta(&mut self, value: GeomValueXml) {
         let position = self.get_meta_position(CellType::GEOM);
         if position.is_some()  {
             let _ = std::mem::replace(&mut self.types[position.unwrap()], DFlowVariant::Geometry(value));
         }
-    }    
+    }
 
     pub fn get_geometry_meta(&self) -> Result<GeomValueXml, JsValue>{
         let position = self.get_meta_position(CellType::GEOM);
@@ -198,7 +198,7 @@ impl CellMeta {
             return Ok(item);
         }
         Err(CellStateError::NotGeometry.into())
-    }      
+    }
 
     pub fn set_widget_container_meta(&mut self, value: WidgetContainerXml) {
         let position = self.get_meta_position(CellType::WIDGETCONTAINER);
@@ -216,17 +216,17 @@ impl CellMeta {
             return Ok(item);
         }
         Err(CellStateError::NotWidgetContainer.into())
-    }      
+    }
 
     // pub fn get_mut_multystate(&mut self) -> Result<&mut MultystateXml, JsValue>{
-    //     let item = 
+    //     let item =
     //     if let CellMetaVariant::Multystate(m) = &mut self.data {
     //         return Ok(m);
     //     }
     //     Err(CellStateError::NotMultystate.into())
     // }
 
-  
+
 
     pub fn create_state(&mut self) {
         let position = self.get_meta_position(CellType::MULTYSTATE);
@@ -239,8 +239,8 @@ impl CellMeta {
 
 impl Default for CellMeta {
     fn default() -> Self {
-        Self { 
-            label: Default::default(), 
+        Self {
+            label: Default::default(),
             types: vec![],
         }
     }
@@ -334,14 +334,14 @@ mod tests {
         println!("{meta:#?}");
 
         assert_eq!(item, meta);
-    }    
+    }
 
     #[test]
     fn get_cell_type_works() {
         let label_meta =  LabelValueXml { ds: Default::default() } ;
 
-        let meta = CellMeta { 
-            label: Default::default(), 
+        let meta = CellMeta {
+            label: Default::default(),
             types: vec![DFlowVariant::Label(label_meta)],
         };
 
@@ -355,8 +355,8 @@ mod tests {
     fn set_label_meta_works() {
         let label_meta = LabelValueXml { ds: Default::default() } ;
 
-        let mut meta = CellMeta { 
-            label: Default::default(), 
+        let mut meta = CellMeta {
+            label: Default::default(),
             types: vec![DFlowVariant::Label(label_meta)],
         };
 
@@ -365,32 +365,32 @@ mod tests {
 
         let from = from_str(&str).unwrap();
         println!("{from:#?}");
-        assert_eq!(meta, from);        
+        assert_eq!(meta, from);
 
         let new_label_meta = LabelValueXml { ds: DataSourceXml { tag: "tag-1".into(), path: "".into() } };
         meta.set_label_meta(new_label_meta);
 
 
         let str = to_string(&meta).unwrap();
-        println!("{str:?}");     
+        println!("{str:?}");
 
         let from = from_str(&str).unwrap();
         println!("{from:#?}");
-        assert_eq!(meta, from);             
-        
+        assert_eq!(meta, from);
+
     }
 
     #[test]
     fn create_state_works() {
-        let multy_meta = MultystateXml { 
-            range_type: Default::default(), 
-            ds: Default::default(), 
-            predef: Default::default(), 
+        let multy_meta = MultystateXml {
+            range_type: Default::default(),
+            ds: Default::default(),
+            predef: Default::default(),
             states: vec![],
         };
 
-        let mut meta = CellMeta { 
-            label: Default::default(), 
+        let mut meta = CellMeta {
+            label: Default::default(),
             types: vec![DFlowVariant::Multystate(multy_meta)],
         };
 
