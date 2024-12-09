@@ -2,21 +2,20 @@ use implicit_clone::ImplicitClone;
 use serde::{Deserialize, Serialize};
 use quick_xml::de::from_str;
 use web_sys::Element;
-use common_model::diagram::DiagramXml;
-use common_model::widget::WidgetXml;
+use common_model::diagram::{DiagramXml, WidgetXml};
 
 use super::{
-    diagram::form_meta::DiagramForm, 
-    mx_cell::MxCell, 
+    diagram::form_meta::DiagramForm,
+    mx_cell::MxCell,
     widget::form_meta::WidgetForm
 };
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, ImplicitClone)]
 pub enum GraphModel {
-    #[serde(rename="diagram")]    
+    #[serde(rename="diagram")]
     Diagram(DiagramXml),
-    #[serde(rename="widget")]    
+    #[serde(rename="widget")]
     Widget(WidgetXml),
 }
 
@@ -38,10 +37,10 @@ impl Default for GraphModel {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default, Clone)]
 #[serde(rename = "object")]
 pub struct DiagramMeta {
-    #[serde(rename="@label")]    
+    #[serde(rename="@label")]
     pub label: String,
-    #[serde(rename="$value")]    
-    pub model: GraphModel, 
+    #[serde(rename="$value")]
+    pub model: GraphModel,
 }
 
 impl DiagramMeta {
@@ -71,7 +70,7 @@ impl From<Element> for DiagramMeta {
     fn from(e: Element) -> Self {
         if let Ok(meta) = from_str::<DiagramMeta>(e.outer_html().as_str()) {
             return meta;
-        }  
+        }
         log::error!("can't create diagram meta form: {}", e.outer_html());
         Default::default()
     }
@@ -92,6 +91,7 @@ impl Default for ModelForm {
 // ==========================================================
 #[cfg(test)]
 mod tests {
+    use common_model::{data_source::DataSourceXml, diagram::WidgetPropertyXml};
     use quick_xml::se::to_string;
 
     use super::*;
@@ -104,27 +104,33 @@ mod tests {
         };
 
         let str = to_string(&item).unwrap();
-        println!("{str}");        
+        println!("{str}");
 
-        let diagram = from_str::<DiagramMeta>(&str).unwrap();    
+        let diagram = from_str::<DiagramMeta>(&str).unwrap();
 
         assert_eq!(item, diagram);
     }
- 
+
 
     #[test]
     fn xml_widget_meta_deser_works() {
         let item = DiagramMeta {
             label: "".to_owned(),
-            model: GraphModel::Widget(Default::default()),
-        };        
+            model: GraphModel::Widget(WidgetXml {
+                object_type: "ZDV".to_owned(),
+                property: vec![WidgetPropertyXml {
+                    name: "".to_owned(),
+                    ds: DataSourceXml::default(),
+                }]
+            }),
+        };
 
         let xml = quick_xml::se::to_string(&item).unwrap();
         println!("{xml}");
 
         // let xml = r#"<object label="" id="0"><widget object-type=""/></object>"#;
 
-        let widget = quick_xml::de::from_str::<DiagramMeta>(&xml);    
+        let widget = quick_xml::de::from_str::<DiagramMeta>(&xml);
         match widget {
             Ok(item) => {
                 println!("{item:#?}");

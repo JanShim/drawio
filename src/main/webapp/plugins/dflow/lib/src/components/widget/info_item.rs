@@ -1,34 +1,65 @@
+use yew::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use yew::prelude::*;
-use yew_hooks::{use_async_with_options, UseAsyncOptions};
-use yewdux::{use_selector, use_store};
+use yew_hooks::{use_async_with_options, use_list, use_toggle, UseAsyncOptions};
+use yewdux::{use_selector, use_store, Dispatch};
+use common_model::diagram::{WidgetPropertyXml, WidgetXml};
 
 use crate::{
-    components::shared::{MdIcon, MdIconType}, model::{
-        common::ModelForm,
-        widget::{form_meta::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
+    components::shared::{use_list_selected, MdIcon, MdIconType}, model::{
+        common::ModelForm, mx_cell::CellValue, widget::{form_meta::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
     },
-    store::{cell::NO_CONTEXT_FOUND, diagram, mx_context::TMxGraphContext},
-    utils::{cliped_model_box, fetch, post, put}
+    store::{cell::NO_CONTEXT_FOUND, diagram::{self, State}, mx_context::TMxGraphContext},
+    utils::{cliped_model_box, fetch, get_cell0, post, put, set_cell0_value}
 };
 
 #[function_component]
 pub fn WidgetInfoComponent() -> Html {
     let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
-    let (state, dispatch) = use_store::<diagram::State>();
-    let model_meta = use_selector(|state: &diagram::State| {
-        // log::debug!("selector: {:?}", state.model_meta);
-        match &state.model_meta {
-            ModelForm::Widget(form) => form.clone(),
-            _ => {
-                log::info!("this is not widget item");
-                Default::default()
-            },
-        }
-    });
+    let (_state, dispatch) = use_store::<diagram::State>();
 
-    let edit_mode = use_state(|| false);
+    let list_loaded = use_state(|| false);
+    let widget_props_list = use_list(Vec::<WidgetPropertyXml>::new());
+
+    let model_meta = {
+        let mx_graph_context = mx_graph_context.clone();
+        let widget_props_list = widget_props_list.clone();
+        let list_loaded = list_loaded.clone();
+        let dispatch = dispatch.clone();
+        use_selector(move |state: &diagram::State| {
+            match &state.model_meta {
+                ModelForm::Widget(form) => {
+                    let editor = &mx_graph_context.mx_editor;
+                    if let Ok(CellValue::Object(el)) = get_cell0(editor).get_value() {
+                        if let Ok(meta) = quick_xml::de::from_str::<WidgetXml>(el.inner_html().as_str()) {
+                            if !*list_loaded {
+                                // appy meta to store
+                                dispatch.reduce_mut(|state| {
+                                    let mut form = form.clone();
+                                    form.meta = el.outer_html().into();     // this is cell0 value
+                                    state.model_meta = ModelForm::Widget(form);
+
+                                    log::debug!("model_meta: {:?}", state.model_meta);
+                                });
+
+                                widget_props_list.set(meta.property);       // state widget properties
+                                list_loaded.set(true);
+                            }
+                            return form.clone();
+                        }
+                    } else {
+                        log::debug!("else CellValue: {:?}", get_cell0(editor).get_value().unwrap());
+                    }
+                    form.clone()
+                },
+                _ => {
+                    log::info!("this is not widget item");
+                    Default::default()
+                },
+            }
+        })};
+
+    let edit_mode = use_toggle(false, true);
 
     let url = mx_graph_context.api_url.clone();
     let widget_groups_list = use_async_with_options(
@@ -39,14 +70,12 @@ pub fn WidgetInfoComponent() -> Html {
     // ============= events ====================
     let edit_mode_toggle = {
         let edit_mode = edit_mode.clone();
-        Callback::from(move |_: MouseEvent| { edit_mode.set(true); })
+        Callback::from(move |_| { edit_mode.toggle(); })
     };
 
     let on_cancel = {
         let edit_mode = edit_mode.clone();
-        Callback::from(move |_: MouseEvent| {
-            edit_mode.set(false);
-        })
+        Callback::from(move |_| { edit_mode.set(false); })
     };
 
     let on_apply = {
@@ -61,7 +90,11 @@ pub fn WidgetInfoComponent() -> Html {
 
             if let Some(form) = form {
                 if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
-                    // let state = state.clone();
+
+                    log::debug!("CURR meta: {}",  form.meta.to_string());
+
+                    // chage cell0 in graph model
+                    set_cell0_value(&mx_graph_context.mx_editor, form.meta.to_string());
 
                     // appy to store
                     dispatch.reduce_mut(|state| {
@@ -75,53 +108,39 @@ pub fn WidgetInfoComponent() -> Html {
                         if let Ok(node) = mx_graph_context.get_graph_xml() {
                             if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
                                 let svg = mx_graph_context.get_graph_svg();
+                                let model: String = cliped_model_box(model_str).into();
 
                                 if form.is_new_item() {
                                     let item = WidgetDto::new(
                                         form.group.to_string(),
                                         form.name.to_string(),
-                                        cliped_model_box(model_str).into(),
+                                        model,
                                         vec![],
                                         Some(svg)
                                     );
 
-                                    // log::debug!("post: {item:?}");
-
-                                    let created = post(format!("{}/widget", mx_graph_context.api_url), item).await
-                                        .and_then(|dto| {
-                                            // log::debug!("created: {dto:?}");
-                                            Ok(dto)
-                                        }).unwrap();
-
-
-                                    // set model meta
-                                    dispatch.reduce_mut(|state| {
-                                        state.model_meta = ModelForm::Widget(WidgetForm {
-                                            uuid: created.uuid.into(),
-                                            name: created.name.into(),
-                                            group: created.group.into(),
-                                        });
-                                    });
-
+                                    let result = post(format!("{}/widget", mx_graph_context.api_url), item).await;
+                                    if let Ok(created) = result {
+                                        set_state_model_meta(dispatch, created);
+                                    } else {
+                                        log::debug!("widget create error: {}", result.unwrap_err());
+                                    }
                                 } else {
                                     let item = WidgetDto {
                                         uuid: form.uuid.to_string(),
                                         group: form.group.to_string(),
                                         name: form.name.to_string(),
-                                        model: cliped_model_box(model_str).into(),
+                                        model,
                                         types: vec!["ZDV2".to_owned()],
                                         svg: Some(svg),
                                     };
 
-                                    let res = put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await
-                                        .and_then(|dto| {
-                                            log::debug!("saved:  {dto:?}");
-                                            Ok(dto)
-                                        });
-                                    if res.is_err() {
-                                        log::error!("{:?}", res.err());
+                                    let result = put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await;
+                                    if let Ok(updated) = result {
+                                        set_state_model_meta(dispatch, updated);
+                                    } else {
+                                        log::debug!("widget {} update error: {}", form.uuid, result.unwrap_err());
                                     }
-
                                 }
                             };
                         }
@@ -133,20 +152,28 @@ pub fn WidgetInfoComponent() -> Html {
         }
     })};
 
+    let on_property_add = {
+            let widget_props_list = widget_props_list.clone();
+            Callback::from(move |event: MouseEvent| {
+                event.prevent_default();
+                widget_props_list.push(WidgetPropertyXml::default());
+        })};
+
     // ================= views =====================
     let header = html!{
-        <div class="flex-box-2 delim-label" >
-        if !*edit_mode {
-            <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
-        }
-        </div>
-    };
+            <div class="flex-box-2 delim-label" >
+            if !*edit_mode {
+                <button onclick={edit_mode_toggle}><MdIcon icon={MdIconType::Edit}/></button>
+            }
+            </div>
+        };
 
     let wgroups_select = {
+            let widget_form = model_meta.clone();
             if widget_groups_list.loading {
                 html! {  }
             } else  {
-                let selected_group =  model_meta.group.clone();
+                let selected_group =  widget_form.group.clone();
                 widget_groups_list.data.as_ref().map_or_else(
                     || html! {},        // default
                     |data| html! {
@@ -161,37 +188,103 @@ pub fn WidgetInfoComponent() -> Html {
             }
         };
 
+    let form_view = {
+            let widget_form = model_meta.clone();
+            html! {
+                <form onsubmit={on_apply}>
+                    <input type="hidden" name="uuid" value={ widget_form.uuid.clone() }/>
+                    <input type="hidden" name="meta" value={ widget_form.meta.clone() }/>
+
+                    <div class="label"><label for="uuid">{ "uuid: " }</label></div>
+                    <input name="uuid-0" value={ format!("{}", widget_form.uuid) } disabled={true} class="input-100"/><br/>
+                    <div class="label"><label for="name">{ "name: " }</label></div>
+                    <input name="name" value={ format!("{}", widget_form.name) } class="input-100"/><br/>
+                    <div class="label"><label for="group">{ "group: " }</label></div>
+                    { wgroups_select }
+
+                    <div>
+                        <div class="label"><label for="props">{ "свойства виджета: " }</label></div>
+                        <div class="flex-box delim-label"><button onclick={on_property_add}><MdIcon icon={MdIconType::Add}/></button></div>
+                        <table class="prop-table">
+                            <colgroup>
+                                <col style="width: 30%"/>
+                                <col style="width: 70%"/>
+                            </colgroup>
+                            {for widget_props_list.current().iter().map(|item| {
+                                html!{
+                                    <tr>
+                                        <td><input name="props-name" value={ format!("{}", item.name) } class="input-100"/></td>
+                                        <td><input name="props-value" value={ format!("{}", item.ds.tag) } class="input-100"/></td>
+                                    </tr>
+                                }
+                            })}
+                        </table>
+                    </div>
+
+                    <div class="flex-box-2" >
+                        <button type="button" onclick={on_cancel}>{"Cancel"}</button>
+                        <button type="submit">{"Save"}</button>
+                    </div>
+                </form>
+            }
+        };
+
+    let view = {
+            let widget_form = model_meta.clone();
+            log::debug!("{:?}", widget_props_list.current());
+
+            html! {
+                <>
+                <div>
+                    <div class="label">{ "uuid: " }</div>
+                    <div class="value">{ format!("{}", widget_form.uuid) }</div>
+                    <div class="label">{ "name: " }</div>
+                    <div class="value">{ format!("{}", widget_form.name) }</div>
+                    <div class="label">{ "group: " }</div>
+                    <div class="value">{ format!("{}", widget_form.group) }</div>
+                </div>
+                <div>
+                    <div class="label"><label for="props">{ "свойства виджета: " }</label></div>
+                    <table class="prop-table">
+                    <colgroup>
+                        <col style="width: 80px"/>
+                        <col style="width: 100%"/>
+                    </colgroup>
+                    {for widget_props_list.current().iter().map(|item| {
+                        html!{
+                            <tr>
+                                <td>{ item.name.clone() }</td>
+                                <td>{ item.ds.tag.clone() }</td>
+                            </tr>
+                        }
+                    })}
+                    </table>
+                </div>
+                </>
+            }
+        };
+
     html! {
         <>
             {header}
             if *edit_mode {
-            <form onsubmit={on_apply}>
-                <input type="hidden" name="uuid" value={ format!("{}", model_meta.uuid) }/>
-
-                <div class="label"><label for="uuid">{ "uuid: " }</label></div>
-                <input name="uuid-0" value={ format!("{}", model_meta.uuid) } disabled={true} class="input-100"/><br/>
-                <div class="label"><label for="name">{ "name: " }</label></div>
-                <input name="name" value={ format!("{}", model_meta.name) } class="input-100"/><br/>
-                <div class="label"><label for="group">{ "group: " }</label></div>
-
-                // <input name="group" value={ format!("{}", model_meta.group) } class="input-100"/><br/>
-                { wgroups_select }
-
-                <div class="flex-box-2" >
-                    <button type="button" onclick={on_cancel}>{"Cancel"}</button>
-                    <button type="submit">{"Save"}</button>
-                </div>
-            </form>
+                { form_view }
             } else {
-            <div>
-                <div class="label">{ "uuid: " }</div>
-                <div class="value">{ format!("{}", model_meta.uuid) }</div>
-                <div class="label">{ "name: " }</div>
-                <div class="value">{ format!("{}", model_meta.name) }</div>
-                <div class="label">{ "group: " }</div>
-                <div class="value">{ format!("{}", model_meta.group) }</div>
-            </div>
+                { view }
             }
         </>
     }
+}
+
+// -----------------------------------------------
+fn set_state_model_meta(dispatch: Dispatch<State>, created: WidgetDto) {
+    // set model meta
+    dispatch.reduce_mut(|state| {
+        state.model_meta = ModelForm::Widget(WidgetForm {
+            uuid: created.uuid.into(),
+            name: created.name.into(),
+            group: created.group.into(),
+            ..Default::default()
+        });
+    });
 }

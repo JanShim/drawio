@@ -12,97 +12,10 @@ use common_model::{
 use crate::errors::CellStateError;
 
 pub mod data_source_reducers;
-pub mod widget_reducers;
-pub mod value_reducers;
 
 pub const CELL_TYPE_LABEL: &str = "value";
 pub const CELL_TYPE_MULTY: &str = "multy";
 pub const CELL_TYPE_GEOM: &str = "geom";
-
-
-// #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-// pub enum CellType {
-//     UNDEFIEND,
-//     LABEL,
-//     MULTYSTATE,
-//     WIDGETCONTAINER,
-//     GEOM,
-// }
-
-// impl From<FormData> for CellType {
-//     fn from(data: FormData) -> Self {
-//         match data.get("cell-type").as_string() {
-//             Some(value) => match value {
-//                 _ if value==CELL_TYPE_LABEL => CellType::LABEL,
-//                 _ if value==CELL_TYPE_GEOM => CellType::GEOM,
-//                 _ => CellType::MULTYSTATE,
-//             },
-//             None => CellType::MULTYSTATE,
-//         }
-//     }
-// }
-
-
-// #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-// pub enum DFlowVariant {
-//     #[serde(rename = "undefiend")]
-//     Undefiend(UndefiendXml),
-//     #[serde(rename = "label")]
-//     Label(LabelValueXml),
-//     #[serde(rename = "multystate")]
-//     Multystate(MultystateXml),
-//     #[serde(rename = "widget-container")]
-//     WidgetContainer(WidgetContainerXml),
-//     #[serde(rename = "geometry")]
-//     Geometry(GeomValueXml),
-// }
-
-// impl DFlowVariant {
-//     pub fn get_cell_type(&self) -> CellType {
-//         match self {
-//             DFlowVariant::Undefiend(_) => CellType::UNDEFIEND,
-//             DFlowVariant::Label(_) => CellType::LABEL,
-//             DFlowVariant::Multystate(_) => CellType::MULTYSTATE,
-//             DFlowVariant::WidgetContainer(_) => CellType::WIDGETCONTAINER,
-//             DFlowVariant::Geometry(_) => CellType::GEOM,
-//         }
-//     }
-
-//     pub fn create_state(&mut self) {
-//         if let Self::Multystate(multy) = self {
-//             multy.create_state();
-//         }
-//     }
-
-//     pub fn get_label(&self) -> Option<LabelValueXml> {
-//         match self {
-//             DFlowVariant::Label(vaue) => Some(vaue.clone()),
-//             _ => None
-//         }
-//     }
-
-//     pub fn get_multystate(&self) -> Option<MultystateXml> {
-//         match self {
-//             DFlowVariant::Multystate(value) => Some(value.clone()),
-//             _ => None
-//         }
-//     }
-
-//     pub fn get_widget_container(&self) -> Option<WidgetContainerXml> {
-//         match self {
-//             DFlowVariant::WidgetContainer(value) => Some(value.clone()),
-//             _ => None
-//         }
-//     }
-
-//     pub fn get_geometry(&self) -> Option<GeomValueXml> {
-//         match self {
-//             DFlowVariant::Geometry(value) => Some(value.clone()),
-//             _ => None
-//         }
-//     }
-// }
-
 
 pub fn get_cellmeta_types(variants: &Vec<DFlowVariant>) -> HashSet<CellType> {
     variants.iter()
@@ -367,7 +280,7 @@ mod tests {
         println!("{from:#?}");
         assert_eq!(meta, from);
 
-        let new_label_meta = LabelValueXml { ds: DataSourceXml { tag: "tag-1".into(), path: "".into() } };
+        let new_label_meta = LabelValueXml { ds: DataSourceXml { tag: "tag-1".into(), path: "".into(), property: None } };
         meta.set_label_meta(new_label_meta);
 
 

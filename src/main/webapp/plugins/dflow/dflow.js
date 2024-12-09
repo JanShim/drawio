@@ -19,7 +19,7 @@ function setCellAttribute(cell, name, value) {
 
 function loadDFlowModel(editor, xmlStr) {
 	const node = mxUtils.parseXml(xmlStr).documentElement;
-	if (!!node) {
+	if (node) {
 		let dec = new mxCodec(node.ownerDocument);
 
 		if (node.nodeName == 'mxGraphModel')
@@ -45,6 +45,22 @@ function loadDFlowModel(editor, xmlStr) {
 
 function getCell0(editor) {
 	return editor.graph.getModel().getCell("0");
+}
+
+function setCell0Value(editor, value) {
+	const node = mxUtils.parseXml(value).documentElement;
+	if (node) {
+		editor.graph.model.beginUpdate();
+		try
+		{
+			let cell0 = editor.graph.model.getCell("0");
+			cell0.value = node;
+		}
+		finally
+		{
+			editor.graph.model.endUpdate();
+		}
+	}
 }
 
 function getPrettyXml(element) {
@@ -217,6 +233,16 @@ async function getPaletteData(apiUrl) {
 	} catch (error) {
 	  console.error(error.message);
 	}
+}
+
+// пробуем отределить тип модели (diargam/widget)
+function getModelType(model) {
+	let cell = model.cells["0"];
+	if (typeof cell.value === 'object') {
+		let name = cell.value.firstChild.tagName;
+		return name === "widget" || name === "diagram";
+	}
+	return false;
 }
 
 const API_URL = "http://localhost:8091/api/v1";
@@ -440,7 +466,6 @@ Draw.loadPlugin(async function(ui) {
 		console.log(widgetGroups);
 
 		sb.addPalette('dflow', 'DFlow items', true, mxUtils.bind(sb, function(content) {
-
 			widgetGroups.forEach(group => {
 				let container = new mxCell('', new mxGeometry(0, 0, 100, 100), 'container=1;collapsible=0;connectable=0;strokeColor=none;');
 				container.vertex = true;
@@ -471,17 +496,18 @@ Draw.loadPlugin(async function(ui) {
 
 	// ================ MENUS =================
 	// Adds menu
-	mxResources.parse('createDiagram=New Diagram');
-	mxResources.parse('createWidget=New Widget');
-	mxResources.parse('openItem=Open...');
-	mxResources.parse('dflow=DFlow');
-	mxResources.parse('dflowData=DFlow Data');
+	mxResources.parse('createDiagram=Новая диаграмма');
+	mxResources.parse('createWidget=Новый виджет');
+	mxResources.parse('openItem=Открыть...');
+	mxResources.parse('dflow=Настройки полотна');
+	mxResources.parse('dflowData=Настройки элемента');
 
 
     ui.actions.addAction('createDiagram', function()
     {
 		loadDFlowModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
 		recreateModelMeta("diagram");
+		diagramDataWindow.setTitle("Настройки диаграмы");
 		diagramDataWindow.setVisible(true);
     });
 
@@ -489,6 +515,7 @@ Draw.loadPlugin(async function(ui) {
     {
 		loadDFlowModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget object-type=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
 		recreateModelMeta("widget");
+		diagramDataWindow.setTitle("Настройки виджета");
 		diagramDataWindow.setVisible(true);
     });
 
@@ -499,7 +526,11 @@ Draw.loadPlugin(async function(ui) {
 
 	ui.actions.addAction('dflow', function()
 	{
-		diagramDataWindow.setVisible(!diagramDataWindow.isVisible());
+		if (getModelType(graph.model)) {
+			diagramDataWindow.setVisible(!diagramDataWindow.isVisible());
+		} else {
+			diagramDataWindow.setVisible(false);
+		}
 	});
 
 	ui.actions.addAction('dflowData', function()

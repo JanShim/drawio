@@ -1,10 +1,8 @@
 use std::rc::Rc;
-use common_model::{data_source::DataSourceXml, multystate::MultystateXml, widget::WidgetXml};
+use common_model::{data_source::DataSourceXml, multystate::MultystateXml};
 use yewdux::Reducer;
 
 use crate::store::cell;
-
-use super::{CellMeta, DFlowVariant};
 
 pub struct WidgetApplyDsAction(pub DataSourceXml);
 impl Reducer<cell::State> for WidgetApplyDsAction {
@@ -13,8 +11,8 @@ impl Reducer<cell::State> for WidgetApplyDsAction {
 
         // if let CellMetaVariant::WidgetContainer(widget) = &state.meta.data {
         //     return cell::State {
-        //             meta: CellMeta { 
-        //                 label: state.meta.label.clone(), 
+        //             meta: CellMeta {
+        //                 label: state.meta.label.clone(),
         //                 data: CellMetaVariant::WidgetContainer(WidgetXml {
         //                     ds: self.0,
         //                     ..widget.clone()

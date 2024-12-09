@@ -13,8 +13,8 @@ pub struct Props {
     pub selected: IString,
 }
 
-#[function_component(WidgetListItemComponent)]
-pub fn component(Props {item, select, selected }: &Props) -> Html {
+#[function_component]
+pub fn WidgetListItemComponent(Props {item, select, selected }: &Props) -> Html {
     let WidgetListItem {uuid, name, group } = item;
 
     let on_select = {
@@ -27,7 +27,7 @@ pub fn component(Props {item, select, selected }: &Props) -> Html {
 
     html! {
         <div onclick={on_select} class={classes!( "selectable", (selected == uuid).then_some("selected") )}>
-            {format!("{} {} {}", uuid, group, name)} 
+            {format!("{} {} {}", uuid, group, name)}
         </div>
     }
 }

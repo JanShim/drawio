@@ -1,5 +1,6 @@
-use implicit_clone::unsync::IString;
+use common_model::data_source::DataSourceDto;
 use serde::{Deserialize, Serialize};
+use yew::AttrValue;
 
 use crate::utils::NULL_UUID;
 
@@ -13,7 +14,6 @@ pub struct WidgetDto {
     pub group: String,
     pub types: Vec<String>,
     pub svg: Option<String>,
-
 }
 
 impl WidgetDto {
@@ -33,16 +33,22 @@ impl WidgetDto {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 // #[serde(rename_all = "camelCase")]
 pub struct WidgetListItem {
-    pub uuid: IString,
-    pub group: IString,
-    pub name: IString,
+    pub uuid: AttrValue,
+    pub group: AttrValue,
+    pub name: AttrValue,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 // #[serde(rename_all = "camelCase")]
 pub struct WidgetGlyphItem {
-    pub uuid: IString,
-    pub group: IString,
-    pub name: IString,
-    pub glyph: IString,
+    pub uuid: AttrValue,
+    pub group: AttrValue,
+    pub name: AttrValue,
+    pub glyph: AttrValue,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct WidgetProperty {
+    pub name: AttrValue,
+    pub ds: DataSourceDto,
 }

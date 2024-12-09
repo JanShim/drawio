@@ -1,9 +1,7 @@
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 use yewdux::use_store;
-use implicit_clone::unsync::IString;
-use std::rc::Rc;
-
 use web_sys::{HtmlDivElement, HtmlElement};
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
 use stylist::yew::{styled_component, Global};
@@ -15,15 +13,10 @@ use crate::{
     },
     // errors::FetchError,
     model::{
-        common::ModelForm,
-        diagram::{form_meta::DiagramForm, DiagramListItem},
-        widget::{form_meta::WidgetForm, WidgetListItem},
-        editor_ui::EditorUi,
-        mx_editor::MxEditor,
-        mx_utils::MxUtils,
+        common::ModelForm, diagram::{form_meta::DiagramForm, DiagramListItem}, editor_ui::EditorUi, mx_cell::CellValue, mx_editor::MxEditor, mx_utils::MxUtils, widget::{form_meta::WidgetForm, WidgetListItem, WidgetProperty}
     },
     store::diagram,
-    utils::{fetch, fetch_string, load_dflow_model, SchemaOptions}
+    utils::{fetch, fetch_string, get_cell0, load_dflow_model, SchemaOptions}
 };
 
 #[derive(Properties, PartialEq)]
@@ -37,29 +30,31 @@ pub struct Props {
 #[styled_component]
 pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     // let editor = mx_editor.clone();
-    let (diagram_state, diagram_dispatch) = use_store::<diagram::State>();
+    let (_diagram_state, diagram_dispatch) = use_store::<diagram::State>();
 
     let tab_tag = use_state(|| "diagram".to_owned());
 
-    let url = api_url.clone();
-    let diagram_list = use_async_with_options(
-        async move { fetch::<Vec::<DiagramListItem>>(format!("{url}/diagram/all")).await },
-        UseAsyncOptions::enable_auto(),
-    );
+    let diagram_list = {
+        let url = api_url.clone();
+        use_async_with_options(
+            async move { fetch::<Vec::<DiagramListItem>>(format!("{url}/diagram/all")).await },
+            UseAsyncOptions::enable_auto(),
+        )};
 
-    let url = api_url.clone();
-    let widget_list = use_async_with_options(
-        async move { fetch::<Vec::<WidgetListItem>>(format!("{url}/widget/all")).await },
-        UseAsyncOptions::enable_auto(),
-    );
+    let widget_list = {
+        let url = api_url.clone();
+        use_async_with_options(
+            async move { fetch::<Vec::<WidgetListItem>>(format!("{url}/widget/all")).await },
+            UseAsyncOptions::enable_auto(),
+        )};
 
-    let selected = use_state(|| IString::from("undefiend"));
+    let selected = use_state(|| AttrValue::from("undefiend"));
 
     // ---------------
     // load model from db
     let on_select =  {
         let selected = selected.clone();
-        Callback::from(move |pk: IString|  {
+        Callback::from(move |pk: AttrValue|  {
             log::debug!("selected: {pk:?}");
             selected.set(pk);
 
@@ -130,6 +125,7 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
         let tab_tag = tab_tag.clone();
         let selected = selected.clone();
         let editor_ui = editor_ui.clone();
+        let cell0 = get_cell0(mx_editor);
         let dispatch = diagram_dispatch.clone();
         Callback::from(move |_: MouseEvent| {
             let url = url.clone();
@@ -143,7 +139,7 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                 wasm_bindgen_futures::spawn_local(async move {
                     let WidgetListItem { uuid, group, name } = fetch::<WidgetListItem>(meta_req).await.unwrap();
                     dispatch.reduce_mut(move |state| {
-                        state.model_meta = ModelForm::Widget(WidgetForm { uuid, name, group });
+                        state.model_meta = ModelForm::Widget(WidgetForm { uuid, name, group, ..Default::default() });
                     });
                 });
             } else {

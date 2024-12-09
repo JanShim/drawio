@@ -2,7 +2,7 @@ use common_model::dflow_cell::DFlowVariant;
 use wasm_bindgen::prelude::*;
 use web_sys::Element;
 use quick_xml::{
-    de::from_str, 
+    de::from_str,
     se::to_string,
 };
 
@@ -10,6 +10,7 @@ use crate::{errors::CellStateError, utils::get_pretty_xml,};
 
 use super::{cell_meta::CellMeta, common,};
 
+#[derive(Debug)]
 pub enum CellValue {
     Object(Element),
     Label(Option<String>),
@@ -34,7 +35,7 @@ extern "C" {
      */
     //mxCell.prototype.getValue = function()
     #[wasm_bindgen(method, js_name=getValue)]
-    fn mx_get_value(this: &MxCell) -> JsValue;    
+    fn mx_get_value(this: &MxCell) -> JsValue;
 
     /**
      * Sets the user object of the cell. The user object
@@ -42,12 +43,12 @@ extern "C" {
      */
     //setValue(value: any): void;
     #[wasm_bindgen(method, js_name=setValue)]
-    fn mx_set_value(this: &MxCell, value: JsValue);    
+    fn mx_set_value(this: &MxCell, value: JsValue);
 
     /**
      * Returns a string that describes the <style>.
      */
-    //getStyle(): string;    
+    //getStyle(): string;
     #[wasm_bindgen(method, js_name=getStyle)]
     fn mx_get_style(this: &MxCell) -> JsValue;
 
@@ -84,13 +85,13 @@ impl MxCell {
 
     pub fn set_style(&self, style: String) {
         self.mx_set_style(style);
-    }    
+    }
 
     pub fn get_diagram_meta(&self) -> Result<common::DiagramMeta, JsValue> {
         match self.mx_get_value() {
             str if str.is_string() => Ok(Default::default()),
             elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
-            _ => Err("can't create diagram meta".into()),           
+            _ => Err("can't create diagram meta".into()),
         }
     }
 
@@ -98,7 +99,7 @@ impl MxCell {
         match self.mx_get_value() {
             str if str.is_string() => Ok(Default::default()),
             elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
-            _ => Err("can't create widget meta".into()),           
+            _ => Err("can't create widget meta".into()),
         }
     }
 
@@ -142,13 +143,13 @@ impl MxCell {
 
             return self.get_meta();
          }
-         Err(JsValue::from_str("can't set cell meta data"))        
+         Err(JsValue::from_str("can't set cell meta data"))
     }
 
     pub fn get_meta_inner_html(&self, meta: &CellMeta) -> Result<String, JsValue> {
         let inner_html = meta.types.iter()
             .map(|data| {
-                let outer_html = 
+                let outer_html =
                 match data {
                         DFlowVariant::Undefiend(value) => to_string(value),
                         DFlowVariant::Label(value) => to_string(value),

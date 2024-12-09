@@ -67,7 +67,7 @@ pub fn use_css_styles(mx_style: AttrValue) -> Rc<(AttrValue, AttrValue)> {
 
 #[hook]
 pub fn use_state_with<T>(deps: T) -> UseStateHandle<T>
-where 
+where
     T: PartialEq + Clone + 'static,
 {
     let state = use_state(|| deps.clone());
@@ -75,7 +75,7 @@ where
         let state = state.clone();
         use_effect_with(deps, move |deps| {
             state.set(deps.clone());
-        })   
+        })
     }
 
     // result
@@ -101,7 +101,6 @@ where T: 'static
 
     // result
     (selected, select_callback)
-
 }
 
 #[hook]
@@ -113,7 +112,7 @@ where T: PartialEq +  Clone + WithXmlDataSource + 'static
         let data_source = data_source.clone();
         use_effect_with(value.clone(), move |v| {
             data_source.set(v.get_ds().clone());
-        });    
+        });
 
     }
 
@@ -131,7 +130,7 @@ pub struct Props {
 }
 
 #[function_component]
-pub fn MdIcon(Props { icon }: &Props) -> Html 
+pub fn MdIcon(Props { icon }: &Props) -> Html
 {
     html! {
         <span class="material-icons md-18"  title={icon.get_title()}>{ Into::<AttrValue>::into((*icon).clone()) }</span>
@@ -148,17 +147,17 @@ pub struct EditButtonsProps {
 }
 
 #[function_component]
-pub fn EditButtons(EditButtonsProps { 
-    edit_mode, 
-    is_edit, 
-    on_apply, 
+pub fn EditButtons(EditButtonsProps {
+    edit_mode,
+    is_edit,
+    on_apply,
     on_edit,
     on_cancel,
-}: &EditButtonsProps ) -> Html 
+}: &EditButtonsProps ) -> Html
 {
     if *edit_mode {
-        if **is_edit { 
-            html! {<div style="width:64px"> 
+        if **is_edit {
+            html! {<div style="width:64px">
                 <button onclick={on_apply}><MdIcon icon={MdIconType::Check}/></button>
                 <button onclick={on_cancel}><MdIcon icon={MdIconType::Cancel}/></button>
             </div>}

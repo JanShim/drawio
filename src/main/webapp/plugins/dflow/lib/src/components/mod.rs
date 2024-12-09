@@ -40,15 +40,19 @@ pub fn get_global_css() -> VNode {
     background-color: #e9e9e9;
     height: 25px;
     padding: 3px;
-}    
-            
+}
+
 table.prop-table {
     width: 100%;
+    border: 1px solid black;
+    border-collapse: collapse;
 }
 table.prop-table td {
     padding: 0px 5px 0px 5px;
     height: 25px;
     vertical-align: middle;
+    border: 1px solid black;
+    border-collapse: collapse;
 }
 table.prop-table td input {
     height: 16px;
@@ -60,14 +64,14 @@ table.prop-table td.label {
 table.prop-table td.img {
     width: 16px;
     padding: 0px;
-}     
+}
 
 .img-16 {
     width: 16px;
     height: 16px;
     padding: 0px;
 }
-        
+
 div.svg-view {
     text-align: center;
     padding: 5px;
@@ -100,7 +104,7 @@ input.state-val {
 .state-name {
     width: 40px;
 }
-        
+
         "#)} />
     }
 }
