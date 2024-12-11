@@ -115,8 +115,11 @@ pub fn InfoComponent() -> Html {
         state.model_meta.clone()
     });
 
-    match *model_meta {
+    match (*model_meta).clone() {
         ModelForm::Diagram(_) => html! { <DiagramInfoComponent/> },
-        ModelForm::Widget(_) =>  html! { <WidgetInfoComponent/>  },
+        ModelForm::Widget(form) =>  {
+            log::debug!("ModelForm::Widget::: {form:?}");
+            html! { <WidgetInfoComponent form_meta={form}/> }
+        },
     }
 }

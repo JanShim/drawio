@@ -1,3 +1,4 @@
+use common_model::diagram::WidgetXml;
 use wasm_bindgen::prelude::*;
 use web_sys::{js_sys::JsString, Element};
 
@@ -7,8 +8,9 @@ use reqwasm::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use wasm_bindgen_futures::wasm_bindgen;
+use yew::AttrValue;
 
-use crate::{errors::FetchError, model::{mx_cell::MxCell, mx_editor::MxEditor}};
+use crate::{errors::FetchError, model::{mx_cell::{CellValue, MxCell}, mx_editor::MxEditor, widget::form_meta::WidgetForm}};
 
 pub const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
 pub const NULL_MODEL: &str = "<mxGraphModel/>";
@@ -112,4 +114,21 @@ where
         .map_err(|err| FetchError::RequestError(err.to_string()))?
         .json::<T>().await
         .map_err(|err| FetchError::SerdeError(err.to_string()));
+}
+
+/**
+ * returns  Option<(cell0.value.outer_html, WidgetXml)>
+ */
+pub fn get_cell0_widget_meta(editor: &MxEditor) -> Option<(AttrValue, WidgetXml)> {
+    if let Ok(CellValue::Object(el)) = get_cell0(editor).get_value() {
+        if let Ok(widget_xml) = quick_xml::de::from_str::<WidgetXml>(el.inner_html().as_str()) {
+            let outer_html = el.outer_html();
+            return Some((outer_html.into(), widget_xml));
+        }
+    }
+
+    log::error!("bad CellValue: {:?}", get_cell0(editor).get_value().unwrap());
+
+    // else
+    None
 }

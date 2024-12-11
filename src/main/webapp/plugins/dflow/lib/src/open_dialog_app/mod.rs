@@ -125,7 +125,6 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
         let tab_tag = tab_tag.clone();
         let selected = selected.clone();
         let editor_ui = editor_ui.clone();
-        let cell0 = get_cell0(mx_editor);
         let dispatch = diagram_dispatch.clone();
         Callback::from(move |_: MouseEvent| {
             let url = url.clone();
@@ -139,7 +138,8 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                 wasm_bindgen_futures::spawn_local(async move {
                     let WidgetListItem { uuid, group, name } = fetch::<WidgetListItem>(meta_req).await.unwrap();
                     dispatch.reduce_mut(move |state| {
-                        state.model_meta = ModelForm::Widget(WidgetForm { uuid, name, group, ..Default::default() });
+                        let form = WidgetForm { uuid, name, group, ..Default::default()};
+                        state.model_meta = ModelForm::Widget(form);
                     });
                 });
             } else {

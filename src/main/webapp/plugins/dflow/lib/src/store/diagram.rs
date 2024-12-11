@@ -4,6 +4,7 @@ use crate::model::common::ModelForm;
 
 #[derive(Store, Clone, PartialEq, Debug)]
 pub struct State {
+    pub redraw: bool,
     pub model_meta: ModelForm,
 }
 
@@ -14,7 +15,7 @@ impl State {
 
     // pub fn get_graph_svg(&self) -> String {
     //     get_graph_svg(&self.mx_editor).into()
-    // }    
+    // }
 
     // pub fn get_xml(&self, node: Node) -> Result<Option<String>, JsValue> {
     //     self.mx_utils.get_xml(node)
@@ -28,7 +29,8 @@ impl State {
 
 impl Default for State {
     fn default() -> Self {
-        Self { 
+        Self {
+            redraw: Default::default(),
             model_meta: Default::default(),
         }
     }
