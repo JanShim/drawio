@@ -10,18 +10,14 @@ use crate::{
     components::{
         diagram::list_item::DiagramListItemComponent,
         widget::list_item::WidgetListItemComponent
-    },
-    // errors::FetchError,
-    model::{
-        common::ModelForm, diagram::{form_meta::DiagramForm, DiagramListItem}, editor_ui::EditorUi, mx_cell::CellValue, mx_editor::MxEditor, mx_utils::MxUtils, widget::{form_meta::WidgetForm, WidgetListItem, WidgetProperty}
-    },
-    store::diagram,
-    utils::{fetch, fetch_string, get_cell0, load_dflow_model, SchemaOptions}
+    }, model::{
+        common::{DiagramMeta, GraphModel, ModelForm}, diagram::{form::DiagramForm, DiagramListItem}, editor_ui::EditorUi, mx_cell::CellValue, mx_editor::MxEditor, mx_utils::MxUtils, widget::{form::WidgetForm, WidgetListItem, WidgetProperty}
+    }, schema_app::recreate_model_meta, store::diagram, utils::{fetch, fetch_string, get_cell0, get_cell0_meta, load_dflow_model, recreate_diagram_model_info, recreate_widget_model_info, SchemaOptions}
 };
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub api_url: String,
+    pub api_url: AttrValue,
     pub mx_utils: Rc<MxUtils>,
     pub mx_editor: Rc<MxEditor>,
     pub editor_ui: Rc<EditorUi>,
@@ -120,46 +116,95 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     };
 
     let on_open = {
-        let editor = mx_editor.clone();
         let url = api_url.clone();
         let tab_tag = tab_tag.clone();
         let selected = selected.clone();
+        let editor = mx_editor.clone();
         let editor_ui = editor_ui.clone();
+        let mx_utils = mx_utils.clone();
         let dispatch = diagram_dispatch.clone();
         Callback::from(move |_: MouseEvent| {
             let url = url.clone();
             let tab_tag = tab_tag.clone();
             let selected = selected.clone();
             let dispatch = dispatch.clone();
-
-            // fill meta storage
-            let meta_req = format!("{url}/{}/{}", *tab_tag, *selected);
-            if *tab_tag == "widget" {
-                wasm_bindgen_futures::spawn_local(async move {
-                    let WidgetListItem { uuid, group, name } = fetch::<WidgetListItem>(meta_req).await.unwrap();
-                    dispatch.reduce_mut(move |state| {
-                        let form = WidgetForm { uuid, name, group, ..Default::default()};
-                        state.model_meta = ModelForm::Widget(form);
-                    });
-                });
-            } else {
-                wasm_bindgen_futures::spawn_local(async move {
-                    let DiagramListItem { uuid, name } = fetch::<DiagramListItem>(meta_req).await.unwrap();
-                    dispatch.reduce_mut(move |state| {
-                        state.model_meta = ModelForm::Diagram(DiagramForm {uuid, name});
-                    });
-                });
-            }
-
-            // fill graph model
             let editor = editor.clone();
             let editor_ui = editor_ui.clone();
+            let mx_utils = mx_utils.clone();
+
             wasm_bindgen_futures::spawn_local(async move {
-                fetch_string(format!("{url}/{}/{}/model", *tab_tag, *selected)).await
-                    .map(|model| {
-                        load_dflow_model(&editor, model.as_str());
+                match fetch_string(format!("{url}/{}/{}/model", *tab_tag, *selected)).await {
+                    Ok(model) => {
+                        let meta_req = format!("{url}/{}/{}", *tab_tag, *selected);
+                        if *tab_tag == "widget" {
+                            match fetch::<WidgetListItem>(meta_req).await {
+                                Ok(WidgetListItem { uuid, name, group }) => {
+                                    let cl_editor = editor.clone();
+                                    let cb = Closure::new(move |el: JsValue| {
+                                            let schema_root_container = el.dyn_into::<HtmlDivElement>().unwrap();
+                                            recreate_model_meta(
+                                                "widget".into(),
+                                                (*cl_editor).clone(),
+                                                (*mx_utils).clone(),
+                                                schema_root_container,
+                                                SchemaOptions { api_url: Some(url.to_string()) }
+                                            );
+                                        });
+
+                                    //create new widget model
+                                    recreate_widget_model_info(&editor, model, &cb);
+
+                                    let diagram_meta = get_cell0_meta(&editor)
+                                        .unwrap_or(DiagramMeta {
+                                            label: Default::default(),
+                                            model: GraphModel::Widget(Default::default()),
+                                        });
+
+                                    dispatch.reduce_mut(move |state| {
+                                        let form = WidgetForm { uuid, name, group, diagram_meta};
+                                        state.model_meta = ModelForm::Widget(form);
+                                    });
+                                },
+                                Err(err) => log::error!("{err}"),
+                            }
+                        } else {
+                            match fetch::<DiagramListItem>(meta_req).await {
+                                Ok(DiagramListItem { uuid, name }) => {
+                                    let cl_editor = editor.clone();
+                                    let cb = Closure::new(move |el: JsValue| {
+                                            let schema_root_container = el.dyn_into::<HtmlDivElement>().unwrap();
+                                            recreate_model_meta(
+                                                "diagram".into(),
+                                                (*cl_editor).clone(),
+                                                (*mx_utils).clone(),
+                                                schema_root_container,
+                                                SchemaOptions { api_url: Some(url.to_string()) }
+                                            );
+                                        });
+
+                                    // create new diagram model
+                                    recreate_diagram_model_info( &editor, model, &cb );
+
+                                    let diagram_meta = get_cell0_meta(&editor)
+                                        .unwrap_or(DiagramMeta {
+                                            label: Default::default(),
+                                            model: GraphModel::Diagram(Default::default()),
+                                        });
+
+                                    dispatch.reduce_mut(move |state| {
+                                        let form = DiagramForm {uuid, name, diagram_meta};
+                                        state.model_meta = ModelForm::Diagram(form);
+                                    });
+                                },
+                                Err(err) => log::error!("{err}"),
+                            }
+                        }
+
+                        // close dialog window
                         editor_ui.hide_dialog();
-                    }).unwrap();
+                    },
+                    Err(err) => log::error!("{err}"),
+                }
             });
         })
     };
@@ -294,7 +339,8 @@ div.selected {
 #[wasm_bindgen(js_name=openDialog)]
 pub fn open_dialog(mx_utils: MxUtils, editor_ui: EditorUi, mx_editor: MxEditor, div: HtmlDivElement, options: SchemaOptions) {
     let props  = Props {
-        api_url: options.api_url.unwrap_or("undefiend".to_owned()),
+
+        api_url: options.api_url.unwrap_or("undefiend".to_owned()).into(),
         mx_utils: Rc::new(mx_utils),
         mx_editor: Rc::new(mx_editor),
         editor_ui: Rc::new(editor_ui),

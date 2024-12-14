@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::NULL_UUID;
 
-pub mod form_meta;
+pub mod form;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct DiagramDto {

@@ -4,7 +4,7 @@ use crate::model::common::ModelForm;
 
 #[derive(Store, Clone, PartialEq, Debug)]
 pub struct State {
-    pub redraw: bool,
+    // pub redraw: bool,
     pub model_meta: ModelForm,
 }
 
@@ -30,7 +30,7 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            redraw: Default::default(),
+            // redraw: Default::default(),
             model_meta: Default::default(),
         }
     }

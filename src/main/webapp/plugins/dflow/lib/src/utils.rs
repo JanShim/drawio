@@ -1,6 +1,6 @@
 use common_model::diagram::WidgetXml;
 use wasm_bindgen::prelude::*;
-use web_sys::{js_sys::JsString, Element};
+use web_sys::{js_sys::JsString, Element, HtmlDivElement};
 
 use reqwasm::{
     http::Request,
@@ -10,7 +10,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use wasm_bindgen_futures::wasm_bindgen;
 use yew::AttrValue;
 
-use crate::{errors::FetchError, model::{mx_cell::{CellValue, MxCell}, mx_editor::MxEditor, widget::form_meta::WidgetForm}};
+use crate::{errors::FetchError, model::{common::DiagramMeta, mx_cell::{CellValue, MxCell}, mx_editor::MxEditor, widget::form::WidgetForm}};
 
 pub const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
 pub const NULL_MODEL: &str = "<mxGraphModel/>";
@@ -57,8 +57,11 @@ extern "C" {
     #[wasm_bindgen(js_name=clipedModelBox)]
     pub fn cliped_model_box(model_str: String) -> JsString;
 
-    // #[wasm_bindgen(js_name=getDiagramBoundingBox)]
-    // pub fn get_diagram_bounding_box(editor: &MxEditor) -> JsValue;
+    #[wasm_bindgen(js_name=recreateWidgetModelInfo)]
+    pub fn recreate_widget_model_info(editor: &MxEditor, modelStr: String, recreateFun: &Closure<dyn Fn(JsValue)>);
+
+    #[wasm_bindgen(js_name=recreateDiagramModelInfo)]
+    pub fn recreate_diagram_model_info(editor: &MxEditor, modelStr: String, recreateFun: &Closure<dyn Fn(JsValue)>);
 
 }
 
@@ -119,11 +122,10 @@ where
 /**
  * returns  Option<(cell0.value.outer_html, WidgetXml)>
  */
-pub fn get_cell0_widget_meta(editor: &MxEditor) -> Option<(AttrValue, WidgetXml)> {
+pub fn get_cell0_meta(editor: &MxEditor) -> Option<DiagramMeta> {
     if let Ok(CellValue::Object(el)) = get_cell0(editor).get_value() {
-        if let Ok(widget_xml) = quick_xml::de::from_str::<WidgetXml>(el.inner_html().as_str()) {
-            let outer_html = el.outer_html();
-            return Some((outer_html.into(), widget_xml));
+        if let Ok(meta) = quick_xml::de::from_str::<DiagramMeta>(el.outer_html().as_str()) {
+            return Some(meta);
         }
     }
 

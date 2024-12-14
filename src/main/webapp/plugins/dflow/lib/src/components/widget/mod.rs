@@ -1,22 +1,22 @@
 use yew::prelude::*;
 use glyph::{GlyphProps, WidgetGlyph};
-use yew_hooks::{use_async_with_options, use_unmount, UseAsyncOptions};
+use yew_hooks::use_unmount;
 use yewdux::{use_selector, use_store};
 use implicit_clone::unsync::IString;
 use svg_view::SvgViewComponent;
 use common_model::{data_source::DataSourceXml, dflow_cell::DFlowVariant, widget::WidgetContainerXml};
 
 use crate::{
-	components::{data_source::{self, DataSource}, shared::{use_my_datasource, use_state_with, MdIcon, MdIconType}}, errors::CellStateError, 
-	model::widget::WidgetGlyphItem, 
+	components::{data_source::{self, DataSource}, shared::{use_my_datasource, use_state_with, MdIcon, MdIconType}},
+	model::widget::WidgetGlyphItem,
 	store::{
 		cell::{self, SetCellModelAction, NO_CONTEXT_FOUND},
 		mx_context::TMxGraphContext
-	}, 
+	},
 	utils::{fetch, fetch_string, NULL_GLYPH, NULL_MODEL, NULL_UUID}
 };
 
-pub mod info_item;
+pub mod info;
 pub mod svg_view;
 pub mod list_item;
 pub mod glyph;
@@ -30,15 +30,15 @@ pub struct Props {
 }
 
 #[function_component]
-pub fn WidgetContainer(Props { 
-	edit_mode, 
+pub fn WidgetContainer(Props {
+	edit_mode,
 	value,
-	on_detals_apply 
-}: &Props) -> Html 
+	on_detals_apply
+}: &Props) -> Html
 {
 	use_unmount(|| {
 		log::debug!("WidgetContainer unmount");
-	});  
+	});
 
     let my_value = use_state_with(value.clone());
     let data_source = use_my_datasource(value.clone());
@@ -49,10 +49,10 @@ pub fn WidgetContainer(Props {
     let type_edit_mode = use_state(|| false);
     let togle_type_edit = {
         let type_edit_mode = type_edit_mode.clone();
-        Callback::from(move |_: MouseEvent| { 
-			type_edit_mode.set(!*type_edit_mode); 
+        Callback::from(move |_: MouseEvent| {
+			type_edit_mode.set(!*type_edit_mode);
 		})
-    };  
+    };
 
 	let glyph_svg = use_state(|| IString::from(""));
 	let widget_uuid = {
@@ -67,7 +67,7 @@ pub fn WidgetContainer(Props {
 		use_effect_with(my_value.uuid.clone(), |uuid| {
 			let uuid = uuid.clone();
 			wasm_bindgen_futures::spawn_local(
-				async move { 
+				async move {
 					if uuid.eq(NULL_UUID) {
 						let model = fetch_string(format!("{url}/widget/{NULL_UUID}/model")).await.unwrap_or(NULL_MODEL.to_owned());
 						let glyph = fetch_string(format!("{url}/widget/{uuid}/glyph")).await.unwrap_or(NULL_GLYPH.to_owned());
@@ -105,7 +105,7 @@ pub fn WidgetContainer(Props {
 					Ok(list) => widget_list.set(list),
 					Err(err) => log::error!("{err}"),
 				};
-			});  
+			});
 		});
 	}
 
@@ -118,8 +118,8 @@ pub fn WidgetContainer(Props {
 			let (pk, glyph) = pk_glyph;
 			if *type_edit_mode {
 				widget_uuid.set(pk);
-				glyph_svg.set(glyph);							
-			}			
+				glyph_svg.set(glyph);
+			}
         })
     };
 
@@ -137,13 +137,13 @@ pub fn WidgetContainer(Props {
 
 	// start apply process if true
 	let start_apply = use_selector(|state: &cell::State | state.start_apply);
-	{    
+	{
 		let on_detals_apply = on_detals_apply.clone();
 		let data_source = data_source.clone();
 		let my_value = my_value.clone();
 		use_effect_with(*start_apply, move |start| {
 			if *start {
-				let new_value = WidgetContainerXml { 
+				let new_value = WidgetContainerXml {
 						ds: (*data_source).clone(),
 						..(*my_value).clone()
 					};
@@ -151,18 +151,18 @@ pub fn WidgetContainer(Props {
 				log::debug!("{new_value:?}");
 
 				let new_variant = DFlowVariant::WidgetContainer(new_value);
-				log::debug!("NEW WIDGET CONTAINER {:?}", new_variant);      
+				log::debug!("NEW WIDGET CONTAINER {:?}", new_variant);
 				on_detals_apply.emit(new_variant);
 			}
 		})
-	};    
+	};
 
     let apply_ds = {
 		let data_source = data_source.clone();
 		Callback::from(move |ds: DataSourceXml| {
 			data_source.set(ds);
 		})
-	};        
+	};
 
 
     // ------------ View Items
@@ -175,13 +175,13 @@ pub fn WidgetContainer(Props {
 			on_apply: apply_ds,
 		});
 		html! {<DataSource ..props/>}
-	};	
+	};
 
     let img_view = {
         let edit_mode = edit_mode.clone();
 		let type_edit_mode = type_edit_mode.clone();
         if edit_mode {
-            if *type_edit_mode { 
+            if *type_edit_mode {
                 html! { <button onclick={on_type_apply}> <MdIcon icon={MdIconType::Check}/></button> }
              } else {
                 html! { <button onclick={togle_type_edit}><MdIcon icon={MdIconType::Edit}/></button> }
@@ -189,7 +189,7 @@ pub fn WidgetContainer(Props {
         } else {
             html! { <span/> }
         }
-    };    	
+    };
 
     let widgets_view = {
 		html! {
@@ -202,7 +202,7 @@ pub fn WidgetContainer(Props {
 				html!{ <WidgetGlyph ..props /> }
 			})
 		}
-    };	
+    };
 
     html! {
         <>
@@ -210,10 +210,10 @@ pub fn WidgetContainer(Props {
         { data_source_view }
         <hr/>
 
-		<div class="flex-box delim-label">{"Тип объекта"} 
-			{img_view} 
+		<div class="flex-box delim-label">{"Тип объекта"}
+			{img_view}
 		</div>
-		
+
 		<SvgViewComponent glyph={(*glyph_svg).clone()}/>
         <hr/>
 
@@ -222,4 +222,4 @@ pub fn WidgetContainer(Props {
 		</div>
         </>
     }
-}    
+}

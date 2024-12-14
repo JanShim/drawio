@@ -1,8 +1,9 @@
 use yew::{prelude::*, virtual_dom::VNode};
-use diagram::info_item::DiagramInfoComponent;
-use widget::info_item::WidgetInfoComponent;
 use stylist::{css, yew::Global};
 use yewdux::use_selector;
+use widget::info::WidgetInfoComponent;
+use diagram::info::DiagramInfoComponent;
+
 
 use crate::model::common::ModelForm;
 use crate::store;
@@ -116,10 +117,9 @@ pub fn InfoComponent() -> Html {
     });
 
     match (*model_meta).clone() {
-        ModelForm::Diagram(_) => html! { <DiagramInfoComponent/> },
+        ModelForm::Diagram(form) => html! { <DiagramInfoComponent {form}/> },
         ModelForm::Widget(form) =>  {
-            log::debug!("ModelForm::Widget::: {form:?}");
-            html! { <WidgetInfoComponent form_meta={form}/> }
+            html! { <WidgetInfoComponent {form}/> }
         },
     }
 }

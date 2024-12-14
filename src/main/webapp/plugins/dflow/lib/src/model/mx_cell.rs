@@ -87,21 +87,21 @@ impl MxCell {
         self.mx_set_style(style);
     }
 
-    pub fn get_diagram_meta(&self) -> Result<common::DiagramMeta, JsValue> {
-        match self.mx_get_value() {
-            str if str.is_string() => Ok(Default::default()),
-            elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
-            _ => Err("can't create diagram meta".into()),
-        }
-    }
+    // pub fn get_diagram_meta(&self) -> Result<common::DiagramMeta, JsValue> {
+    //     match self.mx_get_value() {
+    //         str if str.is_string() => Ok(Default::default()),
+    //         elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
+    //         _ => Err("can't create diagram meta".into()),
+    //     }
+    // }
 
-    pub fn get_widget_meta(&self) -> Result<common::DiagramMeta, JsValue> {
-        match self.mx_get_value() {
-            str if str.is_string() => Ok(Default::default()),
-            elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
-            _ => Err("can't create widget meta".into()),
-        }
-    }
+    // pub fn get_widget_meta(&self) -> Result<common::DiagramMeta, JsValue> {
+    //     match self.mx_get_value() {
+    //         str if str.is_string() => Ok(Default::default()),
+    //         elem if elem.is_object() => elem.dyn_into::<Element>().map(|e| e.into()),
+    //         _ => Err("can't create widget meta".into()),
+    //     }
+    // }
 
     pub fn get_label(&self) -> String {
         self.get_value()

@@ -4,7 +4,7 @@ use yew::AttrValue;
 
 use crate::utils::NULL_UUID;
 
-pub mod form_meta;
+pub mod form;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct WidgetDto {

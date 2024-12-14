@@ -1,9 +1,16 @@
+use common_model::diagram::WidgetPropertyXml;
 use web_sys::Document;
 use yew::prelude::*;
+use yew_hooks::UseListHandle;
 use std::rc::Rc;
 use common_model::utils::{map_to_svg_style, mx_style_to_map};
 use common_model::traits::WithXmlDataSource;
 use common_model::data_source::DataSourceXml;
+
+use crate::model::common::GraphModel;
+use crate::model::mx_editor::MxEditor;
+use crate::model::widget::form::WidgetForm;
+use crate::utils::get_cell0_meta;
 
 // ===========================================
 #[derive(PartialEq, Debug, Clone)]
@@ -53,7 +60,6 @@ pub fn get_document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");
     window.document().expect("should have a document on window")
 }
-
 
 // ============ hooks ======================
 #[hook]

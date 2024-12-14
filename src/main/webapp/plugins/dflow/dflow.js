@@ -245,7 +245,77 @@ function getModelType(model) {
 	return false;
 }
 
+function createDiagramWindow(title) {
+	let container = document.createElement('div');
+	container.setAttribute("id", "container");
+	container.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
+	container.style.border = '1px solid gray';
+	container.style.opacity = '0.8';
+	container.style.padding = '10px';
+	container.style.paddingTop = '0px';
+	container.style.width = '20%';
+	container.style.boxSizing = 'border-box';
+	container.style.minHeight = '100%';
+	container.style.width = '100%';
+
+	let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+	const wind = new mxWindow(title, container, iiw - 520, 60, 300, 500, true, true);
+	wind.destroyOnClose = false;
+	wind.setMaximizable(true);
+	wind.setResizable(true);
+	wind.setScrollable(true);
+	wind.setClosable(true);
+	wind.contentWrapper.style.overflowY = 'scroll';
+
+	return [wind, container];
+}
+
 const API_URL = "http://localhost:8091/api/v1";
+let diagramDataWindow = null;
+let schemaRootContainer = null;
+
+// --------------------------------
+function destroyWind() {
+	if (diagramDataWindow) {
+		let root = diagramDataWindow.getElement();
+		diagramDataWindow.destroy;
+		diagramDataWindow = null;
+		schemaRootContainer.remove();
+		root.remove();
+	}
+}
+
+// --------------------------------
+function recreateWidgetModelInfo(editor, modelStr, recreateFun) {
+	console.log("recreateWidgetModelInfo");
+	destroyWind();
+
+	const [wind, rootContainer] = createDiagramWindow("Настройки виджета");
+	diagramDataWindow = wind;
+	schemaRootContainer = rootContainer;
+
+	loadDFlowModel(editor, modelStr)
+	recreateFun(schemaRootContainer);
+
+	diagramDataWindow.show();
+}
+
+// --------------------------------
+function recreateDiagramModelInfo(editor, modelStr, recreateFun) {
+	console.log("recreateDiagramModelInfo");
+	destroyWind();
+
+	const [wind, rootContainer] = createDiagramWindow("Настройки диаграмы");
+	diagramDataWindow = wind;
+	schemaRootContainer = rootContainer;
+
+	loadDFlowModel(editor, modelStr)
+	recreateFun(schemaRootContainer);
+
+	diagramDataWindow.show();
+}
+
 
 /**
  * Sample plugin.
@@ -260,62 +330,16 @@ Draw.loadPlugin(async function(ui) {
 				initSync(o);
 			});
 	}
+
 	// ============= CSS =====================
 	mxCssLink("plugins/dflow/css/styles.css");
-	// mxCssLink("plugins/dflow/css/iconfont/material-icons.css");
-
-	// ============= windows ==================
-	let diagramDataWindow = null;
-	let cellDataWindow = null;
-
-	//--------------------------------------------------------
-	let schemaDiv = document.createElement('div');
-	schemaDiv.setAttribute("id", "container");
-	schemaDiv.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
-	schemaDiv.style.border = '1px solid gray';
-	schemaDiv.style.opacity = '0.8';
-	schemaDiv.style.padding = '10px';
-	schemaDiv.style.paddingTop = '0px';
-	schemaDiv.style.width = '20%';
 
 	let graph = ui.editor.graph;
-	// graph.setExtendParentsOnAdd(true);
-
-	if (!ui.editor.isChromelessView())
-	{
-		schemaDiv.style.boxSizing = 'border-box';
-		schemaDiv.style.minHeight = '100%';
-		schemaDiv.style.width = '100%';
-
-		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-
-		// main window
-		diagramDataWindow = new mxWindow('DFlow diagram data', schemaDiv, iiw - 320, 60, 300, 500, true, true);
-		diagramDataWindow.destroyOnClose = false;
-		diagramDataWindow.setMaximizable(true);
-		diagramDataWindow.setResizable(true);
-		diagramDataWindow.setScrollable(true);
-		diagramDataWindow.setClosable(true);
-		diagramDataWindow.contentWrapper.style.overflowY = 'scroll';
-	}
-	else
-	{
-		schemaDiv.style.position = 'absolute';
-		schemaDiv.style.minWidth = '200px';
-		schemaDiv.style.top = '40px';
-		schemaDiv.style.right = '20px';
-
-		document.body.appendChild(schemaDiv);
-	}
+	// ============= windows ==================
+	let cellDataWindow = null;
 
 	// Highlights current cell
 	const highlight = new mxCellHighlight(graph, '#00ff00', 2);
-	// const ignored = ['label', 'tooltip', 'placeholders'];
-
-	// register_conteiner(ui.editor, div);	// for wasm app
-
-	// init wasm application
-	// const app = new AppApi(ui.editor, div);
 
 	function writeConsole(evt)
 	{
@@ -355,81 +379,10 @@ Draw.loadPlugin(async function(ui) {
 				highlight.highlight(graph.view.getState(cell));
 			}
 
-			// console.log("compare prev", prevcell===cell);
-
 			if (modelChanged) {
 				console.log("model changed", cell);
 				// app.cell_updated(cell);
-			} else {
-				//let doc = mxUtils.parseXml("<d-flow><som-data p='test' as='data'/></d-flow>").documentElement;
-				//cell.setValue(doc);
-
-				//console.log("selection changed", cell.value);
-				// app.cell_clicked(cell);
-
-				// renderCell(div, cell);
-				// prevcell = cell;
 			}
-
-			// let attrs = (cell.value != null) ? cell.value.attributes : null;
-			// if (attrs != null)
-			// {
-			// 	let label = Graph.sanitizeHtml(graph.getLabel(cell));
-
-			// 	if (label != null && label.length > 0)
-			// 	{
-			// 		div.innerHTML = '<h1>' + label + '</h1>';
-			// 	}
-			// 	else
-			// 	{
-			// 		div.innerText = '';
-			// 	}
-
-			// 	for (let i = 0; i < attrs.length; i++)
-			// 	{
-			// 		if (mxUtils.indexOf(ignored, attrs[i].nodeName) < 0 &&
-			// 			attrs[i].nodeValue.length > 0)
-			// 		{
-			// 			// TODO: Add click handler on h2 to output data
-			// 			let h2 = document.createElement('h2');
-			// 			mxUtils.write(h2, attrs[i].nodeName);
-			// 			div.appendChild(h2);
-			// 			let p = document.createElement('p');
-			// 			mxUtils.write(p, attrs[i].nodeValue);
-			// 			div.appendChild(p);
-			// 		}
-			// 	}
-
-			// 	// set_cell(div, cell);
-			// }
-			// else
-			// {
-			// 	let label = graph.convertValueToString(cell);
-
-			// 	if (label != '')
-			// 	{
-			// 		div.innerHTML = '<h1>' + Graph.sanitizeHtml(label) + '</h1>';
-			// 	}
-			// 	else
-			// 	{
-			// 		div.innerHTML = '<p><i>No data</i></p>';
-			// 	}
-			// }
-
-			// if (!ui.editor.isChromelessView())
-			// {
-			// 	let button = document.createElement('button');
-			// 	button.setAttribute('title', 'Click or Shift+Click to write data for all selected cells to the browser console');
-			// 	button.style['float'] = 'none';
-			// 	mxUtils.write(button, 'Write to Console');
-
-			// 	mxEvent.addListener(button, 'click', function(evt)
-			// 	{
-			// 		writeConsole(evt);
-			// 	});
-
-			// 	div.appendChild(button);
-			// }
 		}
 	};
 
@@ -502,42 +455,62 @@ Draw.loadPlugin(async function(ui) {
 	mxResources.parse('dflow=Настройки полотна');
 	mxResources.parse('dflowData=Настройки элемента');
 
-
+	// --------------
     ui.actions.addAction('createDiagram', function()
     {
-		loadDFlowModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
-		recreateModelMeta("diagram");
-		diagramDataWindow.setTitle("Настройки диаграмы");
-		diagramDataWindow.setVisible(true);
+		recreateDiagramModelInfo(
+			ui.editor,
+			'<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>',
+			(schemaRootContainer) => recreateModelMeta("widget", ui.editor, mxUtils, schemaRootContainer, getAppOptions()),
+		)
+
+		if (getModelType(graph.model)) {
+			dflowAction.enabled = true;
+			openOpenDialogAction.enabled = true;
+		}
     });
 
+	// --------------
     ui.actions.addAction('createWidget', function()
     {
-		loadDFlowModel(ui.editor, '<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget object-type=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>')
-		recreateModelMeta("widget");
-		diagramDataWindow.setTitle("Настройки виджета");
-		diagramDataWindow.setVisible(true);
+		recreateWidgetModelInfo(
+			ui.editor,
+			'<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><widget object-type=""/><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>',
+			(schemaRootContainer) => recreateModelMeta("widget", ui.editor, mxUtils, schemaRootContainer, getAppOptions()),
+		)
+
+		if (getModelType(graph.model)) {
+			dflowAction.enabled = true;
+			openOpenDialogAction.enabled = true;
+		}
     });
 
-    ui.actions.addAction('openItem', function()
+	// --------------
+	const openOpenDialogAction = ui.actions.addAction('openItem', function()
     {
 		ui.showDialog(new DFlowItemsDialog(ui).container, 500, 400, true, false);
     });
+	openOpenDialogAction.enabled = false;
 
-	ui.actions.addAction('dflow', function()
+	// --------------
+	const dflowAction = ui.actions.addAction('dflow', function()
 	{
 		if (getModelType(graph.model)) {
 			diagramDataWindow.setVisible(!diagramDataWindow.isVisible());
 		} else {
-			diagramDataWindow.setVisible(false);
+			diagramDataWindow.hide();
 		}
 	});
+	dflowAction.enabled = false;
 
-	ui.actions.addAction('dflowData', function()
+	// --------------
+	const dflowDataAction = ui.actions.addAction('dflowData', function()
 	{
 		cellDataWindow.setVisible(!cellDataWindow.isVisible());
 	});
+	dflowDataAction.enabled = false;
 
+	// --------------
 	ui.menus.put('dflow', new Menu(function(menu, parent)
 	{
 		ui.menus.addMenuItems(menu, ['createDiagram', 'createWidget', '-', 'openItem', '-', 'dflow', 'dflowData']);
@@ -664,6 +637,13 @@ Draw.loadPlugin(async function(ui) {
 		}
 	};
 	// =======================================
+	class DFlowItemsDialog {
+		constructor(editorUi) {
+			var div = document.createElement('div');
+			openDialog(mxUtils, editorUi, editorUi.editor, div, getAppOptions());
+			this.container = div;
+		}
+	}
 
 	// ============== WASM ===================
 	// init rust wasm
@@ -671,77 +651,7 @@ Draw.loadPlugin(async function(ui) {
 	// здесь натройки пдагина
 	let getAppOptions = function() {return new SchemaOptions(API_URL); }
 
-	initSchemaRender(ui.editor, mxUtils, schemaDiv, getAppOptions());
-
 	cellDataWindow = newCellWindow(divDFlowCellData);
 	initCellRender(ui.editor, mxUtils, divDFlowCellData, getAppOptions());
-
-
-	let DFlowItemsDialog = function(editorUi)
-	{
-		var div = document.createElement('div');
-		// var inner = document.createElement('div');
-
-		// // inner.style.width = '600px';
-		// inner.style.height = '300px';
-		// inner.style.overflow = 'auto';
-
-		// var changed = false;
-
-		// open schema items dialod
-		openDialog(mxUtils, editorUi, editorUi.editor, div, getAppOptions());
-
-		// // div.appendChild(inner);
-		// changed = false;
-
-		// var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
-		// {
-		// 	editorUi.hideDialog();
-		// });
-
-		// cancelBtn.className = 'geBtn';
-
-		// var openBtn = mxUtils.button(closeOnly? mxResources.get('close') : mxResources.get('open'), function()
-		// {
-		// 	if (changed)
-		// 	{
-		// 		editorUi.hideDialog();
-		// 		editorUi.alert(mxResources.get('restartForChangeRequired'));
-		// 	}
-		// 	else
-		// 	{
-		// 		editorUi.hideDialog();
-		// 	}
-		// });
-
-		// openBtn.className = 'geBtn gePrimaryBtn';
-
-		// var buttons = document.createElement('div');
-		// buttons.style.marginTop = '14px';
-		// buttons.style.textAlign = 'right';
-
-
-		// if (editorUi.editor.cancelFirst)
-		// {
-		// 	if (!closeOnly)
-		// 	{
-		// 		buttons.appendChild(cancelBtn);
-		// 	}
-
-		// 		buttons.appendChild(openBtn);
-		// }
-		// else
-		// {
-		// 	buttons.appendChild(openBtn);
-		// 	if (!closeOnly)
-		// 	{
-		// 		buttons.appendChild(cancelBtn);
-		// 	}
-		// }
-
-		// div.appendChild(buttons);
-		this.container = div;
-	};
-
 
 });

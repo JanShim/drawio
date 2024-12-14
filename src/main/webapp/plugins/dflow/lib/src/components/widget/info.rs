@@ -1,30 +1,56 @@
 use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use web_sys::{FormData, HtmlFormElement};
-use yew_hooks::{use_async_with_options, use_list, use_toggle, UseAsyncOptions, UseListHandle};
+use yew_hooks::{use_async_with_options, use_list, use_toggle, use_unmount, UseAsyncOptions, UseListHandle};
 use yewdux::{use_selector, use_store, Dispatch};
 use common_model::diagram::{WidgetPropertyXml, WidgetXml};
 
 use crate::{
-    components::shared::{use_list_selected, MdIcon, MdIconType}, model::{
-        common::{DiagramMeta, GraphModel, ModelForm}, mx_cell::CellValue, mx_editor::MxEditor, widget::{form_meta::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
+    components::shared::{use_list_selected, use_state_with, MdIcon, MdIconType}, model::{
+        common::{DiagramMeta, GraphModel, ModelForm}, mx_cell::CellValue, mx_editor::MxEditor, widget::{form::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
     },
     store::{cell::NO_CONTEXT_FOUND, diagram::{self, State}, mx_context::TMxGraphContext},
-    utils::{cliped_model_box, fetch, get_cell0, get_cell0_widget_meta, post, put, set_cell0_value}
+    utils::{cliped_model_box, fetch, get_cell0, get_cell0_meta, post, put, set_cell0_value}
 };
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
-    pub form_meta: WidgetForm,
+    pub form: WidgetForm,
 }
 
 #[function_component]
-pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
+pub fn WidgetInfoComponent(Props{ form }: &Props) -> Html {
     let mx_graph_context = use_context::<TMxGraphContext>().expect(NO_CONTEXT_FOUND);
-    let (state, dispatch) = use_store::<diagram::State>();
-    let redraw = use_selector(|state: &diagram::State| {state.redraw});
+    use_unmount(|| { log::debug!("unmount WidgetInfoComponent") });
+
+    // let (state, dispatch) = use_store::<diagram::State>();
+
+    let edit_mode = use_toggle(false, true);
 
     let widget_props_list = use_list(Vec::<WidgetPropertyXml>::new());
+
+    let info_form = {
+        let editor = &mx_graph_context.mx_editor;
+        let widget_props_list = widget_props_list.clone();
+        let mut form = form.clone();
+        use_state(move || {
+            // decorate meta from cell0
+            decorate_with_cell0_meta(&editor, &mut form, widget_props_list);
+
+            log::debug!("from in use_state:: {form:?}");
+
+            //result
+            form
+        })};
+
+
+    let widget_groups_list = {
+        let url = mx_graph_context.api_url.clone();
+        use_async_with_options(
+            async move { fetch::<Vec::<WidgetGroupListItemDto>>(format!("{}/widget-group/list", url)).await },
+            UseAsyncOptions::enable_auto(),
+        )};
+
     // {
     //     let editor = mx_graph_context.mx_editor.clone();
     //     let widget_props_list = widget_props_list.clone();
@@ -40,23 +66,23 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
     //     })
     // }
 
-    let widget_form = {
-        let editor = &mx_graph_context.mx_editor;
-        let widget_props_list = widget_props_list.clone();
-        let form_meta = form_meta;
-        use_state(move || {
-            let form = get_widget_form_meta(editor, form_meta, widget_props_list);
-            log::debug!("use_state::: {form:?}");
-            form
-        })
-    };
-    {
-        let widget_form = widget_form.clone();
-        use_effect_with((*form_meta).clone(), move |form| {
-            log::debug!("use_effect_with::: {form:?}");
-            widget_form.set((*form).clone());
-        })
-    }
+    // let widget_form = {
+    //     let editor = &mx_graph_context.mx_editor;
+    //     let widget_props_list = widget_props_list.clone();
+    //     let form_meta = form_meta;
+    //     use_state(move || {
+    //         let form = get_widget_form_meta(editor, form_meta, widget_props_list);
+    //         log::debug!("use_state::: {form:?}");
+    //         form
+    //     })
+    // };
+    // {
+    //     let widget_form = widget_form.clone();
+    //     use_effect_with((*form_meta).clone(), move |form| {
+    //         log::debug!("use_effect_with::: {form:?}");
+    //         widget_form.set((*form).clone());
+    //     })
+    // }
 
 
     // {
@@ -86,22 +112,7 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
     //     })
     // }
 
-    {
-        let editor = &mx_graph_context.mx_editor;
-        let widget_form = widget_form.clone();
-        let widget_props_list = widget_props_list.clone();
-        use_effect_with(get_cell0_widget_meta(editor), move |widget_meta| {
-            if let Some((meta, widget_xml)) = widget_meta {
-                log::debug!("meta::: {meta}; widget_xml:::: {:?}", widget_xml);
-                let props_list = widget_xml.property.clone();
-                widget_props_list.set(props_list);
-                let mut form = (*widget_form).clone();
-                form.meta = meta.clone();
-                widget_form.set(form);
-            }
-        });
-    }
-
+    // ===================== efects =========================
     // let model_meta = {
     //     let mx_graph_context = mx_graph_context.clone();
     //     let widget_props_list = widget_props_list.clone();
@@ -129,13 +140,7 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
     //         }
     //     })};
 
-    let edit_mode = use_toggle(false, true);
 
-    let url = mx_graph_context.api_url.clone();
-    let widget_groups_list = use_async_with_options(
-        async move { fetch::<Vec::<WidgetGroupListItemDto>>(format!("{url}/widget-group/list")).await },
-        UseAsyncOptions::enable_auto(),
-    );
 
     // ============= events ====================
     let edit_mode_toggle = {
@@ -151,7 +156,7 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
     let on_apply = {
         let mx_graph_context = mx_graph_context.clone();
         let edit_mode = edit_mode.clone();
-        let widget_form = widget_form.clone();
+        let info_form = info_form.clone();
         let widget_props_list = widget_props_list.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
@@ -161,72 +166,70 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
 
             if let Some(form) = form {
                 if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<WidgetForm>::into(data)) {
-                    let meta = form.meta.to_string();
+                    let diagram_meta = &form.diagram_meta;
 
-                    log::debug!("CURR meta: {}", meta);
+                    log::debug!("CURR meta: {:?}", diagram_meta);
 
                     // chage cell0 in graph model
-                    set_cell0_value(&mx_graph_context.mx_editor, meta.clone());
+                    let diagram_meta_str = quick_xml::se::to_string(diagram_meta).unwrap();
+                    set_cell0_value(&mx_graph_context.mx_editor, diagram_meta_str);
 
                     // ctore new property list
-                    if let Ok(meta) = quick_xml::de::from_str::<DiagramMeta>(&meta) {
-                        if let GraphModel::Widget(widget) = meta.model {
-                            widget_props_list.set(widget.property);
-                        }
+                    if let GraphModel::Widget(widget) = diagram_meta.model.clone() {
+                        widget_props_list.set(widget.property);
                     }
 
                     // store form meta to state
-                    widget_form.set(form.clone());
+                    info_form.set(form);
 
-                    // send to db
-                    let dispatch = dispatch.clone();
-                    let mx_graph_context = mx_graph_context.clone();
-                    wasm_bindgen_futures::spawn_local(async move {
-                        if let Ok(node) = mx_graph_context.get_graph_xml() {
-                            if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
-                                let svg = mx_graph_context.get_graph_svg();
-                                let model: String = cliped_model_box(model_str).into();
+                    // // send to db
+                    // // let dispatch = dispatch.clone();
+                    // let mx_graph_context = mx_graph_context.clone();
+                    // wasm_bindgen_futures::spawn_local(async move {
+                    //     if let Ok(node) = mx_graph_context.get_graph_xml() {
+                    //         if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
+                    //             let svg = mx_graph_context.get_graph_svg();
+                    //             let model: String = cliped_model_box(model_str).into();
 
-                                if form.is_new_item() {
-                                    let item = WidgetDto::new(
-                                        form.group.to_string(),
-                                        form.name.to_string(),
-                                        model,
-                                        vec![],
-                                        Some(svg)
-                                    );
+                    //             if form.is_new_item() {
+                    //                 let item = WidgetDto::new(
+                    //                     form.group.to_string(),
+                    //                     form.name.to_string(),
+                    //                     model,
+                    //                     vec![],
+                    //                     Some(svg)
+                    //                 );
 
-                                    let result = post(format!("{}/widget", mx_graph_context.api_url), item).await;
-                                    if let Ok(created) = result {
-                                        set_state_model_meta(dispatch, created);
-                                    } else {
-                                        log::debug!("widget create error: {}", result.unwrap_err());
-                                    }
-                                } else {
-                                    let item = WidgetDto {
-                                        uuid: form.uuid.to_string(),
-                                        group: form.group.to_string(),
-                                        name: form.name.to_string(),
-                                        model,
-                                        types: vec!["ZDV2".to_owned()],
-                                        svg: Some(svg),
-                                    };
+                    //                 let result = post(format!("{}/widget", mx_graph_context.api_url), item).await;
+                    //                 if let Ok(created) = result {
+                    //                     set_state_model_meta(dispatch, created);
+                    //                 } else {
+                    //                     log::debug!("widget create error: {}", result.unwrap_err());
+                    //                 }
+                    //             } else {
+                    //                 let item = WidgetDto {
+                    //                     uuid: form.uuid.to_string(),
+                    //                     group: form.group.to_string(),
+                    //                     name: form.name.to_string(),
+                    //                     model,
+                    //                     types: vec!["ZDV2".to_owned()],
+                    //                     svg: Some(svg),
+                    //                 };
 
-                                    let result = put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await;
-                                    if let Ok(updated) = result {
-                                        set_state_model_meta(dispatch, updated);
-                                    } else {
-                                        log::debug!("widget {} update error: {}", form.uuid, result.unwrap_err());
-                                    }
-                                }
-                            };
-                        }
-                    });
-
-                edit_mode.set(false);
+                    //                 let result = put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await;
+                    //                 if let Ok(updated) = result {
+                    //                     set_state_model_meta(dispatch, updated);
+                    //                 } else {
+                    //                     log::debug!("widget {} update error: {}", form.uuid, result.unwrap_err());
+                    //                 }
+                    //             }
+                    //         };
+                    //     }
+                    // });
+                }
             }
-        }
-    })};
+        })
+    };
 
     let on_property_add = {
             let widget_props_list = widget_props_list.clone();
@@ -245,11 +248,11 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
         };
 
     let wgroups_select = {
-            let widget_form = widget_form.clone();
+            let info_form = info_form.clone();
             if widget_groups_list.loading {
                 html! {  }
             } else  {
-                let selected_group =  widget_form.group.clone();
+                let selected_group =  info_form.group.clone();
                 widget_groups_list.data.as_ref().map_or_else(
                     || html! {},        // default
                     |data| html! {
@@ -265,16 +268,18 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
         };
 
     let form_view = {
-            let widget_form = widget_form.clone();
+            let info_form = info_form.clone();
+            let diagram_meta = quick_xml::se::to_string(&info_form.diagram_meta).unwrap_or_default();
+
             html! {
                 <form onsubmit={on_apply}>
-                    <input type="hidden" name="uuid" value={ widget_form.uuid.clone() }/>
-                    <input type="hidden" name="meta" value={ widget_form.meta.clone() }/>
+                    <input type="hidden" name="uuid" value={ info_form.uuid.clone() }/>
+                    <input type="hidden" name="meta" value={ diagram_meta.clone() }/>
 
                     <div class="label"><label for="uuid">{ "uuid: " }</label></div>
-                    <input name="uuid-0" value={ format!("{}", widget_form.uuid) } disabled={true} class="input-100"/><br/>
+                    <input name="uuid-0" value={ format!("{}", info_form.uuid) } disabled={true} class="input-100"/><br/>
                     <div class="label"><label for="name">{ "name: " }</label></div>
-                    <input name="name" value={ format!("{}", widget_form.name) } class="input-100"/><br/>
+                    <input name="name" value={ format!("{}", info_form.name) } class="input-100"/><br/>
                     <div class="label"><label for="group">{ "group: " }</label></div>
                     { wgroups_select }
 
@@ -306,16 +311,16 @@ pub fn WidgetInfoComponent(Props{ form_meta }: &Props) -> Html {
         };
 
     let view = {
-            let widget_form = widget_form.clone();
+            let info_form = info_form.clone();
             html! {
                 <>
                 <div>
                     <div class="label">{ "uuid: " }</div>
-                    <div class="value">{ format!("{}", widget_form.uuid) }</div>
+                    <div class="value">{ format!("{}", info_form.uuid) }</div>
                     <div class="label">{ "name: " }</div>
-                    <div class="value">{ format!("{}", widget_form.name) }</div>
+                    <div class="value">{ format!("{}", info_form.name) }</div>
                     <div class="label">{ "group: " }</div>
-                    <div class="value">{ format!("{}", widget_form.group) }</div>
+                    <div class="value">{ format!("{}", info_form.group) }</div>
                 </div>
                 <div>
                     <div class="label"><label for="props">{ "свойства виджета: " }</label></div>
@@ -363,24 +368,42 @@ fn set_state_model_meta(dispatch: Dispatch<State>, created: WidgetDto) {
     });
 }
 
-// -----------------------------------------------
-fn get_widget_form_meta(
-    editor: &MxEditor,
-    form: &WidgetForm,
-    widget_props_list: UseListHandle<WidgetPropertyXml>
-) -> WidgetForm {
-    if let Some((outer_html, meta)) =  get_cell0_widget_meta(editor) {
+// // -----------------------------------------------
+// fn get_widget_form_meta(
+//     editor: &MxEditor,
+//     form: &WidgetForm,
+//     widget_props_list: UseListHandle<WidgetPropertyXml>
+// ) -> WidgetForm {
+//     if let Some((outer_html, meta)) =  get_cell0_meta(editor) {
 
-        // state widget properties
-        widget_props_list.set(meta.property.clone());
+//         // state widget properties
+//         widget_props_list.set(meta.property.clone());
 
-        // decorate form meta
-        let mut form = form.clone();
-        form.meta = outer_html;
+//         // decorate form meta
+//         let mut form = form.clone();
+//         form.object_meta = outer_html;
 
-        return form;
+//         return form;
+//     }
+
+//     // else
+//     Default::default()
+// }
+
+// ---------------------------------------------
+pub fn decorate_with_cell0_meta(
+    editor:&MxEditor,
+    form: &mut WidgetForm,
+    list_handle: UseListHandle<WidgetPropertyXml>
+) {
+    if let Some(diagram_meta) = get_cell0_meta(editor) {
+        // set form diagram_meta
+        form.diagram_meta = diagram_meta.clone();
+
+        // set widget properties
+        if let GraphModel::Widget(widget_meta) = diagram_meta.model {
+            let props_list = widget_meta.property.clone();
+            list_handle.set(props_list);
+        }
     }
-
-    // else
-    Default::default()
 }

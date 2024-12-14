@@ -1,4 +1,4 @@
-use common_model::{data_source::DataSourceXml, diagram::WidgetPropertyXml};
+use common_model::{data_source::DataSourceXml, diagram::{WidgetPropertyXml, WidgetXml}};
 use web_sys::FormData;
 use yew::AttrValue;
 
@@ -11,7 +11,7 @@ pub struct WidgetForm {
     pub uuid: AttrValue,
     pub name: AttrValue,
     pub group: AttrValue,
-    pub meta: AttrValue,
+    pub diagram_meta: DiagramMeta,     // this.is from cell0
 }
 
 impl WidgetForm {
@@ -26,7 +26,10 @@ impl Default for WidgetForm {
             uuid: NULL_UUID.into(),
             name: Default::default(),
             group: Default::default(),
-            meta: Default::default(),
+            diagram_meta: DiagramMeta {
+                label: Default::default(),
+                model: GraphModel::Widget(Default::default()) ,
+            },
         }
     }
 }
@@ -34,9 +37,15 @@ impl Default for WidgetForm {
 impl From<FormData> for WidgetForm {
     fn from(data: FormData) -> Self {
         let meta = data.get("meta").as_string().unwrap();  // this is current cell0 value
-        let mut meta_str = meta.clone();
 
-        log::debug!("meta_str {meta_str}");
+        log::debug!("IN From<FormData> meta_str {meta}");
+
+        let mut ret = Self {
+                uuid: data.get("uuid").as_string().unwrap_or_default().into(),
+                name: data.get("name").as_string().unwrap_or_default().into(),
+                group: data.get("group").as_string().unwrap_or_default().into(),
+                ..Default::default()
+            };
 
         match quick_xml::de::from_str::<DiagramMeta>(&meta) {
             Ok(meta) => {
@@ -60,24 +69,19 @@ impl From<FormData> for WidgetForm {
                 if let GraphModel::Widget(mut widget) = meta.model {
                     widget.property = props;
 
-                    let new_meta = DiagramMeta {
-                            label: meta.label,
-                            model: GraphModel::Widget(widget),
-                        };
+                    // set new meta data
+                    ret.diagram_meta = DiagramMeta { model: GraphModel::Widget(widget), ..meta };
 
-                    meta_str = quick_xml::se::to_string(&new_meta).unwrap();
-                    log::debug!("meta_str {:?}", meta_str);
+                    log::debug!("OUT From<FormData> WidgetForm:: {ret:?}");
+
+                    return ret;
                 }
             },
             Err(err) => log::error!("{err}"),
         }
 
-        Self {
-            uuid: data.get("uuid").as_string().unwrap_or_default().into(),
-            name: data.get("name").as_string().unwrap_or_default().into(),
-            group: data.get("group").as_string().unwrap_or_default().into(),
-            meta: meta_str.into(),
-        }
+        // else result
+        ret
     }
 }
 

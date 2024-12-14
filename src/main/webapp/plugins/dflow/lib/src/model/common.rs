@@ -5,9 +5,9 @@ use web_sys::Element;
 use common_model::diagram::{DiagramXml, WidgetXml};
 
 use super::{
-    diagram::form_meta::DiagramForm,
+    diagram::form::DiagramForm,
     mx_cell::MxCell,
-    widget::form_meta::WidgetForm
+    widget::form::WidgetForm
 };
 
 
@@ -43,38 +43,24 @@ pub struct DiagramMeta {
     pub model: GraphModel,
 }
 
-impl DiagramMeta {
-    // pub fn get_uuid(&self) -> String {
-    //     self.model.get_uuid()
-    // }
+// impl From<MxCell> for DiagramMeta {
+//     fn from(cell: MxCell) -> Self {
+//         if let Ok(meta) = cell.get_diagram_meta() {
+//             return meta;
+//         }
+//         Default::default()
+//     }
+// }
 
-    // pub fn get_model_type_name(&self) -> String {
-    //     match self.model {
-    //         GraphModel::Diagram(_) => "diagram".to_owned(),
-    //         GraphModel::Widget(_) => "widget".to_owned(),
-    //     }
-    // }
-}
-
-
-impl From<MxCell> for DiagramMeta {
-    fn from(cell: MxCell) -> Self {
-        if let Ok(meta) = cell.get_diagram_meta() {
-            return meta;
-        }
-        Default::default()
-    }
-}
-
-impl From<Element> for DiagramMeta {
-    fn from(e: Element) -> Self {
-        if let Ok(meta) = from_str::<DiagramMeta>(e.outer_html().as_str()) {
-            return meta;
-        }
-        log::error!("can't create diagram meta form: {}", e.outer_html());
-        Default::default()
-    }
-}
+// impl From<Element> for DiagramMeta {
+//     fn from(e: Element) -> Self {
+//         if let Ok(meta) = from_str::<DiagramMeta>(e.outer_html().as_str()) {
+//             return meta;
+//         }
+//         log::error!("can't create diagram meta form: {}", e.outer_html());
+//         Default::default()
+//     }
+// }
 
 #[derive(PartialEq, Debug, Clone, ImplicitClone)]
 pub enum ModelForm {
