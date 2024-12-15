@@ -26,10 +26,7 @@ impl Default for WidgetForm {
             uuid: NULL_UUID.into(),
             name: Default::default(),
             group: Default::default(),
-            diagram_meta: DiagramMeta {
-                label: Default::default(),
-                model: GraphModel::Widget(Default::default()) ,
-            },
+            diagram_meta: DiagramMeta::get_widget_default(),
         }
     }
 }

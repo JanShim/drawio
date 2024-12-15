@@ -306,7 +306,7 @@ function recreateDiagramModelInfo(editor, modelStr, recreateFun) {
 	console.log("recreateDiagramModelInfo");
 	destroyWind();
 
-	const [wind, rootContainer] = createDiagramWindow("Настройки диаграмы");
+	const [wind, rootContainer] = createDiagramWindow("Настройки диаграммы");
 	diagramDataWindow = wind;
 	schemaRootContainer = rootContainer;
 
@@ -461,12 +461,11 @@ Draw.loadPlugin(async function(ui) {
 		recreateDiagramModelInfo(
 			ui.editor,
 			'<mxGraphModel dx="1173" dy="736" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0"><root><object label="" id="0"><diagram /><mxCell /></object><mxCell id="1" parent="0" /></root></mxGraphModel>',
-			(schemaRootContainer) => recreateModelMeta("widget", ui.editor, mxUtils, schemaRootContainer, getAppOptions()),
+			(schemaRootContainer) => recreateModelMeta("diagram", ui.editor, mxUtils, schemaRootContainer, getAppOptions()),
 		)
 
 		if (getModelType(graph.model)) {
 			dflowAction.enabled = true;
-			openOpenDialogAction.enabled = true;
 		}
     });
 
@@ -481,7 +480,6 @@ Draw.loadPlugin(async function(ui) {
 
 		if (getModelType(graph.model)) {
 			dflowAction.enabled = true;
-			openOpenDialogAction.enabled = true;
 		}
     });
 
@@ -490,7 +488,7 @@ Draw.loadPlugin(async function(ui) {
     {
 		ui.showDialog(new DFlowItemsDialog(ui).container, 500, 400, true, false);
     });
-	openOpenDialogAction.enabled = false;
+	openOpenDialogAction.enabled = true;
 
 	// --------------
 	const dflowAction = ui.actions.addAction('dflow', function()

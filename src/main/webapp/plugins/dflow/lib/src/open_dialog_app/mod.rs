@@ -155,10 +155,7 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                                     recreate_widget_model_info(&editor, model, &cb);
 
                                     let diagram_meta = get_cell0_meta(&editor)
-                                        .unwrap_or(DiagramMeta {
-                                            label: Default::default(),
-                                            model: GraphModel::Widget(Default::default()),
-                                        });
+                                        .unwrap_or(DiagramMeta::get_widget_default());
 
                                     dispatch.reduce_mut(move |state| {
                                         let form = WidgetForm { uuid, name, group, diagram_meta};
@@ -186,10 +183,7 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                                     recreate_diagram_model_info( &editor, model, &cb );
 
                                     let diagram_meta = get_cell0_meta(&editor)
-                                        .unwrap_or(DiagramMeta {
-                                            label: Default::default(),
-                                            model: GraphModel::Diagram(Default::default()),
-                                        });
+                                        .unwrap_or(DiagramMeta::get_diagram_default());
 
                                     dispatch.reduce_mut(move |state| {
                                         let form = DiagramForm {uuid, name, diagram_meta};

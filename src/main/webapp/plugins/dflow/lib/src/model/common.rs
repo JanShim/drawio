@@ -43,6 +43,22 @@ pub struct DiagramMeta {
     pub model: GraphModel,
 }
 
+impl DiagramMeta {
+    pub fn get_widget_default() -> Self {
+        Self {
+            label: Default::default(),
+            model: GraphModel::Widget(Default::default()),
+        }
+    }
+
+    pub fn get_diagram_default() -> Self {
+        Self {
+            label: Default::default(),
+            model: GraphModel::Diagram(Default::default()),
+        }
+    }
+}
+
 // impl From<MxCell> for DiagramMeta {
 //     fn from(cell: MxCell) -> Self {
 //         if let Ok(meta) = cell.get_diagram_meta() {
@@ -84,10 +100,7 @@ mod tests {
 
     #[test]
     fn xml_diagram_meta_ser_works() {
-        let item = DiagramMeta {
-            label: "".to_owned(),
-            model: GraphModel::Diagram(Default::default()),
-        };
+        let item = DiagramMeta::get_diagram_default();
 
         let str = to_string(&item).unwrap();
         println!("{str}");

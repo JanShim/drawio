@@ -23,10 +23,7 @@ impl Default for DiagramForm {
         Self {
             uuid: NULL_UUID.into(),
             name: Default::default(),
-            diagram_meta: DiagramMeta {
-                label: Default::default(),
-                model: GraphModel::Diagram(Default::default()) ,
-            },
+            diagram_meta: DiagramMeta::get_diagram_default(),
         }
     }
 }

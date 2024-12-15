@@ -7,9 +7,9 @@ use web_sys::{FormData, HtmlFormElement};
 
 use crate::{components::shared::{MdIcon, MdIconType},
     model::{
-        common::{GraphModel, ModelForm}, diagram::{form::DiagramForm, DiagramDto}, mx_editor::MxEditor
+        common::{DiagramMeta, GraphModel, ModelForm}, diagram::{form::DiagramForm, DiagramDto}, mx_editor::MxEditor
     },
-    store::{cell::NO_CONTEXT_FOUND, mx_context::TMxGraphContext}, utils::{get_cell0_meta, set_cell0_value}
+    store::{cell::NO_CONTEXT_FOUND, mx_context::TMxGraphContext}, utils::{cliped_model_box, get_cell0_meta, set_cell0_value}
 };
 use crate::store;
 use crate::utils::{post, put};
@@ -37,7 +37,7 @@ pub fn DiagramInfoComponent(Props { form }: &Props) -> Html {
     //     }
     // });
 
-    let info_form = {
+    let info_form_handler = {
         let editor = &mx_graph_context.mx_editor;
         let mut form = form.clone();
         use_state(move || {
@@ -74,80 +74,20 @@ pub fn DiagramInfoComponent(Props { form }: &Props) -> Html {
     let on_apply = {
         let mx_graph_context = mx_graph_context.clone();
         let edit_mode = edit_mode.clone();
-        let info_form = info_form.clone();
+        let info_form_handler = info_form_handler.clone();
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
 
             let form = event.target()
-                .and_then(|t| t.dyn_into::<HtmlFormElement>().ok());
+                .and_then(|t| {
+                    match t.dyn_into::<HtmlFormElement>() {
+                        Ok(el) => Some(el),
+                        Err(err) => { log::error!("{err:?}"); None },
+                    }
+                });
 
             if let Some(form) = form {
                 if let Some(form) = FormData::new_with_form(&form).ok().map(|data| Into::<DiagramForm>::into(data)) {
-                    // let state = state.clone();
-
-                    // // appy to store
-                    // dispatch.reduce_mut(|state| {
-                    //     state.model_meta = ModelForm::Diagram(form.clone());
-                    // });
-
-                    // // send to db
-                    // let dispatch = dispatch.clone();
-                    // let mx_graph_context = mx_graph_context.clone();
-                    // wasm_bindgen_futures::spawn_local(async move {
-
-                    //     log::debug!("mx_graph_context {:?}", mx_graph_context);
-
-                    //     if let Ok(node) = mx_graph_context.get_graph_xml() {
-                    //         if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
-
-                    //             // log::debug!("saving: {model_str}");
-
-                    //             let svg = mx_graph_context.get_graph_svg();
-
-                    //             if form.is_new_item() {
-                    //                 let item = DiagramDto::new(
-                    //                     form.name.to_string(),
-                    //                     model_str,
-                    //                     Some(svg),
-                    //                 );
-
-                    //                 let created = post(format!("{}/diagram", mx_graph_context.api_url), item).await
-                    //                     .and_then(|dto| {
-                    //                         // log::debug!("created: {dto:?}");
-                    //                         Ok(dto)
-                    //                     }).unwrap();
-
-                    //                 // set model meta
-                    //                 dispatch.reduce_mut(|state| {
-                    //                     state.model_meta = ModelForm::Diagram(DiagramForm {
-                    //                         uuid: created.uuid.into(),
-                    //                         name: created.name.into(),
-                    //                     });
-                    //                 });
-
-                    //             } else {
-                    //                 let item = DiagramDto {
-                    //                     uuid: form.uuid.to_string(),
-                    //                     name: form.name.to_string(),
-                    //                     model: model_str,
-                    //                     svg: Some(svg),
-                    //                 };
-
-                    //                 let res = put(format!("{}/diagram/{}", mx_graph_context.api_url, form.uuid), item).await
-                    //                     .and_then(|dto| {
-                    //                         log::debug!("saved:  {dto:?}");
-                    //                         Ok(dto)
-                    //                     });
-
-                    //                 if res.is_err() {
-                    //                     log::error!("{:?}", res.err().unwrap())
-                    //                 }
-                    //             }
-                    //         };
-                    //     }
-                    // }
-                    // );
-
                     let diagram_meta = &form.diagram_meta;
 
                     log::debug!("CURR meta: {:?}", diagram_meta);
@@ -156,12 +96,57 @@ pub fn DiagramInfoComponent(Props { form }: &Props) -> Html {
                     let diagram_meta_str = quick_xml::se::to_string(diagram_meta).unwrap();
                     set_cell0_value(&mx_graph_context.mx_editor, diagram_meta_str);
 
-
                     // store form meta to state
-                    info_form.set(form);
+                    info_form_handler.set(form.clone());
 
+                    // send to db
+                    let mx_graph_context = mx_graph_context.clone();
+                    let info_form_handler = info_form_handler.clone();
+                    let edit_mode = edit_mode.clone();
+                    wasm_bindgen_futures::spawn_local(async move {
+                        if let Ok(node) = mx_graph_context.get_graph_xml() {
+                            if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
+                                let svg = mx_graph_context.get_graph_svg();
 
-                    edit_mode.set(false);
+                                if form.is_new_item() {
+                                    let item = DiagramDto::new(
+                                            form.name.to_string(),
+                                            model_str,
+                                            Some(svg),
+                                        );
+
+                                    let result = post(format!("{}/diagram", mx_graph_context.api_url), item).await;
+                                    match result {
+                                        Ok(created) => {
+                                            log::debug!("created result: {:?}", created);
+                                            apply_form_to_state(&created, &mx_graph_context.mx_editor, info_form_handler);
+                                        },
+                                        Err(err) => log::debug!("widget create error: {err:?}"),
+                                    }
+                                } else {
+                                    let item = DiagramDto {
+                                            uuid: form.uuid.to_string(),
+                                            name: form.name.to_string(),
+                                            model: model_str,
+                                            svg: Some(svg),
+                                        };
+
+                                    let result = put(format!("{}/diagram/{}", mx_graph_context.api_url, form.uuid), item).await;
+                                    match result {
+                                        Ok(updated) => {
+                                            log::debug!("updated result: {:?}", updated);
+                                            apply_form_to_state(&updated, &mx_graph_context.mx_editor, info_form_handler);
+                                        },
+                                        Err(err) => log::debug!("widget {} update error: {err:?}", form.uuid),
+                                    }
+                                }
+
+                                // exit edit mode
+                                edit_mode.set(false);
+                            };
+                        }
+                    });
+
                 }
             }
         })};
@@ -176,17 +161,17 @@ pub fn DiagramInfoComponent(Props { form }: &Props) -> Html {
     };
 
     let form_view = {
-        let info_form = info_form.clone();
-        let diagram_meta = quick_xml::se::to_string(&info_form.diagram_meta).unwrap_or_default();
+        let info_form_handler = info_form_handler.clone();
+        let diagram_meta = quick_xml::se::to_string(&info_form_handler.diagram_meta).unwrap_or_default();
         html! {
             <form onsubmit={on_apply}>
-                <input type="hidden" name="uuid" value={ info_form.uuid.clone() }/>
+                <input type="hidden" name="uuid" value={ info_form_handler.uuid.clone() }/>
                 <input type="hidden" name="meta" value={ diagram_meta.clone() }/>
 
                 <div class="label"><label for="uuid">{ "uuid: " }</label></div>
-                <input name="uuid-0" value={ info_form.uuid.clone() } disabled={true} class="input-100"/><br/>
+                <input name="uuid-0" value={ info_form_handler.uuid.clone() } disabled={true} class="input-100"/><br/>
                 <div class="label"><label for="name">{ "name: " }</label></div>
-                <input name="name" value={ info_form.name.clone() } class="input-100"/><br/>
+                <input name="name" value={ info_form_handler.name.clone() } class="input-100"/><br/>
 
                 <div class="flex-box-2" >
                     <button type="button" onclick={on_cancel}>{"Cancel"}</button>
@@ -197,13 +182,13 @@ pub fn DiagramInfoComponent(Props { form }: &Props) -> Html {
     };
 
     let view = {
-        let info_form = info_form.clone();
+        let info_form_handler = info_form_handler.clone();
         html! {
             <div>
                 <div class="label">{ "uuid: " }</div>
-                <div class="value">{ info_form.uuid.clone() }</div>
+                <div class="value">{ info_form_handler.uuid.clone() }</div>
                 <div class="label">{ "name: " }</div>
-                <div class="value">{ info_form.name.clone() }</div>
+                <div class="value">{ info_form_handler.name.clone() }</div>
             </div>
         }
     };
@@ -231,4 +216,20 @@ fn decorate_with_cell0_meta(
         // set form diagram_meta
         form.diagram_meta = diagram_meta.clone();
     }
+}
+
+// -----------------------------------------------
+fn apply_form_to_state(
+    dto: &DiagramDto,
+    editor: &MxEditor,
+    form_handler: UseStateHandle<DiagramForm>,
+) {
+    // prepare widget form
+    let form = DiagramForm {
+            uuid: dto.uuid.clone().into(),
+            name: dto.name.clone().into(),
+            diagram_meta: get_cell0_meta(editor).unwrap_or(DiagramMeta::get_widget_default()),
+        };
+
+    form_handler.set(form);
 }
