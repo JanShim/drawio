@@ -3,12 +3,12 @@ use yew::{function_component, html, use_effect_with, use_memo, use_state, AttrVa
 use yewdux::use_store;
 
 use crate::{
-    components::{multystate::state_rect:: StateSampleRect, shared::{use_css_styles, MdIcon, MdIconType}}, 
+    components::{multystate::state_rect:: StateSampleRect, shared::{use_css_styles, MdIcon, MdIconType}},
     store,
 };
 
 #[derive(Properties, PartialEq, Debug)]
-pub struct StatePredefProps<T> 
+pub struct StatePredefProps<T>
 where
     T: PartialEq + PredefStyle + Clone +'static,
 {
@@ -16,7 +16,7 @@ where
 }
 
 #[function_component]
-pub fn StatePredefComponent<T>(StatePredefProps {value}: &StatePredefProps<T>) -> Html 
+pub fn StatePredefComponent<T>(StatePredefProps {value}: &StatePredefProps<T>) -> Html
 where
     T: PartialEq + PredefStyle + Clone +'static,
 {
@@ -39,12 +39,13 @@ where
     let on_radio_click = {
             let cell_state = cell_state.clone();
             let my_state = my_state.clone();
-            Callback::from(move |_: MouseEvent| { 
-                if let Ok(style) = cell_state.get_cell_style() {
-                    let my_style = my_state.get_style();
-                    let style = merge_mx_styles(&my_style, &style);
-                    cell_state.set_cell_style(style.to_string());
-                } 
+            Callback::from(move |_: MouseEvent| {
+                todo!()
+                // if let Ok(style) = cell_state.get_cell_style() {
+                //     let my_style = my_state.get_style();
+                //     let style = merge_mx_styles(&my_style, &style);
+                //     cell_state.set_cell_style(style.to_string());
+                // }
             })
         };
 
@@ -56,7 +57,7 @@ where
                 <td width="100%">{ my_state.get_name().as_str() }</td>
                 <td width="50"><StateSampleRect css_strings={(*css_strings).clone()} /></td>
             </tr>
-            </table>    
+            </table>
         };
 
     // item view
@@ -68,12 +69,12 @@ where
         </tr>
         </table>
     }
-    
+
 }
 
 // ==========================================
 #[derive(Properties, PartialEq, Debug)]
-pub struct StatePredefEditProps<T> 
+pub struct StatePredefEditProps<T>
 where
     T: PartialEq + PredefStyle + Clone +'static,
 {
@@ -83,7 +84,7 @@ where
 }
 
 #[function_component]
-pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &StatePredefEditProps<T>) -> Html 
+pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &StatePredefEditProps<T>) -> Html
     where
         T: PartialEq + PredefStyle + Clone +'static,
 {
@@ -103,17 +104,17 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
     // =========== events ================
     let toggle_edit = {
         let selected = selected.clone();
-        Callback::from(move |_: MouseEvent| { 
+        Callback::from(move |_: MouseEvent| {
             selected.set(true);
         })
-    };      
+    };
 
     let toggle_close = {
         let selected = selected.clone();
-        Callback::from(move |_: MouseEvent| { 
+        Callback::from(move |_: MouseEvent| {
             selected.set(false);
         })
-    };   
+    };
 
     let toggle_check = {
         let cell_state = cell_state.clone();
@@ -121,20 +122,21 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
         let selected = selected.clone();
         let apply = apply.clone();
         let index = index.clone();
-        Callback::from(move |_: MouseEvent| { 
-            if let Some(style) = cell_state.get_cell_style().ok() {
-                let mut new_state = (*my_state).clone();
-                new_state.set_style(filter_state_mxstyle(style.as_str()));
-                my_state.set(new_state.clone());
-                apply.emit((index, new_state));
-            } 
-            selected.set(false);           
+        Callback::from(move |_: MouseEvent| {
+            todo!()
+            // if let Some(style) = cell_state.get_cell_style().ok() {
+            //     let mut new_state = (*my_state).clone();
+            //     new_state.set_style(filter_state_mxstyle(style.as_str()));
+            //     my_state.set(new_state.clone());
+            //     apply.emit((index, new_state));
+            // }
+            // selected.set(false);
         })
-    };   
+    };
 
     // ============= view items =======================
     let img = {
-        if *selected { 
+        if *selected {
             html! { <img src="images/close.png" onclick={toggle_close}/> }
         } else {
             html! { <button onclick={toggle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
@@ -147,7 +149,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
             <td width="100%">{ my_state.get_name().as_str() }</td>
             <td width="50"><StateSampleRect  css_strings={(*css_strings).clone()}/></td>
         </tr>
-        </table>    
+        </table>
     };
 
 
@@ -160,7 +162,7 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
                 <button onclick={toggle_check}><MdIcon icon={MdIconType::Check}/></button>
             </td>
         </tr>
-        </table>    
+        </table>
     };
 
     // item view
@@ -178,5 +180,5 @@ pub fn StatePredefEditComponent<T>(StatePredefEditProps {value, index, apply}: &
         </tr>
         </table>
     }
-    
+
 }

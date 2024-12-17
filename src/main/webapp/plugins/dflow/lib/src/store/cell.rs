@@ -2,21 +2,29 @@ use std::{cmp::Ordering, collections::HashSet, rc::Rc};
 use common_model::{dflow_cell::{CellType, DFlowVariant}, multystate::range::RangeType};
 use implicit_clone::unsync::IString;
 use wasm_bindgen::JsValue;
+use yew::{AppHandle, AttrValue};
 use yewdux::{store::Store, Reducer};
 
-use crate::model::{
-    cell_meta::CellMeta,
-    mx_cell::MxCell,
-};
+use crate::{cell_app::CellInfoComponent, model::{
+    cell_meta::CellMeta, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
+}};
 
 pub const NOT_CELL: &str = "not cell";
 pub const NOT_CELL_META: &str = "not cell meta";
 pub const NO_CONTEXT_FOUND: &str = "no ctx found";
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct CellInfoContext {
+    pub api_url: AttrValue,
+    pub mx_utils: MxUtils,
+    pub mx_editor: MxEditor,
+    pub mx_cell: MxCell,
+}
+
 #[derive(Clone, PartialEq, Debug, Store)]
 pub struct State {
-    pub cell: Option<Rc<MxCell>>,
-    pub meta: CellMeta,
+    // pub cell: Option<Rc<MxCell>>,
+    // pub meta: CellMeta,
     pub model_node: IString,
     pub start_apply: bool,
 }
@@ -86,18 +94,18 @@ impl State {
     //     Ok(cell.get_label().into())
     // }
 
-    pub fn get_cell_style(&self) -> Result<IString, JsValue> {
-        let cell = self.cell.clone().ok_or(JsValue::from(NOT_CELL))?;
-        cell.get_style()
-            .map(|o| o.into())
-            .ok_or(JsValue::from(NOT_CELL))
-    }
+    // pub fn get_cell_style(&self) -> Result<IString, JsValue> {
+    //     let cell = self.cell.clone().ok_or(JsValue::from(NOT_CELL))?;
+    //     cell.get_style()
+    //         .map(|o| o.into())
+    //         .ok_or(JsValue::from(NOT_CELL))
+    // }
 
-    pub fn set_cell_style(&self, style: String) {
-        if let Some(mut cell) = self.cell.clone() {
-            Rc::make_mut(&mut cell).set_style(style);
-        }
-    }
+    // pub fn set_cell_style(&self, style: String) {
+    //     if let Some(mut cell) = self.cell.clone() {
+    //         Rc::make_mut(&mut cell).set_style(style);
+    //     }
+    // }
 
     // pub fn get_state_meta(&self) -> CellMeta {
     //     self.meta.clone()
@@ -137,8 +145,8 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            cell: None,
-            meta: CellMeta::default(),
+            // cell: None,
+            // meta: CellMeta::default(),
             model_node: Default::default(),
             start_apply: false,
         }
@@ -178,30 +186,31 @@ pub fn cell_type_compare(a: &CellType, b: &CellType) -> Ordering {
 pub struct SetCellTypeAction(pub HashSet<CellType>);
 impl Reducer<State> for SetCellTypeAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut cell_types = self.0.into_iter().collect::<Vec<_>>();
-        cell_types.sort_by(cell_type_compare);
+        todo!()
+        // let mut cell_types = self.0.into_iter().collect::<Vec<_>>();
+        // cell_types.sort_by(cell_type_compare);
 
-        let data = cell_types.into_iter()
-            .map(|o| Into::<DFlowVariant>::into(o) )
-            .collect::<Vec<_>>();
+        // let data = cell_types.into_iter()
+        //     .map(|o| Into::<DFlowVariant>::into(o) )
+        //     .collect::<Vec<_>>();
 
-        let cell = state.cell.clone().ok_or(JsValue::from(NOT_CELL)).unwrap();
-        let meta = CellMeta{
-                label: cell.get_label().into(),
-                types: data
-            };
+        // let cell = state.cell.clone().ok_or(JsValue::from(NOT_CELL)).unwrap();
+        // let meta = CellMeta{
+        //         label: cell.get_label().into(),
+        //         types: data
+        //     };
 
-        // assigne meta to editor cell
-        let res = cell.set_meta(&meta);
-        if res.is_err() {
-            log::error!("{:?}", res.err().unwrap().as_string())
-        }
+        // // assigne meta to editor cell
+        // let res = cell.set_meta(&meta);
+        // if res.is_err() {
+        //     log::error!("{:?}", res.err().unwrap().as_string())
+        // }
 
-        // return
-        State {
-            meta,
-            ..(*state).clone()
-        }.into()
+        // // return
+        // State {
+        //     meta,
+        //     ..(*state).clone()
+        // }.into()
     }
 }
 
@@ -265,22 +274,23 @@ impl Reducer<State> for StartApplyAction {
 pub struct SetRangeTypeAction(pub RangeType);
 impl Reducer<State> for SetRangeTypeAction {
     fn apply(self, state: Rc<State>) -> Rc<State> {
-        let mut meta =  state.meta.clone();
-        if let Ok(mut multystate) = meta.get_multystate_meta() {
-            multystate.states = vec![];
-            multystate.range_type = self.0;
-            meta.set_multystate_meta(multystate);
+        todo!()
+        // let mut meta =  state.meta.clone();
+        // if let Ok(mut multystate) = meta.get_multystate_meta() {
+        //     multystate.states = vec![];
+        //     multystate.range_type = self.0;
+        //     meta.set_multystate_meta(multystate);
 
-            log::debug!("new range: {:?}", meta);
+        //     log::debug!("new range: {:?}", meta);
 
-            return State {
-                meta,
-                ..(*state).clone()
-            }.into();
-        };
+        //     return State {
+        //         meta,
+        //         ..(*state).clone()
+        //     }.into();
+        // };
 
-        // else return
-        state
+        // // else return
+        // state
     }
 }
 

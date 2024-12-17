@@ -35,29 +35,6 @@ pub fn DiagramApp(Props { context }: &Props) -> Html {
     }
 }
 
-
-// #[wasm_bindgen(js_name=initSchemaRender)]
-// pub fn init_schema_render(
-//     mx_editor: MxEditor,
-//     mx_utils: MxUtils,
-//     div: HtmlDivElement,
-//     options: SchemaOptions
-// ) {
-//     Dispatch::<store::diagram::State>::global().set(store::diagram::State {
-//         redraw: Default::default(),
-//         model_meta: Default::default(),
-//     });
-
-//     let props = Props { context: MxGraphContext {
-//         api_url: options.api_url.unwrap_or("undefiend".to_owned()).into(),
-//         mx_utils,
-//         mx_editor,
-//     }.into() };
-
-//     yew::Renderer::<DiagramApp>::with_root_and_props(div.into(), props).render();
-//     log::info!("schema loaded");
-// }
-
 #[wasm_bindgen(js_name=recreateModelMeta)]
 pub fn recreate_model_meta(
     model_type: JsString,
@@ -87,6 +64,4 @@ pub fn recreate_model_meta(
 
     yew::Renderer::<DiagramApp>::with_root_and_props(div.into(), props).render();
     log::info!("schema loaded");
-
-    // let dispatch = Dispatch::<store::diagram::State>::global();
 }

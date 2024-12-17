@@ -271,57 +271,125 @@ function createDiagramWindow(title) {
 	return [wind, container];
 }
 
+function isDFlowCell(cell)
+{
+	if (!!cell && !!cell.value && typeof cell.value !== 'string')
+	{
+		return cell.value.tagName === "d-flow";
+	}
+	return false;
+};
+
+
+function createCellindow() {
+	let container = document.createElement('div');
+	container.setAttribute("id", "container");
+	container.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
+	container.style.border = '1px solid gray';
+	container.style.opacity = '0.8';
+	container.style.padding = '10px';
+	container.style.paddingTop = '0px';
+	container.style.width = '20%';
+	container.style.boxSizing = 'border-box';
+	container.style.minHeight = '100%';
+	container.style.width = '100%';
+
+	let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+	const wind = new mxWindow("Настройки элемента", container, iiw - 520, 60, 300, 500, true, true);
+	wind.destroyOnClose = true;
+	wind.setMaximizable(true);
+	wind.setResizable(true);
+	wind.setScrollable(true);
+	wind.setClosable(true);
+	wind.contentWrapper.style.overflowY = 'scroll';
+
+	return [wind, container];
+}
+
 const API_URL = "http://localhost:8091/api/v1";
 let diagramDataWindow = null;
 let schemaRootContainer = null;
+let cellDataWindow = null;
+let cellRootContainer = null;
 
 // --------------------------------
-function destroyWind() {
+function destroyDiagramWind() {
 	if (diagramDataWindow) {
 		let root = diagramDataWindow.getElement();
+		if (root) {
+			root.remove();
+		}
 		diagramDataWindow.destroy;
 		diagramDataWindow = null;
 		schemaRootContainer.remove();
-		root.remove();
 	}
 }
 
 // --------------------------------
-function recreateWidgetModelInfo(editor, modelStr, recreateFun) {
+function destroyCellWind() {
+	if (cellDataWindow) {
+		let root = cellDataWindow.getElement();
+		if (root) {
+			root.remove();
+		}
+		cellDataWindow.destroy;
+		cellDataWindow = null;
+		cellRootContainer.remove();
+	}
+}
+
+// --------------------------------
+function recreateWidgetModelInfo(editor, modelStr, renderFun) {
 	console.log("recreateWidgetModelInfo");
-	destroyWind();
+	destroyDiagramWind();
 
 	const [wind, rootContainer] = createDiagramWindow("Настройки виджета");
 	diagramDataWindow = wind;
 	schemaRootContainer = rootContainer;
 
 	loadDFlowModel(editor, modelStr)
-	recreateFun(schemaRootContainer);
+	renderFun(schemaRootContainer);
 
 	diagramDataWindow.show();
 }
 
 // --------------------------------
-function recreateDiagramModelInfo(editor, modelStr, recreateFun) {
+function recreateDiagramModelInfo(editor, modelStr, renderFun) {
 	console.log("recreateDiagramModelInfo");
-	destroyWind();
+	destroyDiagramWind();
 
 	const [wind, rootContainer] = createDiagramWindow("Настройки диаграммы");
 	diagramDataWindow = wind;
 	schemaRootContainer = rootContainer;
 
 	loadDFlowModel(editor, modelStr)
-	recreateFun(schemaRootContainer);
+	renderFun(schemaRootContainer);
 
 	diagramDataWindow.show();
 }
+
+// --------------------------------
+function recreateCellInfo(renderFun) {
+	console.log("recreateCellInfo");
+	destroyCellWind();
+
+	const [wind, rootContainer] = createCellindow();
+	cellDataWindow = wind;
+	cellRootContainer = rootContainer;
+
+	renderFun(cellRootContainer);
+
+	cellDataWindow.show();
+}
+
 
 
 /**
  * Sample plugin.
  */
 Draw.loadPlugin(async function(ui) {
-	const {initSync, renderCell, recreateModelMeta, openDialog, SchemaOptions, initSchemaRender, initCellRender} = await import('./lib/pkg/dflow_lib.js');
+	const {initSync, renderCellInfo, recreateModelMeta, openDialog, SchemaOptions } = await import('./lib/pkg/dflow_lib.js');
 
 	async function initWasm() {
 		await fetch('plugins/dflow/lib/pkg/dflow_lib_bg.wasm')
@@ -336,7 +404,6 @@ Draw.loadPlugin(async function(ui) {
 
 	let graph = ui.editor.graph;
 	// ============= windows ==================
-	let cellDataWindow = null;
 
 	// Highlights current cell
 	const highlight = new mxCellHighlight(graph, '#00ff00', 2);
@@ -520,42 +587,6 @@ Draw.loadPlugin(async function(ui) {
 		menu.parentNode.insertBefore(menu, menu.previousSibling.previousSibling.previousSibling);
     }
 
-	// -----------------------------------------------------------------
-	let divDFlowCellData = document.createElement('div');
-	divDFlowCellData.setAttribute("id", "cell-container");
-	divDFlowCellData.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
-	divDFlowCellData.style.border = '1px solid gray';
-	divDFlowCellData.style.opacity = '0.8';
-	divDFlowCellData.style.width = '20%';
-
-	divDFlowCellData.style.boxSizing = 'border-box';
-	divDFlowCellData.style.minHeight = '100%';
-	divDFlowCellData.style.width = '100%';
-
-
-	// cell window
-	function newCellWindow(div) {
-		let iiw = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		let wnd = new mxWindow('DFlow data', div, iiw - 320, 60, 300, 450, true, true);
-		wnd.destroyOnClose = false;
-		wnd.setMaximizable(true);
-		wnd.setResizable(true);
-		wnd.setScrollable(true);
-		wnd.setClosable(true);
-		wnd.contentWrapper.style.overflowY = 'scroll';
-		return wnd;
-	}
-
-	function isDFlowCell(cell)
-	{
-		if (!!cell && !!cell.value && typeof cell.value !== 'string')
-		{
-			return cell.value.tagName === "d-flow";
-		}
-		return false;
-	};
-
-
 	/**
 	 * Updates the DFlow data panel
 	 */
@@ -565,16 +596,18 @@ Draw.loadPlugin(async function(ui) {
 		// Gets the selection cell
 		if (cell != null && isDFlowCell(cell))
 		{
-			highlight.highlight(graph.view.getState(cell));
+			recreateCellInfo(
+				(schemaRootContainer) => renderCellInfo(cell, ui.editor, mxUtils, schemaRootContainer, getAppOptions()),
+			)
 
-			renderCell(cell);
 			cellDataWindow.setVisible(true);
+
+			// highlight selected cell
+			highlight.highlight(graph.view.getState(cell));
 		}
 		else {
 			highlight.highlight(null);
-			if (cellDataWindow != null) {
-				cellDataWindow.setVisible(false);
-			}
+			destroyCellWind();
 		}
 
 	}
@@ -649,7 +682,7 @@ Draw.loadPlugin(async function(ui) {
 	// здесь натройки пдагина
 	let getAppOptions = function() {return new SchemaOptions(API_URL); }
 
-	cellDataWindow = newCellWindow(divDFlowCellData);
-	initCellRender(ui.editor, mxUtils, divDFlowCellData, getAppOptions());
+	// cellDataWindow = newCellWindow(divDFlowCellData);
+	// initCellRender(ui.editor, mxUtils, divDFlowCellData, getAppOptions());
 
 });

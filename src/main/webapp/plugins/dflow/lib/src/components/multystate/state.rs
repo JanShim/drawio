@@ -13,7 +13,7 @@ pub struct Props {
 }
 
 #[function_component]
-pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html 
+pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
 {
     // let my_state = use_state(|| value.clone());
     // {
@@ -49,7 +49,7 @@ pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
             </td>
             <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
         </tr>
-        </table>    
+        </table>
     };
 
     // item view
@@ -61,7 +61,7 @@ pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
         </tr>
         </table>
     }
-    
+
 }
 
 
@@ -76,14 +76,14 @@ pub struct MultystateStateEditProps {
 
 #[function_component]
 pub fn MultystateStateEditComponent(MultystateStateEditProps {
-    value, 
+    value,
     apply,
-    select, 
+    select,
     selected,
-}: &MultystateStateEditProps) -> Html 
+}: &MultystateStateEditProps) -> Html
 {
     // let (_, store_state_dispatch) = use_store::<cell::State>();
-   
+
     let (cell_state, _) = use_store::<store::cell::State>();  // cell meta storage
     let range_type = use_state(|| Into::<RangeType>::into(value.value.clone()));
 
@@ -99,14 +99,14 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
             let my_state = my_state.clone();
             let select = select.clone();
             Callback::from(move |_: MouseEvent| { select.emit(Some((*my_state).clone())) })
-        };      
+        };
 
     let toggle_close = {
             let select = select.clone();
-            Callback::from(move |_: MouseEvent| { 
+            Callback::from(move |_: MouseEvent| {
                 select.emit(None);  // remove selection
             })
-        };   
+        };
 
     let css_strings = use_css_styles(my_state.style.clone());
 
@@ -122,23 +122,24 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
 
                 if let Some(form) = form {
                     if let Some(state_meta) = FormData::new_with_form(&form).ok().map(|data | Into::<StateXml>::into(data)) {
-                        if let Some(style) = cell_state.get_cell_style().ok() {
-                            let filtered_style = filter_state_mxstyle(style.as_str());
-                            let meta = StateXml {
-                                style: filtered_style,
-                                ..state_meta
-                            };
-                            apply.emit(meta);
-                        }
+                        todo!()
+                        // if let Some(style) = cell_state.get_cell_style().ok() {
+                        //     let filtered_style = filter_state_mxstyle(style.as_str());
+                        //     let meta = StateXml {
+                        //         style: filtered_style,
+                        //         ..state_meta
+                        //     };
+                        //     apply.emit(meta);
+                        // }
                     }
                 }
                 select.emit(None);  // remove selection
             })
-        };       
+        };
 
     // --- view items
     let button = {
-        if *selected { 
+        if *selected {
             html! { <button onclick={toggle_close}><MdIcon icon={MdIconType::Cancel}/></button> }
         } else {
             html! { <button onclick={toggle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
@@ -148,19 +149,19 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
     // item view
     html! {
         <table class="prop-table">
-        <td>{ 
+        <td>{
             if *selected {
-                html! { <StateEdit 
-                        range_type={(*range_type).clone()} 
-                        state={(*my_state).clone()} 
-                        css_strings={(*css_strings).clone()} 
+                html! { <StateEdit
+                        range_type={(*range_type).clone()}
+                        state={(*my_state).clone()}
+                        css_strings={(*css_strings).clone()}
                         {form_onsubmit}/>
                 }
             } else {
-                html! { <StateView 
-                    range_type={(*range_type).clone()} 
-                    state={(*my_state).clone()} 
-                    css_strings={(*css_strings).clone()}/>   
+                html! { <StateView
+                    range_type={(*range_type).clone()}
+                    state={(*my_state).clone()}
+                    css_strings={(*css_strings).clone()}/>
                 }
             }
          }</td>
@@ -168,7 +169,7 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
         <td class="img" valign="top">{ button }</td>
         </table>
     }
-    
+
 }
 
 
@@ -182,7 +183,7 @@ pub struct StateViewProps {
 }
 
 #[function_component]
-pub fn StateView(StateViewProps {range_type, state, css_strings }: &StateViewProps) -> Html 
+pub fn StateView(StateViewProps {range_type, state, css_strings }: &StateViewProps) -> Html
 {
     html!{
         <table class="prop-table">
@@ -221,12 +222,12 @@ pub struct StateEditProps {
 }
 
 #[function_component]
-pub fn StateEdit(StateEditProps { 
-    range_type, 
-    state, 
-    css_strings, 
+pub fn StateEdit(StateEditProps {
+    range_type,
+    state,
+    css_strings,
     form_onsubmit
-}: &StateEditProps) -> Html 
+}: &StateEditProps) -> Html
 {
     let init_value: AttrValue = state.value.to_string().into();
     html!{
@@ -247,7 +248,7 @@ pub fn StateEdit(StateEditProps {
                             html! {<>
                                 {"нет нижней границы"}
                                 <input type="hidden" id="from" name="from" value={init_value.clone()} />
-                            </>} 
+                            </>}
                         } else {
                             html! {<>
                                 {"нижняя граница: "}

@@ -52,7 +52,7 @@ extern "C" {
     pub fn get_graph_svg(editor: &MxEditor) -> JsString;
 
     #[wasm_bindgen(js_name=setWidgetModel)]
-    pub fn set_widget_model(editor: MxEditor, cell: MxCell, model_str: String);
+    pub fn set_widget_model(editor: &MxEditor, cell: &MxCell, model_str: String);
 
     #[wasm_bindgen(js_name=clipedModelBox)]
     pub fn cliped_model_box(model_str: String) -> JsString;
@@ -63,6 +63,8 @@ extern "C" {
     #[wasm_bindgen(js_name=recreateDiagramModelInfo)]
     pub fn recreate_diagram_model_info(editor: &MxEditor, modelStr: String, recreateFun: &Closure<dyn Fn(JsValue)>);
 
+    #[wasm_bindgen(js_name=recreateCellInfo)]
+    pub fn recreate_cell_info(recreateFun: &Closure<dyn Fn(JsValue)>);
 }
 
 //------------------------------------------------------------------
