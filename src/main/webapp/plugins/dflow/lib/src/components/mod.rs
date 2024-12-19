@@ -106,6 +106,16 @@ input.state-val {
     width: 40px;
 }
 
+.input-valign-center {
+    height: 30px;
+    display: flex;
+    align-items: center
+}
+
+.datails-panel {
+    border-bottom: grey;
+}
+
         "#)} />
     }
 }

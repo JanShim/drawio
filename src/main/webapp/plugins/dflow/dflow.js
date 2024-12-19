@@ -247,11 +247,11 @@ function getModelType(model) {
 
 function createDiagramWindow(title) {
 	let container = document.createElement('div');
-	container.setAttribute("id", "container");
+	container.setAttribute("id", "diagram-container");
 	container.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
 	container.style.border = '1px solid gray';
 	container.style.opacity = '0.8';
-	container.style.padding = '10px';
+	// container.style.padding = '10px';
 	container.style.paddingTop = '0px';
 	container.style.width = '20%';
 	container.style.boxSizing = 'border-box';
@@ -283,11 +283,10 @@ function isDFlowCell(cell)
 
 function createCellindow() {
 	let container = document.createElement('div');
-	container.setAttribute("id", "container");
+	container.setAttribute("id", "info-container");
 	container.style.background = Editor.isDarkMode() ? Editor.darkColor : '#ffffff';
 	container.style.border = '1px solid gray';
 	container.style.opacity = '0.8';
-	container.style.padding = '10px';
 	container.style.paddingTop = '0px';
 	container.style.width = '20%';
 	container.style.boxSizing = 'border-box';

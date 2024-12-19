@@ -1,12 +1,12 @@
 use std::{cmp::Ordering, collections::HashSet, rc::Rc};
 use common_model::{dflow_cell::{CellType, DFlowVariant}, multystate::range::RangeType};
-use implicit_clone::unsync::IString;
+use implicit_clone::unsync::{IArray, IString};
 use wasm_bindgen::JsValue;
 use yew::{AppHandle, AttrValue};
 use yewdux::{store::Store, Reducer};
 
 use crate::{cell_app::CellInfoComponent, model::{
-    cell_meta::CellMeta, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
+    cell_meta::{CellMeta, TypesItem}, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
 }};
 
 pub const NOT_CELL: &str = "not cell";
@@ -19,6 +19,7 @@ pub struct CellInfoContext {
     pub mx_utils: MxUtils,
     pub mx_editor: MxEditor,
     pub mx_cell: MxCell,
+    pub available_types: IArray<TypesItem>,
 }
 
 #[derive(Clone, PartialEq, Debug, Store)]

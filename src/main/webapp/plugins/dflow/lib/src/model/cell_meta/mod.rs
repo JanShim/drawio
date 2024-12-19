@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use implicit_clone::unsync::IString;
+use implicit_clone::{unsync::IString, ImplicitClone};
 use wasm_bindgen::JsValue;
 use serde::{Deserialize, Serialize};
 use common_model::{
@@ -8,14 +8,24 @@ use common_model::{
      multystate::MultystateXml,
      widget::WidgetContainerXml
     };
+use yew::AttrValue;
 
 use crate::errors::CellStateError;
 
 pub mod data_source_reducers;
+pub mod form;
 
 pub const CELL_TYPE_LABEL: &str = "value";
 pub const CELL_TYPE_MULTY: &str = "multy";
 pub const CELL_TYPE_GEOM: &str = "geom";
+
+#[derive(Debug, PartialEq, Clone, ImplicitClone)]
+pub struct TypesItem {
+    pub cell_type: CellType,
+    pub name: AttrValue,
+    pub label: AttrValue,
+    pub selected: bool,
+}
 
 pub fn get_cellmeta_types(variants: &Vec<DFlowVariant>) -> HashSet<CellType> {
     variants.iter()

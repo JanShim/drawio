@@ -129,7 +129,11 @@ impl MxCell {
                 from_str(el.outer_html().as_str())
                     .map_err(|err| JsValue::from(err.to_string().as_str()))
             },
-            _ => Err(CellStateError::NoMeta.into())
+            _ => {
+                let err = CellStateError::NoMeta.into();
+                log::error!("{err:?}");
+                Err(err)
+            }
         }
     }
 
