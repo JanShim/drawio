@@ -1,19 +1,13 @@
+use state::MultystateStateEditComponent;
+use states::StatesSelector;
 use yew::prelude::*;
 use yew_hooks::{use_list, use_unmount};
-use yewdux::use_selector;
-use common_model::{
-    data_source::DataSourceXml, dflow_cell::DFlowVariant,
-    multystate::{range::RangeType, state::StateXml, state_predef::StatePredefXml, MultystateXml}
-};
+use common_model::multystate::{range::RangeType, state_predef::StatePredefXml, MultystateXml};
+use state_predef::StatePredefEditComponent;
 
-use state_predef::{StatePredefComponent, StatePredefEditComponent};
-use state::{MultystateStateComponent, MultystateStateEditComponent};
-use states::StatesSelector;
-
-use crate::{
-    components::{data_source::{self, DataSource}, shared::use_list_selected},
-    store::cell
-};
+use crate::components::{prop_table_tr::PropTableTr, shared::InputType};
+use crate::model::cell_meta::CELL_TYPE_MULTY;
+use crate::components::shared::use_checked;
 
 // pub mod type_selector;
 pub mod states;
@@ -21,187 +15,170 @@ pub mod state;
 pub mod state_rect;
 pub mod state_predef;
 
+pub const FORM_NAME_PREFIX: &str = "state";
+pub const FORM_NAME_SUFIX_PK: &str = "pk";
+pub const FORM_NAME_SUFIX_NAME: &str = "name";
+pub const FORM_NAME_SUFIX_VALUE: &str = "value";
+pub const FORM_NAME_SUFIX_FROM: &str = "from";
+pub const FORM_NAME_SUFIX_STYLE: &str = "style";
+pub const RANGE_TYPE: &str = "range-type";
+
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
     pub edit_mode: bool,
     pub value: Option<MultystateXml>,
-    // pub on_detals_apply: Callback<DFlowVariant>,    // callback for applyed notification
 }
 
 #[function_component]
 pub fn MultystateComponent(Props {
     edit_mode ,
     value,
-    // on_detals_apply,
 }: &Props) -> Html
 {
     use_unmount(|| {
         log::debug!("MultystateComponent unmount");
     });
 
-    // let meta = use_state(|| value.clone());
-    // let range_type = use_state(|| meta.range_type.clone());
-    // let data_source = use_state(|| meta.ds.clone());
-    // let predef_states = use_state(|| meta.predef.clone());
-    // let states = use_list(meta.states.clone());
-    // {
-    //     let range_type = range_type.clone();
-    //     let data_source = data_source.clone();
-    //     let predef_states = predef_states.clone();
-    //     let states = states.clone();
-    //     use_effect_with(value.clone(), move |m| {
-    //         range_type.set(m.range_type.clone());
-    //         data_source.set(m.ds.clone());
-    //         predef_states.set(m.predef.clone());
-    //         states.set(m.states.clone());
-    //     })
-    // }
+    let meta = use_memo(value.clone(), |value| {
 
-    // let (selected, select_callback) = use_list_selected::<StateXml>();
+        log::debug!("initial meta: {value:?}");
 
-    // // start apply process if true
-    // let start_apply = use_selector(|state: &cell::State | state.start_apply);
-    // {
-    //     let on_detals_apply = on_detals_apply.clone();
-    //     let data_source = data_source.clone();
-    //     let predef_states = predef_states.clone();
-    //     let states = states.clone();
-    //     let range_type = range_type.clone();
-    //     use_effect_with(*start_apply, move |start| {
-    //         if *start {
-    //             let new_state = MultystateXml {
-    //                 range_type: (*range_type).clone(),
-    //                 ds: (*data_source).clone(),
-    //                 predef: (*predef_states).clone(),
-    //                 states: states.current().clone(),
-    //             };
+        match value {
+            Some(value) => value.clone(),
+            None => MultystateXml::default(),
+        }
+    });
 
-    //             let new_variant = DFlowVariant::Multystate(new_state);
-    //             log::debug!("NEW MULTY {:?}", new_variant);
-    //             on_detals_apply.emit(new_variant);
-    //         }
-    //     })
-    // };
+    let (checked, on_checked_toggle) = use_checked(value.is_some());
 
-    // // ======== Events ==========
-    // let state_apply_callback = {
-    //     let states = states.clone();
-    //     let range_type = range_type.clone();
-    //     Callback::from(move |value: StateXml| {
-    //         match *range_type {
-    //             RangeType::DISCRET => states.update(value.pk, value),
-    //             RangeType::RANGE => {
-    //                 let len = states.current().len();
-    //                 let index = len - value.pk - 1;     // for range invers index
-    //                 states.update(index, value)
-    //             },
-    //         };
-    //     })
-    // };
+    let range_type = use_state(|| meta.range_type.clone());
 
-    // let predef_apply_callback = {
-    //     let predef_states = predef_states.clone();
-    //     Callback::from(move |(index, value): (usize, StatePredefXml)| {
-    //         let mut predefs = (*predef_states).clone();
-    //         let _ = std::mem::replace(&mut predefs[index], value);
-    //         predef_states.set(predefs);
-    //     })
-    // };
+    let predef_states = use_state(|| meta.predef.clone());
 
-    // let apply_ds = {
-    //         let data_source = data_source.clone();
-    //         Callback::from(move |ds: DataSourceXml| {
-    //             data_source.set(ds);
-    //         })
-    //     };
+    let states = use_list(meta.states.clone());
 
-    // let on_range_type_change = {
-    //         let range_type_handler = range_type.clone();
-    //         let states = states.clone();
-    //         Callback::from(move |range_type: RangeType| {
-    //             states.clear();
-    //             // store_state_dispatch.apply(SetRangeTypeAction(range_type));
-    //             range_type_handler.set(range_type)
-    //         })
-    //     };
+    // ======== Events ==========
+    let on_range_type_change = {
+            let range_type_handler = range_type.clone();
+            let states = states.clone();
+            Callback::from(move |range_type: RangeType| {
+                states.clear();
+                range_type_handler.set(range_type)
+            })
+        };
 
     // //====== View Items =====
-    // let data_source_view = {
-    //         let data_source = data_source.clone();
-    //         let apply_ds = apply_ds.clone();
-    //         let props = yew::props!(data_source::Props {
-    //             ds: (*data_source).clone(),
-    //             edit_mode: *edit_mode,
-    //             on_apply: apply_ds,
-    //         });
-    //         html! {<DataSource ..props/>}
-    //     };
+    let states_view = {
+            let edit_mode = edit_mode.clone();
+            states.current().iter()
+                .map(move |item| {
+                    html! {
+                        <MultystateStateEditComponent
+                            { edit_mode }
+                            value={ (*item).clone() }
+                        />
+                    }
+                })
+                .collect::<Vec<_>>()
+        };
 
-    // let default_state_view: Html = {
-    //         let default = (*predef_states)[0].clone();
-    //         html! {
-    //             if *edit_mode {
-    //                 <StatePredefEditComponent<StatePredefXml> value={default} index={0} apply={predef_apply_callback.clone()}/>
-    //             } else {
-    //                 <StatePredefComponent<StatePredefXml> value={default}/>
-    //             }
-    //         }
-    //     };
 
-    // let bad_state_view: Html = {
-    //         let bad = (*predef_states)[1].clone();
-    //         html! {
-    //             if *edit_mode {
-    //                 <StatePredefEditComponent<StatePredefXml> value={bad} index={1} apply={predef_apply_callback.clone()}/>
-    //             } else {
-    //                 <StatePredefComponent<StatePredefXml> value={bad}/>
-    //             }
-    //         }
-    //     };
+    // ============= view ==================
+    html!{
+        <div class="datails-panel">
+        if *edit_mode {
+            <div class="input-valign-center">
+                if *checked {
+                    <input type="hidden"
+                        id={ format!("{CELL_TYPE_MULTY}:formGroup") }
+                        name={ format!("{CELL_TYPE_MULTY}:formGroup") }
+                    />
+                    <input type="hidden"
+                        id={ format!("{CELL_TYPE_MULTY}:{RANGE_TYPE}") }
+                        name={ format!("{CELL_TYPE_MULTY}:{RANGE_TYPE}") }
+                        value={ (*range_type).to_string() }
+                    />
+                }
+                <input type="checkbox" id="label" name="label" checked={*checked} onchange={on_checked_toggle}/>
+                <label for="label">{ "Множественные состояния:" }</label>
+            </div>
 
-    // let states_view = {
-    //         let range_type = range_type.clone();
-    //         let edit_mode = edit_mode.clone();
-    //         let selected = selected.clone();
-    //         states.current().iter()
-    //             .map(move |item| {
-    //                 if edit_mode {
-    //                     let props = yew::props!(state::MultystateStateEditProps {
-    //                             value: (*item).clone(),
-    //                             selected: if let Some(selected) = (*selected).clone() {
-    //                                 selected.get_index() == item.get_index()
-    //                             } else {
-    //                                 false
-    //                             },
-    //                             apply: state_apply_callback.clone(),
-    //                             select: select_callback.clone(),
-    //                         });
-    //                     html! { <MultystateStateEditComponent ..props/> }
-    //                 } else {
-    //                     html!{ <MultystateStateComponent value={(*item).clone()} range_type={(*range_type).clone()}/> }
-    //                 }
-    //             })
-    //             .collect::<Vec<_>>()
-    //     };
+            if *checked {
+                <div>
+                    <table class="prop-table">
+                        <PropTableTr<AttrValue>
+                            { edit_mode }
+                            checked={ *checked }
+                            name={ format!("{CELL_TYPE_MULTY}:tag") }
+                            label={ "тег:" }
+                            value={ meta.ds.tag.clone() }
+                            value_type={InputType::STRING}
+                        />
 
-    html! {
-        <fieldset>
-            <legend>{"Множественные состояния:"}</legend>
-            // { data_source_view }
+                        <StatePredefEditComponent<StatePredefXml>
+                            { edit_mode }
+                            checked={ *checked }
+                            name={ format!("{CELL_TYPE_MULTY}:style-0") }
+                            value={ (*predef_states)[0].clone() }
+                        />
+                        <StatePredefEditComponent<StatePredefXml>
+                            { edit_mode }
+                            checked={ *checked }
+                            name={ format!("{CELL_TYPE_MULTY}:style-1") }
+                            value={ (*predef_states)[1].clone() }
+                        />
 
-            // { default_state_view }
-            // { bad_state_view }
+                        <StatesSelector
+                            { edit_mode }
+                            states={ states.clone() }
+                            range_type={ (*range_type).clone() }
+                            {on_range_type_change}
+                        />
+                        { states_view }
 
-            // <StatesSelector
-            //     edit_mode={edit_mode}
-            //     states={states.clone()}
-            //     range_type={ (*range_type).clone() }
-            //     {on_range_type_change}
-            // />
+                    </table>
+                </div>
+            }
+        } else {
+            <div class="input-valign-center">{ "Множественные состояния:" }</div>
+            <div>
+                <table class="prop-table">
+                    <PropTableTr<AttrValue>
+                        edit_mode={ false }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_MULTY}:tag") }
+                        label={ "тег:" }
+                        value={ meta.ds.tag.clone() }
+                        value_type={InputType::STRING}
+                    />
 
-            // { states_view }
+                    <StatePredefEditComponent<StatePredefXml>
+                        edit_mode={ false }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_MULTY}:style-0") }
+                        value={ (*predef_states)[0].clone() }
+                    />
+                    <StatePredefEditComponent<StatePredefXml>
+                        edit_mode={ false }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_MULTY}:style-1") }
+                        value={ (*predef_states)[1].clone() }
+                    />
 
-            <pre>{ format!("{value:?}") }</pre>
-        </fieldset>
+                    <tr>
+                        <td colspan="2">
+                            <div class="flex-box delim-label">
+                                <span>{ "Состояния" }</span>
+                                <span style="margin-right: 50px;">{ range_type.get_label() }</span>
+                            </div>
+                        </td>
+                    </tr>
+
+                    { states_view }
+
+                </table>
+            </div>
+        }
+        </div>
     }
 }

@@ -19,9 +19,9 @@ pub struct Props {
 pub fn StatesSelector(Props {
     edit_mode,
     states,
-    range_type, 
-    on_range_type_change 
-}: &Props) -> Html  
+    range_type,
+    on_range_type_change
+}: &Props) -> Html
 {
     let range_types = vec![RangeType::DISCRET, RangeType::RANGE];
 
@@ -35,7 +35,7 @@ pub fn StatesSelector(Props {
                 let new_states: Vec<(usize, StateXml)> = match range_type {
                     RangeType::DISCRET => {
                         let index = states.current().len();
-                        let name: AttrValue = format!("state-{index}").into();      
+                        let name: AttrValue = format!("state-{index}").into();
                         let prev_val = states.current().last()
                             .map(|o| o.value.get_value())
                             .unwrap_or(0);
@@ -43,11 +43,11 @@ pub fn StatesSelector(Props {
                         vec![
                         (
                             index,
-                            StateXml { 
-                                pk: index, 
+                            StateXml {
+                                pk: index,
                                 name,
                                 value: RangeValue::DiscretConst { value: prev_val },
-                                ..Default::default() 
+                                ..Default::default()
                             }
                         )]
                     },
@@ -56,36 +56,36 @@ pub fn StatesSelector(Props {
                         let mut pk = states.current().len();
                         // если это первая вставка, то нужно вставить from==-inf
                         if pk == 0 {
-                            let name: AttrValue = format!("range-{pk}").into();      
+                            let name: AttrValue = format!("range-{pk}").into();
                             let prev_val = f32::MIN;
 
-                            items.push((0, StateXml { 
-                                pk, 
+                            items.push((0, StateXml {
+                                pk,
                                 name,
                                 value: RangeValue::RangeConst { from: prev_val },
-                                ..Default::default() 
+                                ..Default::default()
                             }));
-                            pk += 1;                            
+                            pk += 1;
                         }
 
-                        let name: AttrValue = format!("range-{pk}").into();      
+                        let name: AttrValue = format!("range-{pk}").into();
                         let prev_val = if pk == 1 {
                                 0.0
                             } else {
                                 states.current().first().map(|o| o.value.get_from()).unwrap_or(0.0)
                             };
-        
-                        items.push((0, StateXml { 
-                                pk, 
+
+                        items.push((0, StateXml {
+                                pk,
                                 name,
                                 value: RangeValue::RangeConst { from: prev_val },
-                                ..Default::default() 
+                                ..Default::default()
                             }
                         ));
 
                         // return
                         items
-                    },            
+                    },
                 };
             log::debug!("Add {range_type:?}: {new_states:?}");
 
@@ -110,20 +110,24 @@ pub fn StatesSelector(Props {
 
     // ============== view ==================
     html! {
-        <div class="flex-box delim-label">
-        {"Состояния"}
-        if *edit_mode {
-            <select onchange={on_change} > {
-                range_types.iter()
-                    .map(|o| {
-                        let selected = *o == *range_type;
-                        html! { <option value={o.get_name()} {selected}>{ o.get_label() }</option> }
-                    })
-                    .collect::<Vec<_>>()
-            }
-            </select>
-             <button onclick={on_state_add}><MdIcon icon={MdIconType::Add}/></button> 
-        } 
-         </div>
+        <tr>
+            <td colspan="2">
+                <div class="flex-box delim-label">
+                    {"Состояния"}
+                    if *edit_mode {
+                        <select onchange={on_change} > {
+                            range_types.iter()
+                                .map(|o| {
+                                    let selected = *o == *range_type;
+                                    html! { <option value={o.get_name()} {selected}>{ o.get_label() }</option> }
+                                })
+                                .collect::<Vec<_>>()
+                        }
+                        </select>
+                        <button onclick={on_state_add}><MdIcon icon={MdIconType::Add}/></button>
+                    }
+                </div>
+            </td>
+        </tr>
     }
 }

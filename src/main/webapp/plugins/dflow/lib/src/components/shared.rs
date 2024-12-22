@@ -1,18 +1,18 @@
-use common_model::diagram::WidgetPropertyXml;
 use web_sys::Document;
 use yew::prelude::*;
-use yew_hooks::UseListHandle;
 use std::rc::Rc;
 use common_model::utils::{map_to_svg_style, mx_style_to_map};
 use common_model::traits::WithXmlDataSource;
 use common_model::data_source::DataSourceXml;
 
-use crate::model::common::GraphModel;
-use crate::model::mx_editor::MxEditor;
-use crate::model::widget::form::WidgetForm;
-use crate::utils::get_cell0_meta;
-
 // ===========================================
+#[derive(PartialEq, Debug)]
+pub enum InputType {
+    STRING,
+    NUMBER
+}
+
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum MdIconType {
     Edit,
@@ -126,6 +126,21 @@ where T: PartialEq +  Clone + WithXmlDataSource + 'static
     data_source
 }
 
+
+#[hook]
+pub fn use_checked(init: bool) -> (UseStateHandle<bool>, Callback<Event> ) {
+
+    let checked = use_state(|| init );
+
+    let on_checked_toggle = {
+        let checked = checked.clone();
+        Callback::from(move |_: Event| {
+            checked.set(!*checked);
+        })
+    };
+
+    (checked, on_checked_toggle)
+}
 
 // ========== common components ================
 

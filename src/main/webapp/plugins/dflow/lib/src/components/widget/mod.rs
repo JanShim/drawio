@@ -166,16 +166,16 @@ pub fn WidgetContainer(Props {
 
 
     // ------------ View Items
-    let data_source_view = {
-		let data_source = data_source.clone();
-		let apply_ds = apply_ds.clone();
-		let props = yew::props!(data_source::Props {
-			ds: (*data_source).clone(),
-			edit_mode: *edit_mode,
-			on_apply: apply_ds,
-		});
-		html! {<DataSource ..props/>}
-	};
+    // let data_source_view = {
+	// 	let data_source = data_source.clone();
+	// 	let apply_ds = apply_ds.clone();
+	// 	let props = yew::props!(data_source::Props {
+	// 		ds: (*data_source).clone(),
+	// 		edit_mode: *edit_mode,
+	// 		on_apply: apply_ds,
+	// 	});
+	// 	html! {<DataSource ..props/>}
+	// };
 
     let img_view = {
         let edit_mode = edit_mode.clone();
@@ -206,9 +206,9 @@ pub fn WidgetContainer(Props {
 
     html! {
         <>
-        <hr/>
-        { data_source_view }
-        <hr/>
+        // <hr/>
+        // { data_source_view }
+        // <hr/>
 
 		<div class="flex-box delim-label">{"Тип объекта"}
 			{img_view}

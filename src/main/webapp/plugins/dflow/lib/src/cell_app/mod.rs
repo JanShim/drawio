@@ -1,15 +1,14 @@
 use std::rc::Rc;
-
-use common_model::dflow_cell::CellType;
 use implicit_clone::unsync::IArray;
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use yew_hooks::use_unmount;
 use stylist::yew::styled_component;
 use web_sys::HtmlDivElement;
+use common_model::dflow_cell::CellType;
 
 use crate::{
-    components::{cell_details::{CellDetails, CellTypeSelector}, get_global_css},
+    components::{cell_details::CellDetails, get_global_css},
     model::{ cell_meta::{TypesItem, CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY}, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils},
     store::cell::CellInfoContext,
     utils::SchemaOptions
@@ -34,11 +33,6 @@ pub fn CellInfoComponent(CellInfoComponentProps { context }: &CellInfoComponentP
 
                 <ContextProvider<CellInfoContext> context={context.clone()}>
                     <CellDetails />
-                    // if cell_types.contains(&CellType::UNDEFIEND) {
-                    //     <CellTypeSelector />
-                    // } else {
-                    //     <CellDetails />
-                    // }
                 </ContextProvider<CellInfoContext>>
             </>}
         },
@@ -51,12 +45,6 @@ pub fn CellInfoComponent(CellInfoComponentProps { context }: &CellInfoComponentP
 #[wasm_bindgen(js_name=renderCellInfo)]
 pub fn render_cell_info(mx_cell: MxCell, mx_editor: MxEditor, mx_utils: MxUtils, div: HtmlDivElement, options: SchemaOptions)
 {
-    // Dispatch::<store::cell::State>::global().set(store::cell::State {
-    //     // cell: Some(Rc::new(cell)),
-    //     meta,
-    //     ..Default::default()
-    // });
-
     let props = CellInfoComponentProps {
             context: CellInfoContext {
                 api_url: options.api_url.unwrap_or("undefiend".to_owned()).into(),

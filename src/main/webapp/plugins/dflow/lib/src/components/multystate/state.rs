@@ -1,10 +1,16 @@
 use common_model::{multystate::{range::RangeType, state::StateXml}, utils::filter_state_mxstyle};
-use wasm_bindgen::JsCast;
-use web_sys::{FormData, HtmlFormElement};
-use yew::{function_component, html, use_effect_with, use_state, AttrValue, Callback, Html, MouseEvent, Properties, SubmitEvent};
-use yewdux::use_store;
+use yew::{function_component, html, use_context, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties};
 
-use crate::{components::{multystate::state_rect::StateSampleRect, shared::{use_css_styles, use_state_with, MdIcon, MdIconType}}, store};
+use crate::{
+    components::{
+        multystate::{
+            state_rect::StateSampleRect,
+            FORM_NAME_PREFIX,
+            FORM_NAME_SUFIX_FROM, FORM_NAME_SUFIX_NAME, FORM_NAME_SUFIX_PK, FORM_NAME_SUFIX_STYLE, FORM_NAME_SUFIX_VALUE
+        },
+        shared::{use_css_styles, use_state_with, MdIcon, MdIconType}
+    }, model::cell_meta::CELL_TYPE_MULTY, store::cell::{CellInfoContext, NO_CONTEXT_FOUND}
+};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
@@ -12,162 +18,96 @@ pub struct Props {
     pub value: StateXml,
 }
 
-#[function_component]
-pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
-{
-    // let my_state = use_state(|| value.clone());
-    // {
-    //     let my_state = my_state.clone();
-    //     use_effect_with(value.clone(), move |value | {
-    //         my_state.set((*value).clone());
-    //     });
-    // }
-    let my_state = use_state_with(value.clone());
+// #[function_component]
+// pub fn MultystateStateComponent(Props { range_type, value, }: &Props) -> Html
+// {
+//     // let my_state = use_state(|| value.clone());
+//     // {
+//     //     let my_state = my_state.clone();
+//     //     use_effect_with(value.clone(), move |value | {
+//     //         my_state.set((*value).clone());
+//     //     });
+//     // }
+//     let my_state = use_state_with(value.clone());
 
-    let css_strings = use_css_styles(my_state.style.clone());
+//     let css_strings = use_css_styles(my_state.style.clone());
 
-    // --- view items
-    let view_mode = html! {
-        <table class="prop-table">
-        <tr>
-            <td><div class="state-name">{ my_state.name.clone() }</div></td>
-            <td>
-            {match range_type {
-                RangeType::DISCRET => html! {<>
-                    {"знач: "}
-                    { my_state.value.to_string() }
-                </>},
-                RangeType::RANGE => {
-                    if my_state.pk == 0 {
-                        html! {"нет нижней границы"}
-                    } else {
-                        html! {<>{"нижняя граница: "}{ my_state.value.to_string() }</>}
-                    }
-                },
+//     // --- view items
+//     let view_mode = html! {
+//         <table class="prop-table">
+//         <tr>
+//             <td><div class="state-name">{ my_state.name.clone() }</div></td>
+//             <td>
+//             {match range_type {
+//                 RangeType::DISCRET => html! {<>
+//                     {"знач: "}
+//                     { my_state.value.to_string() }
+//                 </>},
+//                 RangeType::RANGE => {
+//                     if my_state.pk == 0 {
+//                         html! {"нет нижней границы"}
+//                     } else {
+//                         html! {<>{"нижняя граница: "}{ my_state.value.to_string() }</>}
+//                     }
+//                 },
 
-            }}
-            </td>
-            <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
-        </tr>
-        </table>
-    };
+//             }}
+//             </td>
+//             <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
+//         </tr>
+//         </table>
+//     };
 
-    // item view
-    html! {
-        <table class="prop-table">
-        <tr>
-            <td>{ view_mode }</td>
-            <td class="img"></td>
-        </tr>
-        </table>
-    }
+//     // item view
+//     html! {
+//         <table class="prop-table">
+//         <tr>
+//             <td>{ view_mode }</td>
+//             <td class="img"></td>
+//         </tr>
+//         </table>
+//     }
 
-}
+// }
 
 
 // =====================================
 #[derive(Properties, PartialEq, Debug)]
 pub struct MultystateStateEditProps {
-    pub selected: bool,
+    pub edit_mode: bool,
     pub value: StateXml,
-    pub apply: Callback<StateXml>,
-    pub select: Callback<Option<StateXml>>,
 }
 
 #[function_component]
 pub fn MultystateStateEditComponent(MultystateStateEditProps {
+    edit_mode,
     value,
-    apply,
-    select,
-    selected,
 }: &MultystateStateEditProps) -> Html
 {
-    // let (_, store_state_dispatch) = use_store::<cell::State>();
-
-    let (cell_state, _) = use_store::<store::cell::State>();  // cell meta storage
     let range_type = use_state(|| Into::<RangeType>::into(value.value.clone()));
 
-    let my_state = use_state(|| value.clone());
-    {
-        let my_state = my_state.clone();
-        use_effect_with(value.clone(), move |value| {
-            my_state.set((*value).clone());
-        });
-    }
-
-    let toggle_edit = {
-            let my_state = my_state.clone();
-            let select = select.clone();
-            Callback::from(move |_: MouseEvent| { select.emit(Some((*my_state).clone())) })
-        };
-
-    let toggle_close = {
-            let select = select.clone();
-            Callback::from(move |_: MouseEvent| {
-                select.emit(None);  // remove selection
-            })
-        };
+    let my_state = use_state_with(value.clone());
 
     let css_strings = use_css_styles(my_state.style.clone());
 
-    let form_onsubmit = {
-            let cell_state = cell_state.clone();
-            let apply = apply.clone();
-            let select = select.clone();
-            Callback::from(move |event: SubmitEvent| {
-                event.prevent_default();
-
-                let form = event.target()
-                    .and_then(|t| t.dyn_into::<HtmlFormElement>().ok());
-
-                if let Some(form) = form {
-                    if let Some(state_meta) = FormData::new_with_form(&form).ok().map(|data | Into::<StateXml>::into(data)) {
-                        todo!()
-                        // if let Some(style) = cell_state.get_cell_style().ok() {
-                        //     let filtered_style = filter_state_mxstyle(style.as_str());
-                        //     let meta = StateXml {
-                        //         style: filtered_style,
-                        //         ..state_meta
-                        //     };
-                        //     apply.emit(meta);
-                        // }
-                    }
-                }
-                select.emit(None);  // remove selection
-            })
-        };
-
-    // --- view items
-    let button = {
-        if *selected {
-            html! { <button onclick={toggle_close}><MdIcon icon={MdIconType::Cancel}/></button> }
-        } else {
-            html! { <button onclick={toggle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
-        }
-    };
-
-    // item view
+    // ================= view items ==========================
     html! {
-        <table class="prop-table">
-        <td>{
-            if *selected {
-                html! { <StateEdit
+        <tr>
+            <td colspan="2">
+                if *edit_mode {
+                    <StateEdit
+                        range_type={(*range_type).clone()}
+                        state={(*my_state).clone()}
+                    />
+                } else {
+                    <StateView
                         range_type={(*range_type).clone()}
                         state={(*my_state).clone()}
                         css_strings={(*css_strings).clone()}
-                        {form_onsubmit}/>
+                    />
                 }
-            } else {
-                html! { <StateView
-                    range_type={(*range_type).clone()}
-                    state={(*my_state).clone()}
-                    css_strings={(*css_strings).clone()}/>
-                }
-            }
-         }</td>
-
-        <td class="img" valign="top">{ button }</td>
-        </table>
+            </td>
+        </tr>
     }
 
 }
@@ -183,32 +123,43 @@ pub struct StateViewProps {
 }
 
 #[function_component]
-pub fn StateView(StateViewProps {range_type, state, css_strings }: &StateViewProps) -> Html
+pub fn StateView(StateViewProps {
+    range_type,
+    state,
+    css_strings
+}: &StateViewProps) -> Html
 {
+    let range_value = use_memo(state.clone().clone(), |v| AttrValue::from(v.value.to_string()));
+
     html!{
-        <table class="prop-table">
-        <tr>
-            <td><div class="state-name">{ state.name.clone() }</div></td>
-            <td width="100%">
-            {
-                match *range_type {
+        <div class="flex-cell">
+            <div class="state-name">
+                { state.name.clone() }
+            </div>
+            <div style="margin-left: auto;">
+                {match range_type {
                     RangeType::DISCRET => html! {<>
-                        {"знач: "}
-                        { state.value.to_string() }
+                        <span>{ "=" }</span>
+                        <span style="margin-right: 50px;">{ (*range_value).clone() }</span>
                     </>},
                     RangeType::RANGE => {
                         if state.pk == 0 {
-                            html! {"нет нижней границы"}
+                            html! {
+                                <span style="display: inline-block; width: 55px;">{ "> -∞" }</span>
+                            }
                         } else {
-                            html! {<>{"нижняя граница: "}{ state.value.to_string() }</>}
+                            html! {<>
+                                <span>{ "≥" }</span>
+                                <span style="margin-right: 50px;">{ (*range_value).clone() }</span>
+                            </>}
                         }
                     },
-                }
-            }
-            </td>
-            <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
-        </tr>
-        </table>
+                }}
+            </div>
+            <div>
+                <StateSampleRect css_strings={(*css_strings).clone()} />
+            </div>
+        </div>
     }
 }
 
@@ -217,51 +168,102 @@ pub fn StateView(StateViewProps {range_type, state, css_strings }: &StateViewPro
 pub struct StateEditProps {
     pub range_type: RangeType,
     pub state: StateXml,
-    pub css_strings: (AttrValue, AttrValue),
-    pub form_onsubmit: Callback<SubmitEvent>,
 }
 
 #[function_component]
 pub fn StateEdit(StateEditProps {
     range_type,
     state,
-    css_strings,
-    form_onsubmit
 }: &StateEditProps) -> Html
 {
-    let init_value: AttrValue = state.value.to_string().into();
+    let context = use_context::<CellInfoContext>().expect(NO_CONTEXT_FOUND);
+
+    let my_state = use_state_with(state.clone());
+
+    let range_value = use_memo(state.clone().clone(), |v| AttrValue::from(v.value.to_string()));
+
+    let css_strings = use_css_styles(my_state.get_style());
+
+    // =============== events =======================
+    let toggle_check = {
+        let my_state = my_state.clone();
+        Callback::from(move |_: MouseEvent| {
+            let style = context.mx_cell.get_style()
+                .map(|o| filter_state_mxstyle(o.as_str()));
+
+            let mut new_state = (*my_state).clone();
+            new_state.set_style(style.unwrap_or_default());
+
+            my_state.set(new_state);
+        })
+    };
+
+    // =============== view =========================
     html!{
-    <form onsubmit={ form_onsubmit } class="input-form">
-        <input type="hidden" id="pk" name="pk" value={state.pk.to_string()}/>
-        <input type="hidden" id="range-type" name="range-type" value={(*range_type).to_string()}/>
-        <table class="prop-table">
-            <tr>
-                <td><input id="name" name="name" value={ format!("{}", state.name) } class="state-name"/></td>
-                <td width="100%">
+        <div class="flex-cell">
+            <div class="state-name">
+                <input type="hidden"
+                    id={ get_form_name(FORM_NAME_SUFIX_PK) }
+                    name={ get_form_name(FORM_NAME_SUFIX_PK) }
+                    value={state.pk.to_string()}
+                />
+                <input
+                    id={ get_form_name(FORM_NAME_SUFIX_NAME) }
+                    name={ get_form_name(FORM_NAME_SUFIX_NAME) }
+                    value={ format!("{}", state.name) }
+                />
+            </div>
+            <div style="margin-left: auto;">
                 {match range_type {
                     RangeType::DISCRET => html! {<>
-                        {"знач: "}
-                        <input type="number" id="value" name="value" value={init_value.clone()} min={format!("{init_value}")} step="1" class="state-val"/>
+                        <span>{ "=" }</span>
+                        <input type="number"
+                            id={ get_form_name(FORM_NAME_SUFIX_VALUE) }
+                            name={ get_form_name(FORM_NAME_SUFIX_VALUE) }
+                            min={ (*range_value).clone() }
+                            step="1" class="state-val"
+                            value={ (*range_value).clone() }
+                        />
                     </>},
                     RangeType::RANGE => {
                         if state.pk == 0 {
                             html! {<>
-                                {"нет нижней границы"}
-                                <input type="hidden" id="from" name="from" value={init_value.clone()} />
+                                <span style="display: inline-block; width: 55px;">{ "> -∞" }</span>
+                                <input type="hidden"
+                                    id={ get_form_name(FORM_NAME_SUFIX_FROM) }
+                                    name={ get_form_name(FORM_NAME_SUFIX_FROM) }
+                                    value={ (*range_value).clone() }
+                                />
                             </>}
                         } else {
                             html! {<>
-                                {"нижняя граница: "}
-                                <input type="number" id="from" name="from" value={init_value.clone()} min={format!("{init_value}")} step="0.01" class="state-val"/>
+                                <span>{ "≥" }</span>
+                                <input type="number"
+                                    id={ get_form_name(FORM_NAME_SUFIX_FROM) }
+                                    name={ get_form_name(FORM_NAME_SUFIX_FROM) }
+                                    min={ (*range_value).clone() }
+                                    step="0.01" class="state-val"
+                                    value={ (*range_value).clone() }
+                                />
                             </>}
                         }
                     },
                 }}
-                </td>
-                <td><StateSampleRect css_strings={(*css_strings).clone()} /></td>
-                <td><button type="submit"><MdIcon icon={MdIconType::Check}/></button></td>
-            </tr>
-        </table>
-    </form>
+            </div>
+            <div>
+                <input type="hidden"
+                    id={ get_form_name(FORM_NAME_SUFIX_STYLE) }
+                    name={ get_form_name(FORM_NAME_SUFIX_STYLE) }
+                    value={ my_state.get_style() }
+                />
+                <StateSampleRect css_strings={(*css_strings).clone()} />
+            </div>
+            <button onclick={ toggle_check }><MdIcon icon={MdIconType::Check}/></button>
+        </div>
     }
+}
+
+// ----------------------------------
+fn get_form_name(sufix: &str) -> AttrValue {
+    AttrValue::from(format!("{CELL_TYPE_MULTY}:{FORM_NAME_PREFIX}-{sufix}"))
 }

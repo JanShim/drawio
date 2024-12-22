@@ -37,6 +37,14 @@ pub fn get_global_css() -> VNode {
     justify-content: flex-end;
 }
 
+.flex-cell {
+    display: flex;
+    gap: 4px;
+    flex-direction: row;
+    vertical-align: middle;
+}
+
+
 .delim-label {
     background-color: #e9e9e9;
     height: 25px;
@@ -60,6 +68,7 @@ table.prop-table td input {
 }
 table.prop-table td.label {
     background-color: rgb(221, 221, 221);
+    width: 40px;
     text-align: right;
 }
 table.prop-table td.img {
@@ -103,8 +112,13 @@ input.state-val {
 }
 
 .state-name {
-    width: 40px;
+    width: 100px;
 }
+
+.state-name > input {
+    width: 100%;
+}
+
 
 .input-valign-center {
     height: 30px;
@@ -113,11 +127,11 @@ input.state-val {
 }
 
 .datails-panel {
-    border-bottom: grey;
+    border-bottom: 1px solid var(--border-color);
 }
 
-        "#)} />
-    }
+"#)} />
+}
 }
 
 #[function_component]
