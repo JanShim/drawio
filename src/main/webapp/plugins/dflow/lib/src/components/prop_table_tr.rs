@@ -56,7 +56,7 @@ where T: PartialEq + Clone + ToString + FromStr + 'static
     html! {
         <tr>
             <td class="label">{ label }</td>
-            <td>{ value_view }</td>
+            <td><div class="prop-value">{ value_view }</div></td>
        </tr>
     }
 }

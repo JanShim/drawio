@@ -21,6 +21,9 @@ pub enum MdIconType {
     Square,
     Cancel,
     Add,
+    KeyboardDoubleArrowUp,
+    KeyboardDoubleArrowDown,
+
 }
 
 impl MdIconType {
@@ -32,6 +35,8 @@ impl MdIconType {
             MdIconType::Square => "-?-".into(),
             MdIconType::Cancel => "Отменить".into(),
             MdIconType::Add => "Добавить".into(),
+            MdIconType::KeyboardDoubleArrowUp => "Взять стиль".into(),
+            MdIconType::KeyboardDoubleArrowDown => "Наложить стиль".into(),
         }
     }
 }
@@ -51,6 +56,8 @@ impl Into<AttrValue> for MdIconType {
             MdIconType::Square => "square".into(),
             MdIconType::Cancel => "cancel".into(),
             MdIconType::Add => "add".into(),
+            MdIconType::KeyboardDoubleArrowUp => "keyboard_double_arrow_up".into(),
+            MdIconType::KeyboardDoubleArrowDown => "keyboard_double_arrow_down".into(),
         }
     }
 }
@@ -154,7 +161,7 @@ pub struct Props {
 pub fn MdIcon(Props { icon }: &Props) -> Html
 {
     html! {
-        <span class="material-icons md-18"  title={icon.get_title()}>{ Into::<AttrValue>::into((*icon).clone()) }</span>
+        <span class="material-icons md-16"  title={icon.get_title()}>{ Into::<AttrValue>::into((*icon).clone()) }</span>
     }
 }
 

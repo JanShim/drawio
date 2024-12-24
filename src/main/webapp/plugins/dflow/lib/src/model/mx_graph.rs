@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use super::mx_graph_model::MxGraphModel;
+use super::{mx_cell::MxCell, mx_graph_model::MxGraphModel};
 
 #[wasm_bindgen]
 // #[derive(PartialEq)]
@@ -16,6 +16,11 @@ extern "C" {
      */
     #[wasm_bindgen(method, js_name=getModel)]
     fn mx_get_model(this: &MxGraph) -> JsValue;
+
+//mxGraph.prototype.refresh = function(	cell	)
+//Clears all cell states or the states for the hierarchy starting at the given cell and validates the graph.  This fires a refresh event as the last step.
+	#[wasm_bindgen(method, js_name=refresh)]
+	fn refresh(this: &MxGraph, cell: &MxCell);
 }
 
 impl MxGraph {

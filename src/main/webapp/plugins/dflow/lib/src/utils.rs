@@ -65,6 +65,13 @@ extern "C" {
 
     #[wasm_bindgen(js_name=recreateCellInfo)]
     pub fn recreate_cell_info(recreateFun: &Closure<dyn Fn(JsValue)>);
+
+    // #[wasm_bindgen(js_name=setDefaultStyles)]
+    // pub fn set_default_styles(editor: &MxEditor);
+
+    #[wasm_bindgen(js_name=refreshCell)]
+    pub fn refresh_cell(editor: &MxEditor, cell: &MxCell);
+
 }
 
 //------------------------------------------------------------------

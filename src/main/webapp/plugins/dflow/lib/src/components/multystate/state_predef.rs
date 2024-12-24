@@ -4,7 +4,7 @@ use yewdux::use_store;
 
 use crate::{
     components::{multystate::state_rect:: StateSampleRect, shared::{use_css_styles, use_state_with, MdIcon, MdIconType}},
-    store::{self, cell::{CellInfoContext, NO_CONTEXT_FOUND}},
+    store::{self, cell::{CellInfoContext, NO_CONTEXT_FOUND}}, utils::refresh_cell,
 };
 
 // #[derive(Properties, PartialEq, Debug)]
@@ -91,41 +91,20 @@ pub fn StatePredefEditComponent<T>(
     where
         T: PartialEq + PredefStyle + Clone +'static,
 {
-    // let (cell_state, _) = use_store::<store::cell::State>();  // cell meta storage
-    // let selected = use_state(|| false);
     let context = use_context::<CellInfoContext>().expect(NO_CONTEXT_FOUND);
 
     let my_state = use_state_with(value.clone());
 
-    // let my_state = use_state(|| value.clone());
-    // {
-    //     let my_state = my_state.clone();
-    //     use_effect_with(value.clone(), move |value| {
-    //         my_state.set((*value).clone());
-    //     });
-    // }
-
     let css_strings = use_css_styles(my_state.get_style());
 
     // =========== events ================
-    // let toggle_edit = {
-    //     let selected = selected.clone();
-    //     Callback::from(move |_: MouseEvent| {
-    //         selected.set(true);
-    //     })
-    // };
-
-    // let toggle_close = {
-    //     let selected = selected.clone();
-    //     Callback::from(move |_: MouseEvent| {
-    //         selected.set(false);
-    //     })
-    // };
-
-    let toggle_check = {
+    let get_style = {
+        let mxcell =  context.mx_cell.clone();
         let my_state = my_state.clone();
-        Callback::from(move |_: MouseEvent| {
-            let style = context.mx_cell.get_style()
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+
+            let style = mxcell.get_style()
                 .map(|o| filter_state_mxstyle(o.as_str()));
 
             let mut new_state = (*my_state).clone();
@@ -135,37 +114,25 @@ pub fn StatePredefEditComponent<T>(
         })
     };
 
+    let set_style = {
+        let mxcell =  context.mx_cell.clone();
+        let mxeditor = context.mx_editor.clone();
+        let my_state = my_state.clone();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+
+            let new_style = mxcell.get_style()
+                .map(|o| merge_mx_styles(my_state.get_style().as_str(), o.as_str()));
+
+            if let Some(new_style) = new_style {
+                mxcell.set_style(new_style.to_string());
+
+                refresh_cell(&mxeditor, &mxcell);
+            }
+        })
+    };
+
     // ============= view items =======================
-    // let img = {
-    //     if *selected {
-    //         html! { <img src="images/close.png" onclick={toggle_close}/> }
-    //     } else {
-    //         html! { <button onclick={toggle_edit}><MdIcon icon={MdIconType::Edit}/></button> }
-    //     }
-    // };
-
-    // let view_mode = html! {
-    //     <table>
-    //     <tr>
-    //         <td width="100%">{ my_state.get_name().as_str() }</td>
-    //         <td width="50"><StateSampleRect  css_strings={(*css_strings).clone()}/></td>
-    //     </tr>
-    //     </table>
-    // };
-
-
-    // let edit_mode = html! {
-    //     <table>
-    //     <tr>
-    //         <td width="100%">{ my_state.get_name().as_str() }</td>
-    //         <td width="50"><StateSampleRect css_strings={(*css_strings).clone()}/></td>
-    //         <td width="20">
-    //             <button onclick={toggle_check}><MdIcon icon={MdIconType::Check}/></button>
-    //         </td>
-    //     </tr>
-    //     </table>
-    // };
-
     // item view
     html! {
         if *edit_mode {
@@ -178,9 +145,8 @@ pub fn StatePredefEditComponent<T>(
                             <StateSampleRect css_strings={ (*css_strings).clone() }/>
                         </div>
                         if *edit_mode {
-                            <button onclick={ toggle_check }
-                                disabled={ !*checked }
-                            ><MdIcon icon={ MdIconType::Check }/></button>
+                            <button onclick={ set_style }><MdIcon icon={MdIconType::KeyboardDoubleArrowUp}/></button>
+                            <button onclick={ get_style }><MdIcon icon={MdIconType::KeyboardDoubleArrowDown}/></button>
                         }
                     </div>
                 </td>

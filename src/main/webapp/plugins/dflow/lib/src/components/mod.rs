@@ -76,6 +76,10 @@ table.prop-table td.img {
     padding: 0px;
 }
 
+.material-icons.md-16 {
+    font-size: 16px;
+}
+
 .img-16 {
     width: 16px;
     height: 16px;
@@ -88,7 +92,7 @@ div.svg-view {
 }
 
 .input-100 {
-    width: 100%;
+    width: 98%;
 }
 
 div.label {
@@ -97,6 +101,12 @@ div.label {
 
 div.value {
     padding: 2px;
+}
+
+.prop-value {
+    width: 230px;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 input.state-val {
@@ -119,7 +129,6 @@ input.state-val {
     width: 100%;
 }
 
-
 .input-valign-center {
     height: 30px;
     display: flex;
@@ -128,6 +137,10 @@ input.state-val {
 
 .datails-panel {
     border-bottom: 1px solid var(--border-color);
+}
+
+.item-details button {
+    padding: 2px;
 }
 
 "#)} />

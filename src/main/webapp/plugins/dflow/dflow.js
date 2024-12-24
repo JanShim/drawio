@@ -67,6 +67,10 @@ function getPrettyXml(element) {
 	return mxUtils.getPrettyXml(element);
 }
 
+function refreshCell(editor, cell) {
+	editor.graph.refresh(cell);
+}
+
 // двигает модель в (0,0) угол
 function clipedModelBox(modelStr) {
 	let node = mxUtils.parseXml(modelStr).documentElement;
@@ -382,8 +386,6 @@ function recreateCellInfo(renderFun) {
 	cellDataWindow.show();
 }
 
-
-
 /**
  * Sample plugin.
  */
@@ -402,6 +404,7 @@ Draw.loadPlugin(async function(ui) {
 	mxCssLink("plugins/dflow/css/styles.css");
 
 	let graph = ui.editor.graph;
+
 	// ============= windows ==================
 
 	// Highlights current cell

@@ -1,6 +1,8 @@
 use wasm_bindgen::prelude::*;
 use web_sys::Node;
 
+use super::mx_graph::MxGraph;
+
 #[wasm_bindgen]
 extern "C" {
     pub fn name() -> String;
@@ -17,6 +19,10 @@ extern "C" {
      */
     #[wasm_bindgen(method, js_name=setGraphXml)]
     pub fn set_graph_xml(this: &MxEditor, node: Node);
+
+    // #[wasm_bindgen(js_name=graph)]
+    // pub graph: MxGraph ;
+
 }
 
 impl MxEditor {
@@ -28,15 +34,6 @@ impl MxEditor {
             err => Err(err),
         }
     }
-
-    // pub fn get_diagram_bounding_box(&self) -> Result<JsValue, JsValue>
-    // {
-    //     let rect = utils::get_diagram_bounding_box(self);
-    //     if rect.is_object() {
-    //         return Ok(rect);
-    //     }
-    //     Err(rect)
-    // }
 }
 
 impl Default for MxEditor {

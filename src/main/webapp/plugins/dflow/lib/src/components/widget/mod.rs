@@ -182,7 +182,7 @@ pub fn WidgetContainer(Props {
 		let type_edit_mode = type_edit_mode.clone();
         if edit_mode {
             if *type_edit_mode {
-                html! { <button onclick={on_type_apply}> <MdIcon icon={MdIconType::Check}/></button> }
+                html! { <button onclick={on_type_apply}><MdIcon icon={MdIconType::Check}/></button> }
              } else {
                 html! { <button onclick={togle_type_edit}><MdIcon icon={MdIconType::Edit}/></button> }
              }

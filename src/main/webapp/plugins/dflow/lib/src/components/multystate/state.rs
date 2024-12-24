@@ -1,4 +1,5 @@
-use common_model::{multystate::{range::RangeType, state::StateXml}, utils::filter_state_mxstyle};
+use common_model::{multystate::{range::RangeType, state::StateXml}, utils::{filter_state_mxstyle, merge_mx_styles}};
+use quick_xml::de;
 use yew::{function_component, html, use_context, use_memo, use_state, AttrValue, Callback, Html, MouseEvent, Properties};
 
 use crate::{
@@ -9,7 +10,9 @@ use crate::{
             FORM_NAME_SUFIX_FROM, FORM_NAME_SUFIX_NAME, FORM_NAME_SUFIX_PK, FORM_NAME_SUFIX_STYLE, FORM_NAME_SUFIX_VALUE
         },
         shared::{use_css_styles, use_state_with, MdIcon, MdIconType}
-    }, model::cell_meta::CELL_TYPE_MULTY, store::cell::{CellInfoContext, NO_CONTEXT_FOUND}
+    },
+    model::cell_meta::CELL_TYPE_MULTY,
+    store::cell::{CellInfoContext, NO_CONTEXT_FOUND}, utils::refresh_cell,
 };
 
 #[derive(Properties, PartialEq, Debug)]
@@ -90,6 +93,8 @@ pub fn MultystateStateEditComponent(MultystateStateEditProps {
 
     let css_strings = use_css_styles(my_state.style.clone());
 
+    log::debug!("{}", css_strings.0);
+
     // ================= view items ==========================
     html! {
         <tr>
@@ -156,9 +161,7 @@ pub fn StateView(StateViewProps {
                     },
                 }}
             </div>
-            <div>
-                <StateSampleRect css_strings={(*css_strings).clone()} />
-            </div>
+            <StateSampleRect css_strings={(*css_strings).clone()} />
         </div>
     }
 }
@@ -180,15 +183,22 @@ pub fn StateEdit(StateEditProps {
 
     let my_state = use_state_with(state.clone());
 
-    let range_value = use_memo(state.clone().clone(), |v| AttrValue::from(v.value.to_string()));
+    let range_value = use_memo(state.clone(), |v| {
+            log::debug!("name: {:?}, value: {:?}", v.name, v.value.to_string());
+
+            AttrValue::from(v.value.to_string())
+        });
 
     let css_strings = use_css_styles(my_state.get_style());
 
     // =============== events =======================
-    let toggle_check = {
+    let get_style = {
+        let mx_cell =  context.mx_cell.clone();
         let my_state = my_state.clone();
-        Callback::from(move |_: MouseEvent| {
-            let style = context.mx_cell.get_style()
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+
+            let style = mx_cell.get_style()
                 .map(|o| filter_state_mxstyle(o.as_str()));
 
             let mut new_state = (*my_state).clone();
@@ -197,6 +207,25 @@ pub fn StateEdit(StateEditProps {
             my_state.set(new_state);
         })
     };
+
+    let set_style = {
+        let mxcell =  context.mx_cell.clone();
+        let mxeditor = context.mx_editor.clone();
+        let my_state = my_state.clone();
+        Callback::from(move |event: MouseEvent| {
+            event.prevent_default();
+
+            let new_style = mxcell.get_style()
+                .map(|o| merge_mx_styles(my_state.get_style().as_str(), o.as_str()));
+
+            if let Some(new_style) = new_style {
+                mxcell.set_style(new_style.to_string());
+
+                refresh_cell(&mxeditor, &mxcell);
+            }
+        })
+    };
+
 
     // =============== view =========================
     html!{
@@ -258,7 +287,8 @@ pub fn StateEdit(StateEditProps {
                 />
                 <StateSampleRect css_strings={(*css_strings).clone()} />
             </div>
-            <button onclick={ toggle_check }><MdIcon icon={MdIconType::Check}/></button>
+            <button onclick={ set_style }><MdIcon icon={MdIconType::KeyboardDoubleArrowUp}/></button>
+            <button onclick={ get_style }><MdIcon icon={MdIconType::KeyboardDoubleArrowDown}/></button>
         </div>
     }
 }

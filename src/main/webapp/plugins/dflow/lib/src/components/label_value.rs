@@ -35,9 +35,25 @@ pub fn LabelValueComponent(Props {
     let (checked, on_checked_toggle) = use_checked(value.is_some());
 
     // ============= view ==================
+    let props_table = html! {
+            <div>
+                <table class="prop-table">
+                    <PropTableTr<AttrValue>
+                        { edit_mode }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_LABEL}:tag") }
+                        label={ "тег:" }
+                        value={ meta.ds.tag.clone() }
+                        value_type={InputType::STRING}
+                    />
+                </table>
+            </div>
+        };
+
+
     html!{
-        if *edit_mode {
-            <div class="datails-panel">
+        <div class="datails-panel">
+            if *edit_mode {
                 <div class="input-valign-center">
                     if *checked {
                         <input type="hidden"
@@ -49,33 +65,13 @@ pub fn LabelValueComponent(Props {
                     <label for="label">{ "Настройки значения:" }</label>
                 </div>
                 if *checked {
-                    <div>
-                        <table class="prop-table">
-                            <PropTableTr<AttrValue>
-                                { edit_mode }
-                                checked={ *checked }
-                                name={ format!("{CELL_TYPE_LABEL}:tag") }
-                                label={ "тег:" }
-                                value={ meta.ds.tag.clone() }
-                                value_type={InputType::STRING}
-                            />
-                        </table>
-                    </div>
+                    { props_table }
                 }
-            </div>
-        } else {
-            <div class="datails-panel">
+            } else {
                 <div class="input-valign-center">{ "Настройки значения:" }</div>
-                <div>
-                    <table class="prop-table">
-                        <tr>
-                            <td class="label">{ "тег:" }</td>
-                            <td>{ meta.ds.tag.clone() }</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        }
+                { props_table }
+            }
+        </div>
     }
 
 }

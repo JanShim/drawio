@@ -125,6 +125,8 @@ pub fn StatesSelector(Props {
                         }
                         </select>
                         <button onclick={on_state_add}><MdIcon icon={MdIconType::Add}/></button>
+                    } else {
+                        <div>{ range_type.get_label() }</div>
                     }
                 </div>
             </td>

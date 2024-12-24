@@ -194,14 +194,14 @@ pub fn DiagramInfoComponent(Props { form }: &Props) -> Html {
     };
 
     html! {
-        <>
+        <div class="item-details">
             {header}
             if *edit_mode {
                 { form_view }
             } else {
                 { view }
             }
-        </>
+        </div>
     }
 
 }

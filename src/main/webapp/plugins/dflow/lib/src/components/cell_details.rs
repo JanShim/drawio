@@ -25,7 +25,7 @@ pub fn CellDetails() -> Html {
     });
 
     let context = &use_context::<CellInfoContext>().expect(NO_CONTEXT_FOUND);
-    let force_updater = use_force_update();
+    // let force_updater = use_force_update();
 
     let cell_types_list = use_list({
             let cell_meta = context.mx_cell.get_meta().unwrap_or_default();
@@ -49,10 +49,10 @@ pub fn CellDetails() -> Html {
 
     let on_cancel = {
             let edit_mode = edit_mode.clone();
-            let force_updater = force_updater.clone();
+            // let force_updater = force_updater.clone();
             Callback::from(move |_: MouseEvent| {
                 edit_mode.set(false);
-                force_updater.force_update();
+                // force_updater.force_update();
             })
         };
 
@@ -182,7 +182,7 @@ pub fn CellDetails() -> Html {
         };
 
     html! {
-        <div >
+        <div class="item-details">
             <form onsubmit={on_apply}>
                 { header }
                 { details_view }

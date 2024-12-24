@@ -31,9 +31,41 @@ pub fn GeomValue(Props {
 
     let (checked, on_checked_toggle) = use_checked(value.is_some());
 
+    // ============= view ==================
+    let props_table = html! {
+            <div>
+                <table class="prop-table">
+                    <PropTableTr<AttrValue>
+                        { edit_mode }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_GEOM}:tag") }
+                        label={ "тег:" }
+                        value={ meta.ds.tag.clone() }
+                        value_type={InputType::STRING}
+                    />
+                    <PropTableTr<f32>
+                        { edit_mode }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_GEOM}:min") }
+                        label={ "min:" }
+                        value={ meta.min }
+                        value_type={InputType::NUMBER}
+                    />
+                    <PropTableTr<f32>
+                        { edit_mode }
+                        checked={ *checked }
+                        name={ format!("{CELL_TYPE_GEOM}:max") }
+                        label={ "max:" }
+                        value={ meta.max }
+                        value_type={InputType::NUMBER}
+                    />
+                </table>
+            </div>
+        };
+
     html! {
-        if *edit_mode {
-            <div class="datails-panel">
+        <div class="datails-panel">
+            if *edit_mode {
                 <div class="input-valign-center">
                     if *checked {
                         <input type="hidden"
@@ -45,57 +77,12 @@ pub fn GeomValue(Props {
                     <label for="label">{ "Настройки высоты:" }</label>
                 </div>
                 if *checked {
-                    <div>
-                        <table class="prop-table">
-                            <PropTableTr<AttrValue>
-                                { edit_mode }
-                                checked={ *checked }
-                                name={ format!("{CELL_TYPE_GEOM}:tag") }
-                                label={ "тег:" }
-                                value={ meta.ds.tag.clone() }
-                                value_type={InputType::STRING}
-                            />
-                            <PropTableTr<f32>
-                                { edit_mode }
-                                checked={ *checked }
-                                name={ format!("{CELL_TYPE_GEOM}:min") }
-                                label={ "min:" }
-                                value={ meta.min }
-                                value_type={InputType::NUMBER}
-                            />
-                            <PropTableTr<f32>
-                                { edit_mode }
-                                checked={ *checked }
-                                name={ format!("{CELL_TYPE_GEOM}:max") }
-                                label={ "max:" }
-                                value={ meta.max }
-                                value_type={InputType::NUMBER}
-                            />
-                        </table>
-                    </div>
+                    { props_table }
                 }
-            </div>
-        }
-        else {
-            <div class="datails-panel">
+            } else {
                 <div class="input-valign-center">{ "Настройки высоты:" }</div>
-                <div>
-                    <table class="prop-table">
-                        <tr>
-                            <td class="label">{ "тег:" }</td>
-                            <td>{ meta.ds.tag.clone() }</td>
-                        </tr>
-                        <tr>
-                            <td class="label">{ "min:" }</td>
-                            <td>{ meta.min }</td>
-                        </tr>
-                        <tr>
-                            <td class="label">{ "max:" }</td>
-                            <td>{ meta.max }</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        }
+                { props_table }
+            }
+        </div>
     }
 }
