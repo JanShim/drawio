@@ -1,13 +1,13 @@
 use std::{cmp::Ordering, collections::HashSet, rc::Rc};
-use common_model::{dflow_cell::{CellType, DFlowVariant}, multystate::range::RangeType};
+use common_model::{dflow_cell::CellType, multystate::range::RangeType};
 use implicit_clone::unsync::{IArray, IString};
-use wasm_bindgen::JsValue;
-use yew::{AppHandle, AttrValue};
+use yew::AttrValue;
 use yewdux::{store::Store, Reducer};
 
-use crate::{cell_app::CellInfoComponent, model::{
-    cell_meta::{CellMeta, TypesItem}, mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
-}};
+use crate::model::{
+    cell_meta::TypesItem,
+    mx_cell::MxCell, mx_editor::MxEditor, mx_utils::MxUtils
+};
 
 pub const NOT_CELL: &str = "not cell";
 pub const NOT_CELL_META: &str = "not cell meta";

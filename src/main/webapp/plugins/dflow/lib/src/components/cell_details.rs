@@ -1,18 +1,22 @@
 use yew::prelude::*;
 use yew_hooks::{use_list, use_toggle, use_unmount};
-use std::{cell::RefCell, collections::{HashMap, HashSet}, rc::Rc};
+use std::collections::HashMap;
 use wasm_bindgen::JsCast;
-use web_sys::{FormData, HtmlFormElement, HtmlInputElement};
-use common_model::{dflow_cell::{CellType, DFlowVariant}, geom_value::GeomValueXml, label_value::LabelValueXml, multystate::MultystateXml};
+use web_sys::{FormData, HtmlFormElement};
+use common_model::{dflow_cell::{CellType, DFlowVariant}, geom_value::GeomValueXml, label_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
 
 use crate::{
     components::{
         geom_value::GeomValue, label_value::LabelValueComponent,
-        multystate::MultystateComponent, shared::{MdIcon, MdIconType},
+        multystate::MultystateComponent,
+        shared::{MdIcon, MdIconType},
+        widget::{
+            container_edit::WidgetContainerEdit,
+            container_view::WidgetContainerView
+        },
     },
-    model::cell_meta::{ form::CellDetailsForm, TypesItem, CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY },
+    model::cell_meta::{ form::CellDetailsForm, TypesItem, CELL_TYPE_WIDGET_CONTAINER},
     store::cell::{
-        cell_type_compare,
         CellInfoContext,
         NO_CONTEXT_FOUND
     },
@@ -25,7 +29,6 @@ pub fn CellDetails() -> Html {
     });
 
     let context = &use_context::<CellInfoContext>().expect(NO_CONTEXT_FOUND);
-    // let force_updater = use_force_update();
 
     let cell_types_list = use_list({
             let cell_meta = context.mx_cell.get_meta().unwrap_or_default();
@@ -34,9 +37,26 @@ pub fn CellDetails() -> Html {
                 .map(|o| (o.get_cell_type(), o.clone()))
                 .collect::<HashMap<CellType, DFlowVariant>>();
 
-            context.available_types.iter()
+            if cell_types.contains_key(&CellType::WIDGETCONTAINER) {
+                let type_item = TypesItem {
+                        cell_type: CellType::WIDGETCONTAINER,
+                        name: CELL_TYPE_WIDGET_CONTAINER.into(),
+                        label: "Виджет контейнер".into(),
+                        selected: true,
+                    };
+
+                let variant = cell_types.get(&CellType::WIDGETCONTAINER)
+                    .map(|o| o.clone());
+
+                // result
+                vec![(type_item, variant)]
+            } else {
+                // result
+                context.available_types.iter()
                 .map(|o: TypesItem| (o.clone(), cell_types.get(&o.cell_type).map(|i| i.clone())))
-                .collect::<Vec<(TypesItem, Option<DFlowVariant>)>>()
+                .collect::<Vec<_>>()
+            }
+
         });
 
     let edit_mode = use_toggle(false, true);
@@ -105,48 +125,38 @@ pub fn CellDetails() -> Html {
     let details_view = {
             let edit_mode = edit_mode.clone();
                 if *edit_mode {
-                    html! {<>
+                    html! {
                         {for cell_types_list.current().iter()
                             .map(|(item, variant)| {
                                 match item.cell_type {
                                     CellType::LABEL => {
                                         let value = variant.clone()
-                                            .map(|o| {
-                                                match o {
-                                                    DFlowVariant::Label(value) => value,
-                                                    _ => { log::error!("not label cell variant"); LabelValueXml::default()}
-                                                }
-                                            });
+                                            .map(|o| o.get_label());
 
                                         html!{ <LabelValueComponent edit_mode={ true } {value}/> }
                                     },
                                     CellType::MULTYSTATE => {
-                                        let value = variant.clone()
-                                            .map(|o| {
-                                                match o {
-                                                    DFlowVariant::Multystate(value) => value,
-                                                    _ => { log::error!("not multystate cell variant"); MultystateXml::default()}
-                                                }
-                                            });
+                                        let value = variant.as_ref().map(|o| o.get_multystate());
 
                                         html!{ <MultystateComponent edit_mode={ true } {value}/> }
                                     },
                                     CellType::GEOM => {
-                                        let value = variant.clone()
-                                            .map(|o| {
-                                                match o {
-                                                    DFlowVariant::Geometry(value) => value,
-                                                    _ => { log::error!("not geometry cell variant"); GeomValueXml::default()}
-                                                }
-                                            });
+                                        let value = variant.as_ref().map(|o| o.get_geometry());
 
                                         html!{ <GeomValue edit_mode={ true } {value}/> }
+                                    },
+                                    CellType::WIDGETCONTAINER => {
+                                        let value = variant.as_ref()
+                                            .map(|o| o.get_widget_container())
+                                            .unwrap_or_default();
+
+                                        html!{ <WidgetContainerEdit {value}/> }
                                     },
                                     _ => html!(),
                                 }
                             })
                         }
-                    </>}
+                    }
                 } else {
                     let current_variants = cell_types_list.current().iter()
                         .filter(|(_, variant)| variant.is_some())
@@ -172,6 +182,9 @@ pub fn CellDetails() -> Html {
                                     },
                                     DFlowVariant::Geometry(value) => html!{
                                         <GeomValue edit_mode={ false } {value}/>
+                                    },
+                                    DFlowVariant::WidgetContainer(value) => html!{
+                                        <WidgetContainerView {value}/>
                                     },
                                     _ => html! { <h1>{ "Тип элемента не обрабатывается" }</h1> }
                                 }

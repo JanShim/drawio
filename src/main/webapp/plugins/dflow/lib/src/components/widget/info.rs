@@ -2,15 +2,17 @@ use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use web_sys::{FormData, HtmlFormElement};
 use yew_hooks::{use_async_with_options, use_list, use_toggle, use_unmount, UseAsyncOptions, UseListHandle};
-use yewdux::{use_selector, use_store, Dispatch};
-use common_model::diagram::{WidgetPropertyXml, WidgetXml};
+use common_model::diagram::WidgetPropertyXml;
 
 use crate::{
-    components::shared::{use_list_selected, use_state_with, MdIcon, MdIconType}, model::{
-        common::{DiagramMeta, GraphModel, ModelForm}, mx_cell::CellValue, mx_editor::MxEditor, widget::{form::WidgetForm, WidgetDto}, widget_group::WidgetGroupListItemDto
+    components::shared::{MdIcon, MdIconType}, model::{
+        common::{DiagramMeta, GraphModel},
+        mx_editor::MxEditor,
+        widget::{form::WidgetForm, WidgetDto},
+        widget_group::WidgetGroupListItemDto
     },
-    store::{cell::NO_CONTEXT_FOUND, diagram::{self, State}, mx_context::TMxGraphContext},
-    utils::{cliped_model_box, fetch, get_cell0, get_cell0_meta, post, put, set_cell0_value}
+    store::{cell::NO_CONTEXT_FOUND, mx_context::TMxGraphContext},
+    utils::{cliped_model_box, fetch, get_cell0_meta, post, put, set_cell0_value}
 };
 
 #[derive(PartialEq, Properties)]

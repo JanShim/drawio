@@ -18,7 +18,6 @@ pub struct Props {
 pub fn LabelValueComponent(Props {
     edit_mode,
     value,
-    // on_detals_apply,
 }: &Props ) -> Html
 {
     use_unmount(|| {
@@ -49,7 +48,6 @@ pub fn LabelValueComponent(Props {
                 </table>
             </div>
         };
-
 
     html!{
         <div class="datails-panel">

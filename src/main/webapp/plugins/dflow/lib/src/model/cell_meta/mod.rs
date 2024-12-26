@@ -18,6 +18,7 @@ pub mod form;
 pub const CELL_TYPE_LABEL: &str = "value";
 pub const CELL_TYPE_MULTY: &str = "multy";
 pub const CELL_TYPE_GEOM: &str = "geom";
+pub const CELL_TYPE_WIDGET_CONTAINER: &str = "widget-container";
 
 #[derive(Debug, PartialEq, Clone, ImplicitClone)]
 pub struct TypesItem {
@@ -85,7 +86,7 @@ impl CellMeta {
     pub fn get_label_meta(&self) -> Result<LabelValueXml, JsValue>{
         let position = self.get_meta_position(CellType::LABEL);
         if position.is_some()  {
-            let item = self.types[position.unwrap()].get_label().unwrap();
+            let item = self.types[position.unwrap()].get_label();
             return Ok(item);
         }
         Err(CellStateError::NotLabel.into())
@@ -101,7 +102,7 @@ impl CellMeta {
     pub fn get_multystate_meta(&self) -> Result<MultystateXml, JsValue>{
         let position = self.get_meta_position(CellType::MULTYSTATE);
         if position.is_some()  {
-            let item = self.types[position.unwrap()].get_multystate().unwrap();
+            let item = self.types[position.unwrap()].get_multystate();
             return Ok(item);
         }
         Err(CellStateError::NotMultystate.into())
@@ -117,7 +118,7 @@ impl CellMeta {
     pub fn get_geometry_meta(&self) -> Result<GeomValueXml, JsValue>{
         let position = self.get_meta_position(CellType::GEOM);
         if position.is_some()  {
-            let item = self.types[position.unwrap()].get_geometry().unwrap();
+            let item = self.types[position.unwrap()].get_geometry();
             return Ok(item);
         }
         Err(CellStateError::NotGeometry.into())
@@ -135,7 +136,7 @@ impl CellMeta {
     pub fn get_widget_container_meta(&self) -> Result<WidgetContainerXml, JsValue>{
         let position = self.get_meta_position(CellType::WIDGETCONTAINER);
         if position.is_some()  {
-            let item = self.types[position.unwrap()].get_widget_container().unwrap();
+            let item = self.types[position.unwrap()].get_widget_container();
             return Ok(item);
         }
         Err(CellStateError::NotWidgetContainer.into())
