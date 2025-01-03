@@ -1,9 +1,12 @@
-use web_sys::Document;
 use yew::prelude::*;
+use base64::prelude::*;
 use std::rc::Rc;
+use web_sys::Document;
 use common_model::utils::{map_to_svg_style, mx_style_to_map};
 use common_model::traits::WithXmlDataSource;
 use common_model::data_source::DataSourceXml;
+
+use crate::utils::NULL_GLYPH_SVG;
 
 // ===========================================
 #[derive(PartialEq, Debug)]
@@ -66,6 +69,19 @@ impl Into<AttrValue> for MdIconType {
 pub fn get_document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");
     window.document().expect("should have a document on window")
+}
+
+pub fn decode_glyph_to_svg(glyph: &str) -> AttrValue {
+    let svg = BASE64_STANDARD.decode(glyph)
+        .map(|o| String::from_utf8(o).unwrap_or(NULL_GLYPH_SVG.to_owned()));
+
+    match svg {
+        Ok(svg) => svg.into(),
+        Err(err) => {
+            log::error!("{err}");
+            NULL_GLYPH_SVG.into()
+        }
+    }
 }
 
 // ============ hooks ======================

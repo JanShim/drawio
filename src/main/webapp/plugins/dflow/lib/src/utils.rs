@@ -8,13 +8,13 @@ use reqwasm::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use wasm_bindgen_futures::wasm_bindgen;
-use yew::AttrValue;
 
-use crate::{errors::FetchError, model::{common::DiagramMeta, mx_cell::{CellValue, MxCell}, mx_editor::MxEditor, widget::form::WidgetForm}};
+use crate::{errors::FetchError, model::{common::DiagramMeta, mx_cell::{CellValue, MxCell}, mx_editor::MxEditor}};
 
 pub const NULL_UUID: &str = "00000000-0000-0000-0000-000000000000";
 pub const NULL_MODEL: &str = "<mxGraphModel/>";
-pub const NULL_GLYPH: &str = "<svg/>";
+pub const NULL_GLYPH_SVG: &str = "<svg/>";
+pub const NULL_GLYPH_SIZED: &str = r#"{"glyph": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgd2lkdGg9IjMzcHgiIGhlaWdodD0iMzNweCIgdmlld0JveD0iLTAuNSAtMC41IDMzIDMzIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUpOyI+CiAgICA8Zz4KICAgICAgICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiKDAsIDAsIDApIi8+CiAgICA8L2c+CiAgICA8ZyBmaWxsPSJyZ2IoMCwgMCwgMCkiIGZvbnQtZmFtaWx5PSImcXVvdDtIZWx2ZXRpY2EmcXVvdDsiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTJweCI+CiAgICAgICAgPHRleHQgeD0iMTUuNSIgeT0iMjAuNSI+PzwvdGV4dD4KICAgIDwvZz4KPC9zdmc+Cg==", "geom": {"x":0.0,"y":0.0,"width":33.0,"height":33.0}}"#;
 
 
 #[wasm_bindgen]
@@ -51,8 +51,11 @@ extern "C" {
     #[wasm_bindgen(js_name=getGraphSvg)]
     pub fn get_graph_svg(editor: &MxEditor) -> JsString;
 
-    #[wasm_bindgen(js_name=setWidgetModel)]
-    pub fn set_widget_model(editor: &MxEditor, cell: &MxCell, model_str: String);
+    // #[wasm_bindgen(js_name=setWidgetModel)]
+    // pub fn set_widget_model(editor: &MxEditor, cell: &MxCell, model_str: String);
+
+    #[wasm_bindgen(js_name=setWidgetContainerGlyph)]
+    pub fn set_widget_container_glyph(editor: &MxEditor, cell: &MxCell, model_str: String);
 
     #[wasm_bindgen(js_name=clipedModelBox)]
     pub fn cliped_model_box(model_str: String) -> JsString;
@@ -72,6 +75,8 @@ extern "C" {
     #[wasm_bindgen(js_name=refreshCell)]
     pub fn refresh_cell(editor: &MxEditor, cell: &MxCell);
 
+    // #[wasm_bindgen(js_name=encodeURIComponent)]
+    // pub fn encode_uri_component(uri: &str) -> JsString;
 }
 
 //------------------------------------------------------------------

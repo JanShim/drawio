@@ -15,7 +15,7 @@ pub struct Props {
 
 #[function_component]
 pub fn WidgetListItemComponent(Props {item, select, selected }: &Props) -> Html {
-    let WidgetListItem {uuid, name, group } = item;
+    let WidgetListItem {uuid, name, name_ru, group } = item;
 
     let on_select = {
             let pk = uuid.clone();
@@ -26,8 +26,10 @@ pub fn WidgetListItemComponent(Props {item, select, selected }: &Props) -> Html 
         };
 
     html! {
-        <div onclick={on_select} class={classes!( "selectable", (selected == uuid).then_some("selected") )}>
-            {format!("{} {} {}", uuid, group, name)}
-        </div>
+        <tr onclick={on_select} class={classes!( "selectable", (selected == uuid).then_some("selected") )}>
+            <td>{ name }</td>
+            <td>{ name_ru.clone().unwrap_or_default() }</td>
+            <td>{ group }</td>
+        </tr>
     }
 }

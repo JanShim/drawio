@@ -3,13 +3,14 @@ use std::fmt::Display;
 
 use wasm_bindgen::JsValue;
 
+pub const JSON_FORMAT_ERROR: &str = "json format error";
 
 #[derive(Debug, Clone)]
 pub enum FetchError {
     // #[error("{0}")]
     RequestError(String),
     // #[error("{0}")]
-    SerdeError(String),    
+    SerdeError(String),
     InsertModelError(String),
     ParseXmlError(String),
 }

@@ -4,21 +4,23 @@ use web_sys::{Node, SvgElement};
 use yew::prelude::*;
 use implicit_clone::unsync::IString;
 
-use crate::components::shared::get_document;
+use crate::components::shared::{decode_glyph_to_svg, get_document};
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct Props {
-    pub glyph: IString,
+    pub svg: IString,
 }
 
 #[function_component]
-pub fn SvgViewComponent(Props {glyph}: &Props) -> Html {
-    let div = use_memo(glyph.clone(), |html| {
+pub fn SvgViewComponent(Props {svg}: &Props) -> Html {
+    let div = use_memo(svg.clone(), |svg| {
+        // let svg = decode_glyph_to_svg(glyph.as_str());
+
         let document = get_document();
-    
-        let div = document.create_element("div").unwrap();   
-        div.set_class_name("svg-view"); 
-        div.set_inner_html(&html);
+
+        let div = document.create_element("div").unwrap();
+        div.set_class_name("svg-view");
+        div.set_inner_html(&svg);
 
         if let Some(svg) = div.first_child() {
             if let Some(svg) = svg.dyn_into::<SvgElement>().ok() {
@@ -30,7 +32,7 @@ pub fn SvgViewComponent(Props {glyph}: &Props) -> Html {
 
                     let style = map_to_css(style_map);
                     svg.set_attribute("style", &style).ok();
-                };  
+                };
 
                 // svg.set_attribute("viewBox", "-0.5 -0.5 33 33").ok();
                 svg.set_attribute("width", "128").ok();

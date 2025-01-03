@@ -15,6 +15,7 @@ use crate::errors::CellStateError;
 pub mod data_source_reducers;
 pub mod form;
 
+pub const CELL_TYPE_UNDEFIEND: &str = "undefiend";
 pub const CELL_TYPE_LABEL: &str = "value";
 pub const CELL_TYPE_MULTY: &str = "multy";
 pub const CELL_TYPE_GEOM: &str = "geom";

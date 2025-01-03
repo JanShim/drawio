@@ -143,6 +143,12 @@ input.state-val {
     padding: 2px;
 }
 
+.widgetGlyphItem {
+    overflow: hidden;
+    padding: 2px;
+    margin: 2px;
+}
+
 "#)} />
 }
 }

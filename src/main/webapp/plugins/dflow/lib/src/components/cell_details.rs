@@ -3,7 +3,7 @@ use yew_hooks::{use_list, use_toggle, use_unmount};
 use std::collections::HashMap;
 use wasm_bindgen::JsCast;
 use web_sys::{FormData, HtmlFormElement};
-use common_model::{dflow_cell::{CellType, DFlowVariant}, geom_value::GeomValueXml, label_value::LabelValueXml, multystate::MultystateXml, widget::WidgetContainerXml};
+use common_model::dflow_cell::{CellType, DFlowVariant};
 
 use crate::{
     components::{
@@ -19,7 +19,7 @@ use crate::{
     store::cell::{
         CellInfoContext,
         NO_CONTEXT_FOUND
-    },
+    }, utils::set_widget_container_glyph,
 };
 
 #[function_component]
@@ -102,6 +102,12 @@ pub fn CellDetails() -> Html {
                         log::error!("{:?}", tst.unwrap_err());
                     }
 
+                    // if this is widget container. we need to update widget container model
+                    if meta.types.len() == 1 && meta.types[0].get_cell_type() == CellType::WIDGETCONTAINER {
+                        let model = form.widget_model.expect("model must be not empty");
+
+                        set_widget_container_glyph(&context.mx_editor, &context.mx_cell, model.to_string());
+                    }
 
                     // close edit mode
                     edit_mode.toggle();
@@ -206,145 +212,16 @@ pub fn CellDetails() -> Html {
 }
 
 // ----------------------------------------------
-
-// #[function_component]
-// pub fn CellTypeSelector() -> Html
-// {
-//     use_unmount(|| {
-//         log::debug!("CellTypeSelectorComponent unmount");
-//     });
-
-//     let context = &use_context::<CellInfoContext>().expect(NO_CONTEXT_FOUND);
-
-//     // let (_, cell_state_dispatch) = use_store::<cell::State>();
-//     let cell_types: Rc<RefCell<Vec<TypesItem>>> = use_mut_ref(|| {
-//             vec![
-//                 // TypesItem {name: CELL_TYPE_LABEL.into(), label: "Значение".into(), selected: false},
-//                 // TypesItem {name: CELL_TYPE_MULTY.into(), label: "Множество состояний".into(), selected: false},
-//                 // TypesItem {name: CELL_TYPE_GEOM.into(), label: "Геометрия".into(), selected: false},
-//             ]
-//         });
-
-//     let cell_types_map = use_mut_ref(|| HashMap::<String, CellType>::new());
-
-//     let is_checked = use_state(|| false);
-//     let is_checkable = use_state(|| false);
-
-//     let cell_types_apply: Callback<MouseEvent> = {
-//             let cell_types_map = cell_types_map.clone();
-//             let cell = context.mx_cell.clone();
-//             Callback::from(move |_: MouseEvent| {
-//                 let cell_types = cell_types_map.borrow().values()
-//                     .map(|o| (*o).clone())
-//                     .collect::<HashSet<_>>();
-
-//                 // cell_state_dispatch.apply(SetCellTypeAction(cell_types));
-//                 let mut cell_types = cell_types.into_iter().collect::<Vec<_>>();
-//                 cell_types.sort_by(cell_type_compare);
-
-//                 let data = cell_types.into_iter()
-//                     .map(|o| Into::<DFlowVariant>::into(o) )
-//                     .collect::<Vec<_>>();
-
-//                 // let cell = state.cell.clone().ok_or(JsValue::from(NOT_CELL)).unwrap();
-//                 let mut meta = cell.get_meta().unwrap();
-//                 meta.types = data;
-
-//                 // // assigne meta to editor cell
-//                 let res = cell.set_meta(&meta);
-//                 if res.is_err() {
-//                     log::error!("{:?}", res.unwrap_err())
-//                 }
-
-//                 is_checked.set(true);
-//             })
-//         };
-
-//     let onchange = {
-//             let cell_types = cell_types.clone();
-//             let cell_types_map = cell_types_map.clone();
-//             let is_checkable = is_checkable.clone();
-//             Callback::from(move |e: Event| {
-//                 let target = e.target().unwrap().dyn_into::<HtmlInputElement>().unwrap();
-//                 let checked = target.checked();
-//                 let id = target.id();
-//                 match id.clone() {
-//                     val if val == CELL_TYPE_LABEL => {
-//                         if checked {
-//                             cell_types_map.borrow_mut().insert(val, CellType::LABEL);
-//                         } else {
-//                             cell_types_map.borrow_mut().remove(&val);
-//                         }
-//                     },
-//                     val if val == CELL_TYPE_MULTY => {
-//                         if checked {
-//                             cell_types_map.borrow_mut().insert(val, CellType::MULTYSTATE);
-//                         } else {
-//                             cell_types_map.borrow_mut().remove(&val);
-//                         }
-//                     },
-//                     val if val == CELL_TYPE_GEOM => {
-//                         if checked {
-//                             cell_types_map.borrow_mut().insert(val, CellType::GEOM);
-//                         } else {
-//                             cell_types_map.borrow_mut().remove(&val);
-//                         }
-//                     },
-//                     _ => (),
-//                 };
-//                 is_checkable.set(cell_types_map.borrow().len() > 0);
-
-//                 cell_types.borrow_mut().iter_mut()
-//                     .for_each( |o| {
-//                         if o.name.eq(&id) {
-//                             o.selected = checked;
-//                         }
-//                     }) ;
-//             })
-//         };
-
-//     // ============= views ================
-//     let list_vew = {
-//             cell_types.borrow().iter()
-//                 .map(|o| {
-//                     html! {
-//                         <div>
-//                             <input type="checkbox" id={o.name.clone()} name={o.name.clone()} checked={o.selected} onchange={onchange.clone()}/>
-//                             <label for={o.name.clone()}>{o.label.clone()}</label>
-//                         </div>
-//                     }
-//                 })
-//                 .collect::<Html>()
-//         };
-
-//     html! {
-//         <div>
-//             <div class="flex-box-2 delim-label" >
-//                 <button onclick={cell_types_apply} disabled={!*is_checkable}><MdIcon icon={MdIconType::Check}/></button>
-//             </div>
-
-//             <fieldset class="types-list">
-//                 <legend>{"Выберите нужные функции:"}</legend>
-//                 { list_vew }
-//             </fieldset>
-//         </div>
-//     }
-// }
-
-// ----------------------------------------------
 #[derive(Properties, PartialEq, Debug)]
 pub struct CellDetailsHeaderProps {
     pub edit_mode: bool,
-    // pub on_cell_details_apply: Callback<MouseEvent>,
     pub on_edit_mode_set: Callback<MouseEvent>,
     pub on_cancel: Callback<MouseEvent>,
 }
 
-
 #[function_component]
 pub fn CellDetailsHeader(CellDetailsHeaderProps {
     edit_mode,
-    // on_cell_details_apply,
     on_edit_mode_set,
     on_cancel,
 }: &CellDetailsHeaderProps) -> Html {

@@ -1,3 +1,8 @@
+const API_URL = "http://localhost:8091/api/v1";
+let diagramDataWindow = null;
+let schemaRootContainer = null;
+let cellDataWindow = null;
+let cellRootContainer = null;
 
 function mxCssLink(href)
 {
@@ -90,40 +95,51 @@ function clipedModelBox(modelStr) {
 			graph2.model.endUpdate();
 		}
 
+		let box;
+		let widgetCells;
 		graph2.model.beginUpdate();
 		try {
 			let cells = graph2.model.cells;
-			let widgetCells = Object.entries(cells).map(( [k, v] ) => v);
+			widgetCells = Object.entries(cells).map(( [k, v] ) => v);
 
 			// make all cells uneditable
 			// movable=0;resizable=0;rotatable=0;cloneable=0;deletable=0
 			let mxCells = widgetCells.filter((o) => o.id != "0" && o.id != "1");
-			graph2.setCellStyles("movable", 0, mxCells);
-			graph2.setCellStyles("resizable", 0, mxCells);
-			graph2.setCellStyles("rotatable", 0, mxCells);
-			graph2.setCellStyles("cloneable", 0, mxCells);
-			graph2.setCellStyles("deletable", 0, mxCells);
+			// graph2.setCellStyles("movable", 0, mxCells);
+			// graph2.setCellStyles("resizable", 0, mxCells);
+			// graph2.setCellStyles("rotatable", 0, mxCells);
+			// graph2.setCellStyles("cloneable", 0, mxCells);
+			// graph2.setCellStyles("deletable", 0, mxCells);
 
-			let box = graph2.getBoundingBox(widgetCells);
-			let x = box.x;
-			let y = box.y;
-			widgetCells.forEach(c => {
-				let geom = c.getGeometry();
-				if (!!geom) {
-					geom.x -= x;
-					geom.y -= y;
-				}
-			});
+			box = graph2.getBoundingBox(widgetCells);
+			if (box) {
+				width = box.width;
+				height = box.height;
+				let x = box.x;
+				let y = box.y;
+				widgetCells.forEach(c => {
+					let geom = c.getGeometry();
+					if (geom) {
+						geom.x -= x;
+						geom.y -= y;
+					}
+				});
+			}
 		}
 		finally {
 			graph2.model.endUpdate();
 		}
 
+		// agaim after move
+		box = graph2.getBoundingBox(widgetCells);
+		console.log("box!!!", box);
+
+
 		let encoder = new mxCodec();
 		let result = encoder.encode(graph2.model);
 		let res =  mxUtils.getXml(result, '');
 		container.remove();
-		return res;
+		return JSON.stringify({geom: box, model: res});
 	}
 
 	return modelStr;
@@ -142,7 +158,6 @@ function setWidgetModel(editor, cellP, modelStr) {
 		try
 		{
 			graph2.model.clear();
-			// graph2.view.scale = 0.5;
 			codec.decode(node, graph2.getModel());
 		}
 		finally
@@ -177,25 +192,71 @@ function setWidgetModel(editor, cellP, modelStr) {
 			graph2.model.endUpdate();
 		}
 
-		// merge into cellP
-		editor.graph.model.beginUpdate();
+		// set delateble cells
+		editor.graph.getModel().beginUpdate();
 		try {
-			// let glyph = cellP.remove(0);  // remove glyph cell
 			let childs = cellP.children;
 			editor.graph.setCellStyles("deletable", 1, childs);
-			// childs.forEach((_, i) => cellP.remove(i))
-			editor.graph.removeCells(childs);
-			// childs.forEach(o => editor.graph.removeStateForCell(o));
+		}
+		finally {
+			editor.graph.getModel().endUpdate();
+		}
+		editor.graph.refresh(cellP);
+
+		// merge into cellP
+		editor.graph.getModel().beginUpdate();
+		try {
+			let childs = cellP.children;
+			editor.graph.removeCells(childs, true);
 
 			let cells = graph2.model.cells;
 			editor.graph.model.mergeChildren(cells["1"], cellP, false);
 		}
 		finally {
-			editor.graph.model.endUpdate();
-			container.remove();
+			editor.graph.getModel().endUpdate();
+		}
+		editor.graph.refresh(cellP);
+	}
+}
+
+function setWidgetContainerGlyph(editor, cellP, glyphModelStr) {
+	let node = mxUtils.parseXml(glyphModelStr).documentElement;
+	if (node && node.nodeName === 'mxGraphModel') {
+		let graph2 = new mxGraph(document.createElement("div"));
+
+		// decode glyph model into graph2
+		graph2.model.beginUpdate();
+		try
+		{
+			graph2.model.clear();
+			let codec = new mxCodec(node);
+			codec.decode(node, graph2.getModel());
+		}
+		finally
+		{
+			graph2.model.endUpdate();
 		}
 
-		editor.graph.refresh(cellP);
+		// merge into cellP
+		editor.graph.getModel().beginUpdate();
+		try {
+			let glyphCell = graph2.model.getCell("2");
+			let parent = cellP.parent;
+			glyphCell.value = cellP.value;
+			glyphCell.id = cellP.id;
+			let {x, y} = cellP.geometry;
+			let {width, height} = glyphCell.geometry;
+			glyphCell.geometry = new mxGeometry(x, y, width, height);
+
+			editor.graph.model.remove(cellP);
+			editor.graph.model.add(parent, glyphCell);
+		}
+		finally {
+			editor.graph.getModel().endUpdate();
+		}
+
+		console.log("setWidgetContainerGlyph", editor.graph.model);
+
 	}
 }
 
@@ -284,7 +345,6 @@ function isDFlowCell(cell)
 	return false;
 };
 
-
 function createCellindow() {
 	let container = document.createElement('div');
 	container.setAttribute("id", "info-container");
@@ -309,12 +369,6 @@ function createCellindow() {
 
 	return [wind, container];
 }
-
-const API_URL = "http://localhost:8091/api/v1";
-let diagramDataWindow = null;
-let schemaRootContainer = null;
-let cellDataWindow = null;
-let cellRootContainer = null;
 
 // --------------------------------
 function destroyDiagramWind() {
@@ -681,10 +735,7 @@ Draw.loadPlugin(async function(ui) {
 	// ============== WASM ===================
 	// init rust wasm
 	await initWasm();
-	// здесь натройки пдагина
+	// здесь натройки плагина
 	let getAppOptions = function() {return new SchemaOptions(API_URL); }
-
-	// cellDataWindow = newCellWindow(divDFlowCellData);
-	// initCellRender(ui.editor, mxUtils, divDFlowCellData, getAppOptions());
 
 });

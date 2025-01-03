@@ -4,24 +4,25 @@ use common_model::{
     data_source::DataSourceXml, dflow_cell::DFlowVariant, geom_value::GeomValueXml, label_value::LabelValueXml,
     multystate::{
         range::{RangeType, RangeValue}, state::StateXml, state_predef::{PredefStateXml, StatePredefXml}, MultystateXml
-    }
+    }, widget::{self, WidgetContainerXml}
 };
 use web_sys::FormData;
+use yew::AttrValue;
 
 use crate::{
     components::multystate::{
-        FORM_NAME_PREFIX, FORM_NAME_SUFIX_FROM, FORM_NAME_SUFIX_NAME, FORM_NAME_SUFIX_PK, FORM_NAME_SUFIX_STYLE, FORM_NAME_SUFIX_VALUE, RANGE_TYPE
+        FORM_NAME_PREFIX, FORM_NAME_SUFIX_FROM,
+        FORM_NAME_SUFIX_NAME, FORM_NAME_SUFIX_PK,
+        FORM_NAME_SUFIX_STYLE, FORM_NAME_SUFIX_VALUE, RANGE_TYPE
     },
-    model::cell_meta::{CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY}
+    model::cell_meta::{CELL_TYPE_GEOM, CELL_TYPE_LABEL, CELL_TYPE_MULTY, CELL_TYPE_WIDGET_CONTAINER}
 };
 
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CellDetailsForm {
-    // pub label: Option<LabelValueXml>,
-    // pub name: AttrValue,
-    // pub diagram_meta: DiagramMeta,
     pub variants: Vec<DFlowVariant>,
+    pub widget_model: Option<AttrValue>,
 }
 
 
@@ -30,8 +31,9 @@ impl From<FormData> for CellDetailsForm {
         let mut variants  = Vec::<DFlowVariant>::new();
 
         // work with label
-        if data.has(format!("{CELL_TYPE_LABEL}:formGroup").as_str()) {
-            let ds = get_formdata_data_source(&data, CELL_TYPE_LABEL, Default::default());
+        let target = CELL_TYPE_LABEL;
+        if data.has(format!("{target}:formGroup").as_str()) {
+            let ds = get_formdata_data_source(&data, target, Default::default());
 
             let meta = LabelValueXml { ds };
 
@@ -39,14 +41,15 @@ impl From<FormData> for CellDetailsForm {
         }
 
         // work with multystate
-        if data.has(format!("{CELL_TYPE_MULTY}:formGroup").as_str()) {
-            let ds = get_formdata_data_source(&data, CELL_TYPE_MULTY, Default::default());
+        let target = CELL_TYPE_MULTY;
+        if data.has(format!("{target}:formGroup").as_str()) {
+            let ds = get_formdata_data_source(&data, target, Default::default());
 
             let mut predef_styles = Vec::<StatePredefXml>::new();
-            if let Some(style) = get_formdata_string_value(&data, CELL_TYPE_MULTY, "style-0") {
+            if let Some(style) = get_formdata_string_value(&data, target, "style-0") {
                 predef_styles.push( StatePredefXml::Default( PredefStateXml { style: style.into() }) );
             }
-            if let Some(style) = get_formdata_string_value(&data, CELL_TYPE_MULTY, "style-1") {
+            if let Some(style) = get_formdata_string_value(&data, target, "style-1") {
                 predef_styles.push( StatePredefXml::Bad( PredefStateXml { style: style.into() }) );
             }
 
@@ -57,12 +60,12 @@ impl From<FormData> for CellDetailsForm {
             };
 
             // get arrays of inputs from formdata
-            let state_pk = get_formdata_all_string_values(&data, CELL_TYPE_MULTY, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_PK}"));
-            let state_name = get_formdata_all_string_values(&data, CELL_TYPE_MULTY, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_NAME}"));
-            let state_style = get_formdata_all_string_values(&data, CELL_TYPE_MULTY, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_STYLE}"));
+            let state_pk = get_formdata_all_string_values(&data, target, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_PK}"));
+            let state_name = get_formdata_all_string_values(&data, target, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_NAME}"));
+            let state_style = get_formdata_all_string_values(&data, target, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_STYLE}"));
 
             // what is range type
-            let range_type = get_formdata_string_value(&data, CELL_TYPE_MULTY, RANGE_TYPE)
+            let range_type = get_formdata_string_value(&data, target, RANGE_TYPE)
                 .map(|o| RangeType::from(o));
 
             if let Some(range_type) = range_type {
@@ -70,7 +73,7 @@ impl From<FormData> for CellDetailsForm {
 
                 match range_type {
                     RangeType::DISCRET => {
-                        let state_value = get_formdata_all_string_values(&data, CELL_TYPE_MULTY, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_VALUE}"));
+                        let state_value = get_formdata_all_string_values(&data, target, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_VALUE}"));
 
                         let states = state_pk.into_iter()
                             .zip(state_name.into_iter())
@@ -96,7 +99,7 @@ impl From<FormData> for CellDetailsForm {
                         meta.states = states;
                     },
                     RangeType::RANGE => {
-                        let state_from = get_formdata_all_string_values(&data, CELL_TYPE_MULTY, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_FROM}"));
+                        let state_from = get_formdata_all_string_values(&data, target, &format!("{FORM_NAME_PREFIX}-{FORM_NAME_SUFIX_FROM}"));
 
                         let states = state_pk.into_iter()
                             .zip(state_name.into_iter())
@@ -128,10 +131,11 @@ impl From<FormData> for CellDetailsForm {
         }
 
         // work with geometry
-        if data.has(format!("{CELL_TYPE_GEOM}:formGroup").as_str()) {
-            let ds = get_formdata_data_source(&data, CELL_TYPE_GEOM, Default::default());
-            let min = get_formdata_typed_value::<f32>(&data, CELL_TYPE_GEOM, "min");
-            let max = get_formdata_typed_value::<f32>(&data, CELL_TYPE_GEOM, "max");
+        let target = CELL_TYPE_GEOM;
+        if data.has(format!("{target}:formGroup").as_str()) {
+            let ds = get_formdata_data_source(&data, target, Default::default());
+            let min = get_formdata_typed_value::<f32>(&data, target, "min");
+            let max = get_formdata_typed_value::<f32>(&data, target, "max");
 
             let meta = GeomValueXml {
                     min: min.unwrap_or_default(),
@@ -143,9 +147,30 @@ impl From<FormData> for CellDetailsForm {
             variants.push(DFlowVariant::Geometry(meta));
         }
 
+        // work with widget container
+        let mut widget_model: Option<AttrValue> = None;
+        let target = CELL_TYPE_WIDGET_CONTAINER;
+        if data.has(format!("{target}:formGroup").as_str()) {
+            let ds = get_formdata_data_source(&data, target, Default::default());
+            let uuid = get_formdata_string_value(&data, target, "uuid").expect("uuid must be");
+            let group = get_formdata_string_value(&data, target, "group").expect("group must be");
+            widget_model = Some( get_formdata_string_value(&data, target, "model").expect("model must be").into() );
+
+            log::debug!("widget_model: {widget_model:?}");
+
+            let meta = WidgetContainerXml {
+                    uuid: uuid.into(),
+                    group: group.into(),
+                    ds,
+                };
+
+            variants.push(DFlowVariant::WidgetContainer(meta));
+        }
+
         // result
         Self {
             variants,
+            widget_model,
         }
     }
 }

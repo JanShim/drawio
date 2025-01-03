@@ -6,12 +6,20 @@ use crate::components::widget::glyph_svg::GlyphSvg;
 #[derive(Properties, PartialEq, Debug)]
 pub struct GlyphProps {
     pub pk: AttrValue,
-    pub on_select: Callback<(IString, IString)>,
+    pub name: AttrValue,
+    pub name_ru: Option<AttrValue>,
     pub glyph: IString,
+    pub on_select: Callback<(IString, IString)>,
 }
 
 #[function_component]
-pub fn WidgetGlyph(GlyphProps {pk, on_select, glyph }: &GlyphProps) -> Html {
+pub fn WidgetGlyph(GlyphProps {
+    pk,
+    name,
+    name_ru ,
+    glyph,
+    on_select,
+}: &GlyphProps) -> Html {
 
     let on_click = {
         let on_select = on_select.clone();
@@ -23,8 +31,9 @@ pub fn WidgetGlyph(GlyphProps {pk, on_select, glyph }: &GlyphProps) -> Html {
     };
 
     html! {
-		<a id={pk} onclick={on_click} class="geItem" style="overflow: hidden; width: 34px; height: 32px; padding: 1px;">
-            <GlyphSvg svg={glyph.clone()}/>
-		</a>        
+		<a id={pk} onclick={on_click} class="widgetGlyphItem">
+            // <GlyphSvg svg={glyph.clone()}/>
+            <img src={ format!("data:image/svg+xml;base64,{}", glyph) } width="36" height="36" title={ name_ru.clone().unwrap_or((*name).clone()) }/>
+		</a>
     }
 }

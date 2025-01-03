@@ -10,6 +10,7 @@ use super::NULL_UUID;
 pub struct WidgetForm {
     pub uuid: AttrValue,
     pub name: AttrValue,
+    pub name_ru: AttrValue,
     pub group: AttrValue,
     pub diagram_meta: DiagramMeta,     // this.is from cell0
 }
@@ -25,6 +26,7 @@ impl Default for WidgetForm {
         Self {
             uuid: NULL_UUID.into(),
             name: Default::default(),
+            name_ru: Default::default(),
             group: Default::default(),
             diagram_meta: DiagramMeta::get_widget_default(),
         }
@@ -40,6 +42,7 @@ impl From<FormData> for WidgetForm {
         let mut ret = Self {
                 uuid: data.get("uuid").as_string().unwrap_or_default().into(),
                 name: data.get("name").as_string().unwrap_or_default().into(),
+                name_ru: data.get("name_ru").as_string().unwrap_or_default().into(),
                 group: data.get("group").as_string().unwrap_or_default().into(),
                 ..Default::default()
             };

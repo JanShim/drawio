@@ -10,32 +10,22 @@ pub mod form;
 pub struct WidgetDto {
     pub uuid: String,
     pub name: String,
+    pub name_ru: String,
     pub model: String,
     pub group: String,
     pub types: Vec<String>,
+    pub geom: Option<String>,
     pub svg: Option<String>,
 }
 
-impl WidgetDto {
-    pub fn new(group: String, name: String, model: String, types: Vec<String>, svg: Option<String>) -> Self {
-        WidgetDto {
-            uuid: NULL_UUID.to_owned(),
-            group,
-            name,
-            model,
-            types,
-            svg,
-        }
-    }
-}
 
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
 // #[serde(rename_all = "camelCase")]
 pub struct WidgetListItem {
     pub uuid: AttrValue,
     pub group: AttrValue,
     pub name: AttrValue,
+    pub name_ru: Option<AttrValue>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -44,6 +34,7 @@ pub struct WidgetGlyphItem {
     pub uuid: AttrValue,
     pub group: AttrValue,
     pub name: AttrValue,
+    pub name_ru: Option<AttrValue>,
     pub glyph: AttrValue,
 }
 

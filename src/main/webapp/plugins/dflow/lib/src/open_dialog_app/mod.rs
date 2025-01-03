@@ -40,7 +40,13 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     let widget_list = {
         let url = api_url.clone();
         use_async_with_options(
-            async move { fetch::<Vec::<WidgetListItem>>(format!("{url}/widget/all")).await },
+            async move {
+                fetch::<Vec::<WidgetListItem>>(format!("{url}/widget/all")).await
+                    .map(|mut v| {
+                        v.sort_by(|a, b| a.name.cmp(&b.name));
+                        v
+                    })
+             },
             UseAsyncOptions::enable_auto(),
         )};
 
@@ -138,7 +144,7 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                         let meta_req = format!("{url}/{}/{}", *tab_tag, *selected);
                         if *tab_tag == "widget" {
                             match fetch::<WidgetListItem>(meta_req).await {
-                                Ok(WidgetListItem { uuid, name, group }) => {
+                                Ok(WidgetListItem { uuid, name, name_ru, group }) => {
                                     let cl_editor = editor.clone();
                                     let cb = Closure::new(move |el: JsValue| {
                                             let schema_root_container = el.dyn_into::<HtmlDivElement>().unwrap();
@@ -158,7 +164,12 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
                                         .unwrap_or(DiagramMeta::get_widget_default());
 
                                     dispatch.reduce_mut(move |state| {
-                                        let form = WidgetForm { uuid, name, group, diagram_meta};
+                                        let form = WidgetForm {
+                                            uuid,
+                                            name,
+                                            name_ru: name_ru.unwrap_or_default(),
+                                            group,
+                                            diagram_meta};
                                         state.model_meta = ModelForm::Widget(form);
                                     });
                                 },
@@ -225,16 +236,18 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
 
     let widgets_view = {
         if widget_list.loading {
-            html! { "Loading, wait a sec..." }
+            html! { <tr><td>{ "Loading, wait a sec..." }</td></tr> }
         } else  {
             widget_list.data.as_ref().map_or_else(
                 || html! {},        // default
                 |repo| html! {
                     for repo.iter().map(|item|
-                        html!{ <WidgetListItemComponent
-                            item={item.clone()}
-                            select={on_select.clone()}
-                            selected={(*selected).clone()} />
+                        html!{
+                            <WidgetListItemComponent
+                                item={item.clone()}
+                                select={on_select.clone()}
+                                selected={(*selected).clone()}
+                            />
                         }
                     )
             })
@@ -244,7 +257,9 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
     let tab_content_view = {
         let tab_tag = tab_tag.clone();
         match tab_tag {
-            val if *val == "widget" => widgets_view,
+            val if *val == "widget" => html! {
+                <table>{ widgets_view }</table>
+            },
             _ => diagrams_view,
         }
     };
@@ -287,16 +302,16 @@ pub fn App(Props {api_url, mx_utils, mx_editor, editor_ui}: &Props) -> Html {
   border-top: none;
 }
 
-div.selectable {
+.selectable {
     cursor: pointer;
 }
 
-div.selected {
-    background-color: #4d90fe;
+.selected {
+    background-color:rgb(79, 146, 254);
     color: white;
 }
 
-        "#)} />
+"#)} />
         <div style="height: 340px; overflow: auto;">
             <div class="tab">
             <button tag="diagram"

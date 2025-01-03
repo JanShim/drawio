@@ -11,7 +11,7 @@ pub fn StateSampleRect(Props { css_strings: (style, text_style) }: &Props) -> Ht
         <svg viewBox="0 0 60 30" width="40" height="20" xmlns="http://www.w3.org/2000/svg">
         <g style={style}>
             <g>
-                <rect x="0" y="0" width="60" height="30" stroke="none"/>
+                <rect x="0" y="0" width="60" height="30"/>
             </g>
             <g>
                 <g font-family="&quot;Helvetica&quot;" font-weight="bold" text-anchor="middle" font-size="12px">

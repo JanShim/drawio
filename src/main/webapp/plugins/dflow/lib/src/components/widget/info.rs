@@ -1,19 +1,29 @@
+use serde::Deserialize;
 use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use web_sys::{FormData, HtmlFormElement};
 use yew_hooks::{use_async_with_options, use_list, use_toggle, use_unmount, UseAsyncOptions, UseListHandle};
-use common_model::diagram::WidgetPropertyXml;
+use common_model::{diagram::WidgetPropertyXml, geometry::GeometryDto};
 
 use crate::{
-    components::shared::{MdIcon, MdIconType}, model::{
+    components::shared::{MdIcon, MdIconType},
+    errors::JSON_FORMAT_ERROR,
+    model::{
         common::{DiagramMeta, GraphModel},
         mx_editor::MxEditor,
         widget::{form::WidgetForm, WidgetDto},
         widget_group::WidgetGroupListItemDto
     },
     store::{cell::NO_CONTEXT_FOUND, mx_context::TMxGraphContext},
-    utils::{cliped_model_box, fetch, get_cell0_meta, post, put, set_cell0_value}
+    utils::{cliped_model_box, fetch, get_cell0_meta, post, put, set_cell0_value, NULL_UUID}
 };
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+struct ModelWithSize {
+    geom: Option<GeometryDto>,
+    model: String,
+}
+
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
@@ -50,67 +60,6 @@ pub fn WidgetInfoComponent(Props{ form }: &Props) -> Html {
             async move { fetch::<Vec::<WidgetGroupListItemDto>>(format!("{}/widget-group/list", url)).await },
             UseAsyncOptions::enable_auto(),
         )};
-
-    // {
-    //     let editor = mx_graph_context.mx_editor.clone();
-    //     let widget_props_list_handler = widget_props_list_handler.clone();
-    //     let dispatch = dispatch.clone();
-    //     use_effect_with(redraw.clone(), move |redraw| {
-    //         if **redraw {
-    //             let form = recreate_meta(&editor, widget_props_list_handler);
-    //             dispatch.reduce_mut(|state| {
-    //                 state.redraw = false;
-    //                 state.model_meta = ModelForm::Widget(form);
-    //             });
-    //         }
-    //     })
-    // }
-
-    // let widget_form = {
-    //     let editor = &mx_graph_context.mx_editor;
-    //     let widget_props_list_handler = widget_props_list_handler.clone();
-    //     let form_meta = form_meta;
-    //     use_state(move || {
-    //         let form = get_widget_form_meta(editor, form_meta, widget_props_list_handler);
-    //         log::debug!("use_state::: {form:?}");
-    //         form
-    //     })
-    // };
-    // {
-    //     let widget_form = widget_form.clone();
-    //     use_effect_with((*form_meta).clone(), move |form| {
-    //         log::debug!("use_effect_with::: {form:?}");
-    //         widget_form.set((*form).clone());
-    //     })
-    // }
-
-
-    // {
-    //     let widget_form = widget_form.clone();
-    //     use_effect_with(state.model_meta.clone(), move |model_meta| {
-    //         match model_meta.clone() {
-    //             ModelForm::Widget(mut form) => {
-    //                 // if let Ok(CellValue::Object(el)) = get_cell0(editor).get_value() {
-    //                 //     if let Ok(meta) = quick_xml::de::from_str::<WidgetXml>(el.inner_html().as_str()) {
-    //                 //         // appy meta to store
-    //                 //         let mut form = form.clone();
-    //                 //         form.meta = el.outer_html().into();     // this is cell0 value
-    //                 //         widget_props_list_handler.set(meta.property);       // state widget properties
-    //                 //         widget_meta.set(form);
-    //                 //     }
-    //                 // } else {
-    //                 //     log::debug!("else CellValue: {:?}", get_cell0(editor).get_value().unwrap());
-    //                 // }
-    //                 form.meta = widget_form.meta.clone();
-    //                 log::debug!("NEW WIDGET!! {form:?}");
-    //                 widget_form.set(form);  // store to state
-    //             },
-    //             _ => {
-    //                 log::info!("this is not widget item");
-    //             },
-    //         }
-    //     })
-    // }
 
     // ============= efects =========================
 
@@ -168,17 +117,21 @@ pub fn WidgetInfoComponent(Props{ form }: &Props) -> Html {
                         if let Ok(node) = mx_graph_context.get_graph_xml() {
                             if let Ok(Some(model_str)) = mx_graph_context.get_xml(node) {
                                 let svg = mx_graph_context.get_graph_svg();
-                                let model: String = cliped_model_box(model_str).into();
+                                let model_with_size_json: String = cliped_model_box(model_str).into();
+                                let model_with_size = serde_json::from_str::<ModelWithSize>(&model_with_size_json).expect(JSON_FORMAT_ERROR);
+
+                                let mut item = WidgetDto {
+                                        uuid:  NULL_UUID.to_owned(),
+                                        group: form.group.to_string(),
+                                        name: form.name.to_string(),
+                                        name_ru: form.name_ru.to_string(),
+                                        model: model_with_size.model,
+                                        types: [].into(),       //TODO: разобраться с типами
+                                        svg: Some(svg),
+                                        geom: model_with_size.geom.map(|o| serde_json::to_string(&o).expect(JSON_FORMAT_ERROR)),
+                                    };
 
                                 if form.is_new_item() {
-                                    let item = WidgetDto::new(
-                                            form.group.to_string(),
-                                            form.name.to_string(),
-                                            model,
-                                            vec![],
-                                            Some(svg)
-                                        );
-
                                     let result = post(format!("{}/widget", mx_graph_context.api_url), item).await;
                                     match result {
                                         Ok(created) => {
@@ -188,15 +141,7 @@ pub fn WidgetInfoComponent(Props{ form }: &Props) -> Html {
                                         Err(err) => log::debug!("widget create error: {err:?}"),
                                     }
                                 } else {
-                                    let item = WidgetDto {
-                                            uuid: form.uuid.to_string(),
-                                            group: form.group.to_string(),
-                                            name: form.name.to_string(),
-                                            model,
-                                            //TODO: разобраться с типами
-                                            types: vec!["ZDV2".to_owned()],
-                                            svg: Some(svg),
-                                        };
+                                    item.uuid = form.uuid.to_string();
 
                                     let result = put(format!("{}/widget/{}", mx_graph_context.api_url, form.uuid), item).await;
                                     match result {
@@ -265,9 +210,14 @@ pub fn WidgetInfoComponent(Props{ form }: &Props) -> Html {
 
                     <div class="label"><label for="uuid">{ "uuid: " }</label></div>
                     <input name="uuid-0" value={ format!("{}", info_form_handler.uuid) } disabled={true} class="input-100"/><br/>
-                    <div class="label"><label for="name">{ "name: " }</label></div>
+
+                    <div class="label"><label for="name">{ "наименование (EN): " }</label></div>
                     <input name="name" value={ format!("{}", info_form_handler.name) } class="input-100"/><br/>
-                    <div class="label"><label for="group">{ "group: " }</label></div>
+
+                    <div class="label"><label for="name_ru">{ "наименование (RU): " }</label></div>
+                    <input name="name_ru" value={ format!("{}", info_form_handler.name_ru) } class="input-100"/><br/>
+
+                    <div class="label"><label for="group">{ "группа: " }</label></div>
                     { wgroups_select }
 
                     <div>
@@ -304,9 +254,11 @@ pub fn WidgetInfoComponent(Props{ form }: &Props) -> Html {
                 <div>
                     <div class="label">{ "uuid: " }</div>
                     <div class="value">{ format!("{}", info_form_handler.uuid) }</div>
-                    <div class="label">{ "name: " }</div>
+                    <div class="label">{ "наименование (EN): " }</div>
                     <div class="value">{ format!("{}", info_form_handler.name) }</div>
-                    <div class="label">{ "group: " }</div>
+                    <div class="label">{ "наименование (RU): " }</div>
+                    <div class="value">{ format!("{}", info_form_handler.name_ru) }</div>
+                    <div class="label">{ "группа: " }</div>
                     <div class="value">{ format!("{}", info_form_handler.group) }</div>
                 </div>
                 <div>
@@ -352,6 +304,7 @@ fn apply_form_to_state(
     let form = WidgetForm {
             uuid: dto.uuid.clone().into(),
             name: dto.name.clone().into(),
+            name_ru: dto.name_ru.clone().into(),
             group: dto.group.clone().into(),
             diagram_meta: get_cell0_meta(editor).unwrap_or(DiagramMeta::get_widget_default()),
         };

@@ -1,13 +1,16 @@
 use yew::prelude::*;
+use base64::prelude::*;
 use yew_hooks::use_unmount;
 use implicit_clone::unsync::IString;
-use common_model::widget::WidgetContainerXml;
+use common_model::widget::{GlyphSized, WidgetContainerXml};
 
 use crate::{
 	components::{
-		prop_table_tr::PropTableTr, shared::InputType,
+		prop_table_tr::PropTableTr, shared::{decode_glyph_to_svg, InputType},
 		widget::svg_view::SvgViewComponent
-	}, model::{cell_meta::CELL_TYPE_WIDGET_CONTAINER, widget_group::WidgetGroupListItemDto}, store::cell::{CellInfoContext, NO_CONTEXT_FOUND}, utils::{fetch, fetch_string, NULL_GLYPH, NULL_MODEL, NULL_UUID}
+	}, errors::JSON_FORMAT_ERROR, model::{
+		cell_meta::CELL_TYPE_WIDGET_CONTAINER, widget::WidgetListItem, widget_group::WidgetGroupListItemDto
+	}, store::cell::{CellInfoContext, NO_CONTEXT_FOUND}, utils::{fetch, fetch_string, NULL_GLYPH_SIZED, NULL_GLYPH_SVG, NULL_MODEL, NULL_UUID}
 };
 
 
@@ -27,6 +30,8 @@ pub fn WidgetContainerView(Props {
 
 	let context = use_context::<CellInfoContext>().expect(NO_CONTEXT_FOUND);
 
+	let meta = use_state(|| WidgetListItem::default());
+
 	let group_name = use_state(|| value.group.clone());
 
 	let glyph_svg = use_state(|| IString::from(""));
@@ -35,33 +40,30 @@ pub fn WidgetContainerView(Props {
 		let group_pk = value.group.clone();
 		let group_name = group_name.clone();
 		let glyph_svg = glyph_svg.clone();
+		let meta = meta.clone();
 		use_effect_with(value.uuid.clone(), |uuid| {
 			let uuid = uuid.clone();
 			wasm_bindgen_futures::spawn_local(
 				async move {
+					// fetch widget meta
+					match fetch::<WidgetListItem>(format!("{url}/widget/{uuid}")).await {
+						Ok(widget_meta) => meta.set(widget_meta),
+						Err(err) => log::error!("{err}"),
+					}
+
 					// fetch group
 					match fetch::<WidgetGroupListItemDto>(format!("{url}/widget-group/{group_pk}")).await {
 						Ok(group) => group_name.set(group.name),
 						Err(err) => log::error!("{err}"),
 					}
 
-					if uuid.eq(NULL_UUID) {
-						// let model = fetch_string(format!("{url}/widget/{NULL_UUID}/model")).await.unwrap_or(NULL_MODEL.to_owned());
-						let glyph = fetch_string(format!("{url}/widget/{uuid}/glyph")).await.unwrap_or(NULL_GLYPH.to_owned());
-
-						glyph_svg.set(AttrValue::from(glyph));
-						return;
-					}
-
-					// // fetch model
-					// match fetch_string(format!("{url}/widget/{uuid}/model")).await {
-					// 	Ok(model) => cell_store_dispatch.apply(SetCellModelAction(model.into())),
-					// 	Err(err) => log::error!("{err}"),
-					// }
-
 					// fetch glyph
 					match fetch_string(format!("{url}/widget/{uuid}/glyph")).await {
-						Ok(glyph) => glyph_svg.set(AttrValue::from(glyph)),
+						Ok(glyph_sized_str) => {
+							let glyph_sized = serde_json::from_str::<GlyphSized>(&glyph_sized_str).expect(JSON_FORMAT_ERROR);
+							let glyph = decode_glyph_to_svg(&glyph_sized.glyph);
+							glyph_svg.set(glyph);
+						},
 						Err(err) => log::error!("{err}"),
 					}
 				 }
@@ -102,7 +104,9 @@ pub fn WidgetContainerView(Props {
 
 		<div class="flex-box delim-label">{ "Тип объекта" }</div>
 
-		<SvgViewComponent glyph={ (*glyph_svg).clone() }/>
+		<SvgViewComponent svg={ (*glyph_svg).clone() }/>
+
+		<div> { meta.name_ru.clone().unwrap_or(meta.name.clone())} </div>
 
         </>
     }
